@@ -38,6 +38,28 @@ export class CreateProductDto {
   variants?: ProductVariantDto[];
 }
 
+export class GetProductsDto {
+  @IsOptional()
+  @IsNumber()
+  skip?: string; // string vì query params là string
+
+  @IsOptional()
+  @IsNumber()
+  take?: string;
+
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsString()
+  sellerId?: string;
+
+  @IsOptional()
+  @IsString()
+  enterpriseId?: string;
+}
+
 export class ProductVariantDto {
   @ApiProperty({ required: false })
   @IsOptional()

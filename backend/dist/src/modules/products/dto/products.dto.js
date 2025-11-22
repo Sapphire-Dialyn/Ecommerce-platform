@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateReviewDto = exports.UpdateCategoryDto = exports.CreateCategoryDto = exports.UpdateProductDto = exports.ProductVariantDto = exports.CreateProductDto = void 0;
+exports.CreateReviewDto = exports.UpdateCategoryDto = exports.CreateCategoryDto = exports.UpdateProductDto = exports.ProductVariantDto = exports.GetProductsDto = exports.CreateProductDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class CreateProductDto {
@@ -58,6 +58,34 @@ __decorate([
     (0, class_validator_1.IsArray)(),
     __metadata("design:type", Array)
 ], CreateProductDto.prototype, "variants", void 0);
+class GetProductsDto {
+}
+exports.GetProductsDto = GetProductsDto;
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", String)
+], GetProductsDto.prototype, "skip", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", String)
+], GetProductsDto.prototype, "take", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], GetProductsDto.prototype, "categoryId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], GetProductsDto.prototype, "sellerId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], GetProductsDto.prototype, "enterpriseId", void 0);
 class ProductVariantDto {
 }
 exports.ProductVariantDto = ProductVariantDto;

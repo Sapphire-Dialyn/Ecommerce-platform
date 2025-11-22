@@ -20,14 +20,14 @@ let AdminService = class AdminService {
         this.prisma = prisma;
         this.emailService = emailService;
     }
-    async getAllUsers() {
+    async getAllUsers(role) {
+        const whereClause = role ? { role: role } : {};
         return this.prisma.user.findMany({
+            where: whereClause,
+            orderBy: { createdAt: 'desc' },
             include: {
                 seller: true,
                 enterprise: true,
-                logistics: true,
-                addresses: true,
-                orders: true,
             },
         });
     }
@@ -40,10 +40,10 @@ let AdminService = class AdminService {
                 logistics: true,
                 addresses: true,
                 orders: {
+                    take: 5,
+                    orderBy: { createdAt: 'desc' },
                     include: {
-                        orderItems: true,
                         payment: true,
-                        logisticsOrders: true,
                     },
                 },
             },
@@ -120,25 +120,11 @@ let AdminService = class AdminService {
     }
     async getAllProducts() {
         return this.prisma.product.findMany({
+            take: 50,
+            orderBy: { createdAt: 'desc' },
             include: {
-                seller: {
-                    select: {
-                        id: true,
-                        storeName: true,
-                        verified: true,
-                    },
-                },
-                enterprise: {
-                    select: {
-                        id: true,
-                        companyName: true,
-                        verified: true,
-                        officialBrand: true,
-                    },
-                },
                 category: true,
-                variants: true,
-                reviews: true,
+                variants: { select: { price: true, stock: true } }
             },
         });
     }
@@ -150,15 +136,11 @@ let AdminService = class AdminService {
     }
     async getAllOrders() {
         return this.prisma.order.findMany({
+            take: 50,
+            orderBy: { createdAt: 'desc' },
             include: {
-                user: true,
-                orderItems: {
-                    include: {
-                        product: true,
-                    },
-                },
+                user: { select: { name: true, email: true } },
                 payment: true,
-                logisticsOrders: true,
             },
         });
     }

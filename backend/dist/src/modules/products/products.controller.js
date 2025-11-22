@@ -24,11 +24,10 @@ let ProductsController = class ProductsController {
     constructor(productsService) {
         this.productsService = productsService;
     }
-    createCategory(createCategoryDto, req) {
-        if (req.user.role !== client_1.Role.ADMIN) {
+    createCategory(dto, req) {
+        if (req.user.role !== client_1.Role.ADMIN)
             throw new Error('Only admins can create categories');
-        }
-        return this.productsService.createCategory(createCategoryDto);
+        return this.productsService.createCategory(dto);
     }
     findAllCategories() {
         return this.productsService.findAllCategories();
@@ -36,38 +35,43 @@ let ProductsController = class ProductsController {
     findOneCategory(id) {
         return this.productsService.findOneCategory(id);
     }
-    updateCategory(id, updateCategoryDto, req) {
-        if (req.user.role !== client_1.Role.ADMIN) {
+    updateCategory(id, dto, req) {
+        if (req.user.role !== client_1.Role.ADMIN)
             throw new Error('Only admins can update categories');
-        }
-        return this.productsService.updateCategory(id, updateCategoryDto);
+        return this.productsService.updateCategory(id, dto);
     }
     deleteCategory(id, req) {
-        if (req.user.role !== client_1.Role.ADMIN) {
+        if (req.user.role !== client_1.Role.ADMIN)
             throw new Error('Only admins can delete categories');
-        }
         return this.productsService.deleteCategory(id);
     }
-    async createProduct(req, createProductDto) {
-        if (req.user.role !== client_1.Role.SELLER && req.user.role !== client_1.Role.ENTERPRISE) {
+    async createProduct(req, dto) {
+        if (![client_1.Role.SELLER, client_1.Role.ENTERPRISE].includes(req.user.role))
             throw new Error('Only sellers and enterprises can create products');
-        }
-        let productData = createProductDto;
+        let data = dto;
         if (req.user.role === client_1.Role.SELLER) {
             const seller = await this.productsService.findSellerByUserId(req.user.id);
-            productData = Object.assign(Object.assign({}, createProductDto), { sellerId: seller.id });
+            data = Object.assign(Object.assign({}, dto), { sellerId: seller.id });
         }
-        else if (req.user.role === client_1.Role.ENTERPRISE) {
+        if (req.user.role === client_1.Role.ENTERPRISE) {
             const enterprise = await this.productsService.findEnterpriseByUserId(req.user.id);
-            productData = Object.assign(Object.assign({}, createProductDto), { enterpriseId: enterprise.id });
+            data = Object.assign(Object.assign({}, dto), { enterpriseId: enterprise.id });
         }
-        return this.productsService.createProduct(productData);
+        return this.productsService.createProduct(data);
     }
-    findAllProducts(skip, take, categoryId, sellerId) {
-        return this.productsService.findAllProducts(skip, take, categoryId, sellerId);
+    findAllProducts(skip, take, categoryId, sellerId, enterpriseId) {
+        const skipNumber = skip ? Number(skip) : 0;
+        const takeNumber = take ? Number(take) : 100;
+        return this.productsService.findAllProducts(skipNumber, takeNumber, categoryId, sellerId, enterpriseId);
     }
-    createReview(productId, createReviewDto, req) {
-        return this.productsService.createReview(productId, req.user.id, createReviewDto);
+    getProductsBySeller(sellerId) {
+        return this.productsService.getProductsBySellerId(sellerId);
+    }
+    getProductsByEnterprise(enterpriseId) {
+        return this.productsService.getProductsByEnterpriseId(enterpriseId);
+    }
+    createReview(productId, dto, req) {
+        return this.productsService.createReview(productId, req.user.id, dto);
     }
     getProductReviews(productId) {
         return this.productsService.getProductReviews(productId);
@@ -75,28 +79,25 @@ let ProductsController = class ProductsController {
     findOneProduct(id) {
         return this.productsService.findOneProduct(id);
     }
-    async updateProduct(id, updateProductDto, req) {
-        if (req.user.role !== client_1.Role.SELLER) {
+    async updateProduct(id, dto, req) {
+        if (req.user.role !== client_1.Role.SELLER)
             throw new Error('Only sellers can update products');
-        }
-        const sellerId = (await this.productsService.findSellerByUserId(req.user.id)).id;
-        return this.productsService.updateProduct(id, sellerId, updateProductDto);
+        const seller = await this.productsService.findSellerByUserId(req.user.id);
+        return this.productsService.updateProduct(id, seller.id, dto);
     }
     async deleteProduct(id, req) {
-        if (req.user.role !== client_1.Role.SELLER) {
+        if (req.user.role !== client_1.Role.SELLER)
             throw new Error('Only sellers can delete products');
-        }
-        const sellerId = (await this.productsService.findSellerByUserId(req.user.id)).id;
-        return this.productsService.deleteProduct(id, sellerId);
+        const seller = await this.productsService.findSellerByUserId(req.user.id);
+        return this.productsService.deleteProduct(id, seller.id);
     }
 };
 exports.ProductsController = ProductsController;
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Create a new category (Admin only)' }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: 'Category has been created.' }),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Post)('categories'),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a new category (Admin only)' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
@@ -104,8 +105,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "createCategory", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Get all categories (Public)' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all categories.' }),
     (0, public_decorator_1.Public)(),
     (0, common_1.Get)('categories'),
     __metadata("design:type", Function),
@@ -113,8 +112,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "findAllCategories", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Get category by ID (Public)' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Return the category.' }),
     (0, public_decorator_1.Public)(),
     (0, common_1.Get)('categories/:id'),
     __param(0, (0, common_1.Param)('id')),
@@ -123,8 +120,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "findOneCategory", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Update category (Admin only)' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Category has been updated.' }),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Patch)('categories/:id'),
@@ -136,8 +131,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "updateCategory", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Delete category (Admin only)' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Category has been deleted.' }),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Delete)('categories/:id'),
@@ -148,11 +141,10 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "deleteCategory", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Create a new product (Seller or Enterprise only)' }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: 'Product has been created.' }),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Post)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Create product (Seller or Enterprise only)' }),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -160,25 +152,40 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ProductsController.prototype, "createProduct", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Get all products (Public)' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all products.' }),
-    (0, swagger_1.ApiQuery)({ name: 'skip', required: false, type: Number }),
-    (0, swagger_1.ApiQuery)({ name: 'take', required: false, type: Number }),
-    (0, swagger_1.ApiQuery)({ name: 'categoryId', required: false }),
-    (0, swagger_1.ApiQuery)({ name: 'sellerId', required: false }),
     (0, public_decorator_1.Public)(),
     (0, common_1.Get)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all products with filters' }),
+    (0, swagger_1.ApiQuery)({ name: 'categoryId', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'sellerId', required: false }),
+    (0, swagger_1.ApiQuery)({ name: 'enterpriseId', required: false }),
     __param(0, (0, common_1.Query)('skip')),
     __param(1, (0, common_1.Query)('take')),
     __param(2, (0, common_1.Query)('categoryId')),
     __param(3, (0, common_1.Query)('sellerId')),
+    __param(4, (0, common_1.Query)('enterpriseId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number, String, String]),
+    __metadata("design:paramtypes", [Number, Number, String, String, String]),
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "findAllProducts", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Create a product review' }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: 'Review has been created.' }),
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Get)('seller/:sellerId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all products of a specific seller' }),
+    __param(0, (0, common_1.Param)('sellerId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "getProductsBySeller", null);
+__decorate([
+    (0, public_decorator_1.Public)(),
+    (0, common_1.Get)('enterprise/:enterpriseId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get all products of a specific enterprise' }),
+    __param(0, (0, common_1.Param)('enterpriseId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "getProductsByEnterprise", null);
+__decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Post)(':id/reviews'),
@@ -190,8 +197,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "createReview", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Get product reviews (Public)' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all reviews for the product.' }),
     (0, public_decorator_1.Public)(),
     (0, common_1.Get)(':id/reviews'),
     __param(0, (0, common_1.Param)('id')),
@@ -200,8 +205,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "getProductReviews", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Get product by ID (Public)' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Return the product.' }),
     (0, public_decorator_1.Public)(),
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
@@ -210,8 +213,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "findOneProduct", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Update product (Seller only)' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Product has been updated.' }),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Patch)(':id'),
@@ -223,8 +224,6 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], ProductsController.prototype, "updateProduct", null);
 __decorate([
-    (0, swagger_1.ApiOperation)({ summary: 'Delete product (Seller only)' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Product has been deleted.' }),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.Delete)(':id'),

@@ -12,7 +12,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const data = await productService.getAll();
+        const data = await productService.getAllProducts();
         setProducts(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Lỗi:", error);
@@ -104,17 +104,17 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-6xl w-full leading-20">
             {[
               { 
-                id: "cmi8n5pb20000vrsc405a285t", 
+                id: "cmials0wu0000vr8wtzaycoo0", 
                 name: "Chăm sóc da mặt", 
                 img: "https://www.laneige.com.vn/media/catalog/product/2/5/250624_final_vn_wb_hyaluronic_cleansing_foam_thumbnail_600x600.jpg?optimize=low&fit=bounds&height=&width=&canvas=:" 
               },
               { 
-                id: "cmi8n5pb70001vrscran3x3mw", 
+                id: "cmials0wz0001vr8w8j2u5ein", 
                 name: "Trang điểm", 
                 img: "https://file.hstatic.net/200000073977/article/my-pham-trang-diem_ffc49920bf144f08886d93fb22f15cbf.jpg" 
               },
               { 
-                id: "cmi8n5pb80002vrscho5v6zy3", 
+                id: "cmials0x00002vr8w0kxu4cqr", 
                 name: "Chăm sóc cơ thể", 
                 img: "https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?auto=format&fit=crop&w=200&q=80" 
               },

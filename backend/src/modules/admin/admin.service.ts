@@ -19,14 +19,16 @@ export class AdminService {
   ) {}
 
   // User Management
-  async getAllUsers() {
+ async getAllUsers(role?: Role) {
+    const whereClause = role ? { role: role } : {};
+
     return this.prisma.user.findMany({
+      where: whereClause,
+      orderBy: { createdAt: 'desc' }, // Sắp xếp mới nhất lên đầu
       include: {
-        seller: true,
-        enterprise: true,
-        logistics: true,
-        addresses: true,
-        orders: true,
+        seller: true,     // Để lấy thông tin Store Name
+        enterprise: true, // Để lấy thông tin Company Name
+        // Bỏ bớt mấy cái nặng như orders, addresses nếu chỉ để hiển thị danh sách
       },
     });
   }
@@ -39,11 +41,12 @@ export class AdminService {
         enterprise: true,
         logistics: true,
         addresses: true,
+        // Chỉ include orders khi xem chi tiết user
         orders: {
+          take: 5, // Chỉ lấy 5 đơn gần nhất để đỡ nặng
+          orderBy: { createdAt: 'desc' },
           include: {
-            orderItems: true,
             payment: true,
-            logisticsOrders: true,
           },
         },
       },
@@ -136,27 +139,14 @@ export class AdminService {
   }
 
   // Product Management
-  async getAllProducts() {
+ async getAllProducts() {
+    // Cần giới hạn số lượng hoặc phân trang
     return this.prisma.product.findMany({
+      take: 50, // Giới hạn 50 sản phẩm mới nhất để demo
+      orderBy: { createdAt: 'desc' },
       include: {
-        seller: {
-          select: {
-            id: true,
-            storeName: true,
-            verified: true,
-          },
-        },
-        enterprise: {
-          select: {
-            id: true,
-            companyName: true,
-            verified: true,
-            officialBrand: true,
-          },
-        },
         category: true,
-        variants: true,
-        reviews: true,
+        variants: { select: { price: true, stock: true } } // Chỉ lấy giá và kho để hiển thị
       },
     });
   }
@@ -171,15 +161,11 @@ export class AdminService {
   // Order Management
   async getAllOrders() {
     return this.prisma.order.findMany({
+      take: 50,
+      orderBy: { createdAt: 'desc' },
       include: {
-        user: true,
-        orderItems: {
-          include: {
-            product: true,
-          },
-        },
+        user: { select: { name: true, email: true } },
         payment: true,
-        logisticsOrders: true,
       },
     });
   }

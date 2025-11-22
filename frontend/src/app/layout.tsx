@@ -4,20 +4,21 @@ import "./globals.css";
 
 // Import các thành phần hạ tầng
 import ReduxProvider from "@/store/ReduxProvider";
+import AuthProvider from "@/providers/AuthProvider"; // 👈 1. Import AuthProvider
 import Navbar from "@/component/Navbar";
 import Footer from "@/component/Footer";
-import { Toaster } from "react-hot-toast"; // Thông báo đẹp
+import { Toaster } from "react-hot-toast"; 
 
 // Cấu hình Font chữ
 const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-inter", // Biến CSS cho font thường
+  variable: "--font-inter", 
   display: "swap",
 });
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
-  variable: "--font-serif", // Biến CSS cho font tiêu đề (sang trọng)
+  variable: "--font-serif", 
   display: "swap",
 });
 
@@ -42,50 +43,56 @@ export default function RootLayout({
         {/* Bọc toàn bộ ứng dụng trong Redux để quản lý State */}
         <ReduxProvider>
           
-          {/* Thanh điều hướng nằm cố định trên cùng */}
-          <Navbar />
+          {/* 👈 2. Bọc nội dung bên trong AuthProvider.
+             AuthProvider cần nằm TRONG ReduxProvider (để dùng dispatch) 
+             nhưng nằm NGOÀI Navbar (để Navbar có dữ liệu mà dùng)
+          */}
+          <AuthProvider>
 
-          {/* Nội dung chính của từng trang (Page) sẽ được render ở đây */}
-          {/* flex-grow giúp đẩy footer xuống dưới cùng nếu nội dung ngắn */}
-          <main className="grow">
-            {children}
-          </main>
+            {/* Thanh điều hướng nằm cố định trên cùng */}
+            <Navbar />
 
-          {/* Chân trang nằm cố định dưới cùng */}
-          <Footer />
+            {/* Nội dung chính của từng trang (Page) */}
+            <main className="grow pt-24"> 
+              {children}
+            </main>
 
-          {/* Cấu hình thông báo Toast (Bay ra từ góc trên phải) */}
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                borderRadius: '10px',
-                background: '#333',
-                color: '#fff',
-              },
-              // Tùy chỉnh màu sắc cho thông báo thành công (màu hồng tím)
-              success: {
+            {/* Chân trang nằm cố định dưới cùng */}
+            <Footer />
+
+            {/* Cấu hình thông báo Toast */}
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                duration: 3000,
                 style: {
-                  background: '#fdf4ff', // fuchsia-50
-                  color: '#c026d3',      // fuchsia-600
-                  border: '1px solid #f0abfc',
-                  fontWeight: '500',
+                  borderRadius: '10px',
+                  background: '#333',
+                  color: '#fff',
                 },
-                iconTheme: {
-                  primary: '#c026d3',
-                  secondary: '#fff',
+                success: {
+                  style: {
+                    background: '#fdf4ff', // fuchsia-50
+                    color: '#c026d3',      // fuchsia-600
+                    border: '1px solid #f0abfc',
+                    fontWeight: '500',
+                  },
+                  iconTheme: {
+                    primary: '#c026d3',
+                    secondary: '#fff',
+                  },
                 },
-              },
-              error: {
-                style: {
-                  background: '#fff1f2',
-                  color: '#e11d48',
-                  border: '1px solid #fecdd3',
+                error: {
+                  style: {
+                    background: '#fff1f2',
+                    color: '#e11d48',
+                    border: '1px solid #fecdd3',
+                  },
                 },
-              },
-            }}
-          />
+              }}
+            />
+            
+          </AuthProvider>
         </ReduxProvider>
       </body>
     </html>

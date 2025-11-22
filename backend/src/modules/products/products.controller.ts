@@ -10,196 +10,194 @@ import {
   Request,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
+
 import {
   CreateProductDto,
   UpdateProductDto,
   CreateCategoryDto,
   UpdateCategoryDto,
   CreateReviewDto,
+  GetProductsDto
 } from './dto/products.dto';
+
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Role } from '@prisma/client';
-import { Public } from '../auth/decorators/public.decorator'; // 👈 Import quan trọng
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('products')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
+  
 
   // ==================================================================
-  // 1. CATEGORY ENDPOINTS (QUAN TRỌNG: PHẢI ĐẶT TRƯỚC PRODUCT ID)
+  // CATEGORY ENDPOINTS
   // ==================================================================
 
-  @ApiOperation({ summary: 'Create a new category (Admin only)' })
-  @ApiResponse({ status: 201, description: 'Category has been created.' })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Post('categories')
-  createCategory(@Body() createCategoryDto: CreateCategoryDto, @Request() req) {
-    if (req.user.role !== Role.ADMIN) {
-      throw new Error('Only admins can create categories');
-    }
-    return this.productsService.createCategory(createCategoryDto);
+  @ApiOperation({ summary: 'Create a new category (Admin only)' })
+  createCategory(@Body() dto: CreateCategoryDto, @Request() req) {
+    if (req.user.role !== Role.ADMIN) throw new Error('Only admins can create categories');
+    return this.productsService.createCategory(dto);
   }
 
-  @ApiOperation({ summary: 'Get all categories (Public)' })
-  @ApiResponse({ status: 200, description: 'Return all categories.' })
-  @Public() // ✅ Cho phép xem không cần login
+  @Public()
   @Get('categories')
   findAllCategories() {
     return this.productsService.findAllCategories();
   }
 
-  @ApiOperation({ summary: 'Get category by ID (Public)' })
-  @ApiResponse({ status: 200, description: 'Return the category.' })
-  @Public() // ✅ Cho phép xem không cần login
+  @Public()
   @Get('categories/:id')
   findOneCategory(@Param('id') id: string) {
     return this.productsService.findOneCategory(id);
   }
 
-  @ApiOperation({ summary: 'Update category (Admin only)' })
-  @ApiResponse({ status: 200, description: 'Category has been updated.' })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Patch('categories/:id')
-  updateCategory(
-    @Param('id') id: string,
-    @Body() updateCategoryDto: UpdateCategoryDto,
-    @Request() req,
-  ) {
-    if (req.user.role !== Role.ADMIN) {
-      throw new Error('Only admins can update categories');
-    }
-    return this.productsService.updateCategory(id, updateCategoryDto);
+  updateCategory(@Param('id') id: string, @Body() dto: UpdateCategoryDto, @Request() req) {
+    if (req.user.role !== Role.ADMIN) throw new Error('Only admins can update categories');
+    return this.productsService.updateCategory(id, dto);
   }
 
-  @ApiOperation({ summary: 'Delete category (Admin only)' })
-  @ApiResponse({ status: 200, description: 'Category has been deleted.' })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Delete('categories/:id')
   deleteCategory(@Param('id') id: string, @Request() req) {
-    if (req.user.role !== Role.ADMIN) {
-      throw new Error('Only admins can delete categories');
-    }
+    if (req.user.role !== Role.ADMIN) throw new Error('Only admins can delete categories');
     return this.productsService.deleteCategory(id);
   }
 
   // ==================================================================
-  // 2. PRODUCT ROOT ENDPOINTS
+  // PRODUCT ROOT ENDPOINTS
   // ==================================================================
 
-  @ApiOperation({ summary: 'Create a new product (Seller or Enterprise only)' })
-  @ApiResponse({ status: 201, description: 'Product has been created.' })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Post()
-  async createProduct(@Request() req, @Body() createProductDto: CreateProductDto) {
-    if (req.user.role !== Role.SELLER && req.user.role !== Role.ENTERPRISE) {
+  @ApiOperation({ summary: 'Create product (Seller or Enterprise only)' })
+  async createProduct(@Request() req, @Body() dto: CreateProductDto) {
+    if (![Role.SELLER, Role.ENTERPRISE].includes(req.user.role))
       throw new Error('Only sellers and enterprises can create products');
-    }
-    
-    let productData = createProductDto;
-    
+
+    let data = dto;
+
     if (req.user.role === Role.SELLER) {
       const seller = await this.productsService.findSellerByUserId(req.user.id);
-      productData = { ...createProductDto, sellerId: seller.id };
-    } else if (req.user.role === Role.ENTERPRISE) {
-      const enterprise = await this.productsService.findEnterpriseByUserId(req.user.id);
-      productData = { ...createProductDto, enterpriseId: enterprise.id };
+      data = { ...dto, sellerId: seller.id };
     }
-    
-    return this.productsService.createProduct(productData);
+
+    if (req.user.role === Role.ENTERPRISE) {
+      const enterprise = await this.productsService.findEnterpriseByUserId(req.user.id);
+      data = { ...dto, enterpriseId: enterprise.id };
+    }
+
+    return this.productsService.createProduct(data);
   }
 
-  @ApiOperation({ summary: 'Get all products (Public)' })
-  @ApiResponse({ status: 200, description: 'Return all products.' })
-  @ApiQuery({ name: 'skip', required: false, type: Number })
-  @ApiQuery({ name: 'take', required: false, type: Number })
+  // ==================================================================
+  // GET PRODUCTS — WITH FILTERS
+  // ==================================================================
+
+  @Public()
+  @Get()
+  @ApiOperation({ summary: 'Get all products with filters' })
   @ApiQuery({ name: 'categoryId', required: false })
   @ApiQuery({ name: 'sellerId', required: false })
-  @Public() // ✅ Cho phép xem không cần login
-  @Get()
+  @ApiQuery({ name: 'enterpriseId', required: false })
   findAllProducts(
     @Query('skip') skip?: number,
     @Query('take') take?: number,
     @Query('categoryId') categoryId?: string,
     @Query('sellerId') sellerId?: string,
+    @Query('enterpriseId') enterpriseId?: string,
   ) {
-    return this.productsService.findAllProducts(skip, take, categoryId, sellerId);
+  const skipNumber = skip ? Number(skip) : 0;
+  const takeNumber = take ? Number(take) : 100;      // mặc định lấy 100 sản phẩm
+    return this.productsService.findAllProducts(
+    skipNumber,
+    takeNumber,
+    categoryId,
+    sellerId,
+    enterpriseId,
+  );
   }
 
   // ==================================================================
-  // 3. REVIEW ENDPOINTS (Đặt trước Product ID để tránh xung đột)
+  // GET PRODUCTS BY SELLER
   // ==================================================================
 
-  @ApiOperation({ summary: 'Create a product review' })
-  @ApiResponse({ status: 201, description: 'Review has been created.' })
+  @Public()
+  @Get('seller/:sellerId')
+  @ApiOperation({ summary: 'Get all products of a specific seller' })
+  getProductsBySeller(@Param('sellerId') sellerId: string) {
+    return this.productsService.getProductsBySellerId(sellerId);
+  }
+
+  // ==================================================================
+  // GET PRODUCTS BY ENTERPRISE
+  // ==================================================================
+
+  @Public()
+  @Get('enterprise/:enterpriseId')
+  @ApiOperation({ summary: 'Get all products of a specific enterprise' })
+  getProductsByEnterprise(@Param('enterpriseId') enterpriseId: string) {
+    return this.productsService.getProductsByEnterpriseId(enterpriseId);
+  }
+
+  // ==================================================================
+  // REVIEW ENDPOINTS
+  // ==================================================================
+
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Post(':id/reviews')
   createReview(
     @Param('id') productId: string,
-    @Body() createReviewDto: CreateReviewDto,
+    @Body() dto: CreateReviewDto,
     @Request() req,
   ) {
-    return this.productsService.createReview(
-      productId,
-      req.user.id,
-      createReviewDto,
-    );
+    return this.productsService.createReview(productId, req.user.id, dto);
   }
 
-  @ApiOperation({ summary: 'Get product reviews (Public)' })
-  @ApiResponse({ status: 200, description: 'Return all reviews for the product.' })
-  @Public() // ✅ Cho phép xem review không cần login
+  @Public()
   @Get(':id/reviews')
   getProductReviews(@Param('id') productId: string) {
     return this.productsService.getProductReviews(productId);
   }
 
   // ==================================================================
-  // 4. PRODUCT ID ENDPOINTS (PHẢI ĐẶT CUỐI CÙNG)
+  // PRODUCT BY ID
   // ==================================================================
 
-  @ApiOperation({ summary: 'Get product by ID (Public)' })
-  @ApiResponse({ status: 200, description: 'Return the product.' })
-  @Public() // ✅ Cho phép xem chi tiết không cần login
+  @Public()
   @Get(':id')
   findOneProduct(@Param('id') id: string) {
     return this.productsService.findOneProduct(id);
   }
 
-  @ApiOperation({ summary: 'Update product (Seller only)' })
-  @ApiResponse({ status: 200, description: 'Product has been updated.' })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Patch(':id')
-  async updateProduct(
-    @Param('id') id: string,
-    @Body() updateProductDto: UpdateProductDto,
-    @Request() req,
-  ) {
-    if (req.user.role !== Role.SELLER) {
-      throw new Error('Only sellers can update products');
-    }
-    const sellerId = (await (this.productsService as any).findSellerByUserId(req.user.id)).id;
-    return this.productsService.updateProduct(id, sellerId, updateProductDto);
+  async updateProduct(@Param('id') id: string, @Body() dto: UpdateProductDto, @Request() req) {
+    if (req.user.role !== Role.SELLER) throw new Error('Only sellers can update products');
+
+    const seller = await this.productsService.findSellerByUserId(req.user.id);
+    return this.productsService.updateProduct(id, seller.id, dto);
   }
 
-  @ApiOperation({ summary: 'Delete product (Seller only)' })
-  @ApiResponse({ status: 200, description: 'Product has been deleted.' })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Delete(':id')
   async deleteProduct(@Param('id') id: string, @Request() req) {
-    if (req.user.role !== Role.SELLER) {
-      throw new Error('Only sellers can delete products');
-    }
-    const sellerId = (await (this.productsService as any).findSellerByUserId(req.user.id)).id;
-    return this.productsService.deleteProduct(id, sellerId);
+    if (req.user.role !== Role.SELLER) throw new Error('Only sellers can delete products');
+
+    const seller = await this.productsService.findSellerByUserId(req.user.id);
+    return this.productsService.deleteProduct(id, seller.id);
   }
 }

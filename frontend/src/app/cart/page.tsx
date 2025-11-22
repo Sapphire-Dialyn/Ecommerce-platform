@@ -16,12 +16,12 @@ export default function CartPage() {
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
-        <div className="w-32 h-32 bg-fuchsia-50 rounded-full flex items-center justify-center mb-6 animate-bounce">
+        <div className="w-32 h-32 bg-fuchsia-50 flex items-center justify-center mb-6 animate-bounce"> {/* Bỏ rounded-full */}
              <div className="text-6xl">🛍️</div>
         </div>
         <h2 className="text-3xl font-serif font-bold text-gray-900 mb-2">Giỏ hàng trống trơn</h2>
         <p className="text-gray-500 mb-8">Có vẻ bạn chưa chọn món đồ làm đẹp nào cả.</p>
-        <Link href="/shop/products" className="px-10 py-4 bg-fuchsia-600 text-white font-bold rounded-full hover:bg-fuchsia-700 transition shadow-lg">
+        <Link href="/shop/products" className="px-10 py-4 bg-fuchsia-600 text-white font-bold hover:bg-fuchsia-700 transition shadow-lg"> {/* Bỏ rounded-full */}
           Đi mua sắm ngay
         </Link>
       </div>
@@ -38,9 +38,9 @@ export default function CartPage() {
             {/* --- CỘT TRÁI: LIST SẢN PHẨM --- */}
             <div className="lg:w-2/3 space-y-6">
                 {cartItems.map((item) => (
-                    <div key={item.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-6 transition hover:shadow-md">
+                    <div key={item.id} className="bg-white p-5 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-6 transition hover:shadow-md"> {/* Bỏ rounded-2xl */}
                         {/* Ảnh */}
-                        <div className="w-full sm:w-28 h-28 bg-gray-50 rounded-xl overflow-hidden shrink-0 border border-gray-100">
+                        <div className="w-full sm:w-28 h-28 bg-gray-50 overflow-hidden shrink-0 border border-gray-100"> {/* Bỏ rounded-xl */}
                             <img src={item.image || 'https://via.placeholder.com/100'} alt={item.name} className="w-full h-full object-cover" />
                         </div>
                         
@@ -48,7 +48,7 @@ export default function CartPage() {
                         <div className="flex-1 text-center sm:text-left w-full">
                             <h3 className="font-bold text-gray-900 text-lg truncate">{item.name}</h3>
                             <div className="text-sm text-gray-500 mt-1">
-                                {item.variant ? <span className="bg-fuchsia-50 text-fuchsia-700 px-2 py-0.5 rounded text-xs uppercase font-bold">{item.variant}</span> : null}
+                                {item.variant ? <span className="bg-fuchsia-50 text-fuchsia-700 px-2 py-0.5 text-xs uppercase font-bold">{item.variant}</span> : null} {/* Bỏ rounded */}
                             </div>
                             <p className="text-fuchsia-600 font-bold text-lg mt-2 font-serif">
                                 {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
@@ -56,7 +56,7 @@ export default function CartPage() {
                         </div>
 
                         {/* Tăng giảm số lượng */}
-                        <div className="flex items-center border border-gray-200 rounded-full h-10 bg-gray-50">
+                        <div className="flex items-center border border-gray-200 h-10 bg-gray-50"> {/* Bỏ rounded-full */}
                              <button 
                                 onClick={() => dispatch(updateQuantity({ id: item.id, quantity: item.quantity - 1 }))}
                                 className="w-10 h-full flex items-center justify-center hover:text-fuchsia-600 transition"
@@ -71,7 +71,7 @@ export default function CartPage() {
                         {/* Xóa */}
                         <button 
                             onClick={() => dispatch(removeFromCart(item.id))}
-                            className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition"
+                            className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 transition" // Bỏ rounded-full
                             title="Xóa khỏi giỏ"
                         >
                             <Trash2 size={20} />
@@ -94,7 +94,7 @@ export default function CartPage() {
 
             {/* --- CỘT PHẢI: TỔNG TIỀN (Order Summary) --- */}
             <div className="lg:w-1/3">
-                <div className="bg-white p-8 rounded-4xl shadow-lg border border-fuchsia-100 sticky top-24">
+                <div className="bg-white p-8 shadow-lg border border-fuchsia-100 sticky top-24"> {/* Bỏ rounded-4xl */}
                     <h3 className="text-xl font-serif font-bold text-gray-900 mb-6">Tổng quan đơn hàng</h3>
                     
                     <div className="space-y-4 mb-8">
@@ -107,7 +107,7 @@ export default function CartPage() {
                             <span className="font-medium">{shipping === 0 ? 'Miễn phí' : new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shipping)}</span>
                         </div>
                         {shipping === 0 && (
-                            <div className="text-xs text-green-600 bg-green-50 px-3 py-1 rounded-lg flex items-center gap-2">
+                            <div className="text-xs text-green-600 bg-green-50 px-3 py-1 flex items-center gap-2"> {/* Bỏ rounded-lg */}
                                 <ShieldCheck size={12}/> Đơn hàng {'>'} 500k được Freeship
                             </div>
                         )}
@@ -121,15 +121,11 @@ export default function CartPage() {
                         <p className="text-xs text-gray-400 mt-2 text-right">Đã bao gồm VAT</p>
                     </div>
 
-                    <button className="w-full bg-gray-900 text-white font-bold py-4 rounded-full hover:bg-fuchsia-600 transition duration-300 shadow-lg transform hover:-translate-y-1">
+                    {/* Nút thanh toán: Vuông vức, màu hồng ngả tím (fuchsia-600) */}
+                    <button className="w-full bg-fuchsia-600 text-white font-bold py-4 hover:bg-fuchsia-700 transition duration-300 shadow-lg transform hover:-translate-y-1"> 
                         Thanh toán ngay
                     </button>
                     
-                    <div className="mt-6 flex justify-center gap-4 opacity-50 grayscale hover:grayscale-0 transition">
-                         <img src="https://cdn-icons-png.flaticon.com/512/196/196578.png" className="h-8" alt="Visa"/>
-                         <img src="https://cdn-icons-png.flaticon.com/512/196/196566.png" className="h-8" alt="Paypal"/>
-                         <img src="https://cdn-icons-png.flaticon.com/512/196/196565.png" className="h-8" alt="Mastercard"/>
-                    </div>
                 </div>
             </div>
         </div>

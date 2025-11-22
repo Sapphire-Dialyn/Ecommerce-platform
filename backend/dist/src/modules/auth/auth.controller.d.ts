@@ -8,8 +8,8 @@ export declare class AuthController {
         user: any;
     }>;
     register(data: RegisterDto): Promise<{
-        id: string;
         name: string;
+        id: string;
         email: string;
         avatar: string | null;
         phone: string | null;
@@ -32,8 +32,8 @@ export declare class AuthController {
         message: string;
     }>;
     getCurrentUser(req: any): Promise<{
-        id: string;
         name: string;
+        id: string;
         email: string;
         role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
