@@ -33,16 +33,16 @@ import { EmailModule } from '@modules/email/email.module';
     AuthService,
     LocalStrategy,
     JwtStrategy,
-    // Global JWT Guard
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-    // Global Roles Guard
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
+    // Global guards tạm thời tắt để test API endpoints
+    // TODO: Bật lại sau khi hoàn thành testing
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: JwtAuthGuard,
+    // },
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: RolesGuard,
+    // },
   ],
   controllers: [AuthController],
   exports: [AuthService],

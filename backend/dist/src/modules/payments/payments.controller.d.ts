@@ -12,15 +12,15 @@ export declare class PaymentsController {
                 enterpriseId: string | null;
                 price: number;
                 productId: string;
-                orderId: string;
-                variantId: string | null;
                 quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
         } & {
             id: string;
-            userId: string;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
             shippingFee: number;
             paymentId: string | null;
@@ -48,15 +48,15 @@ export declare class PaymentsController {
                 enterpriseId: string | null;
                 price: number;
                 productId: string;
-                orderId: string;
-                variantId: string | null;
                 quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
         } & {
             id: string;
-            userId: string;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
             shippingFee: number;
             paymentId: string | null;
@@ -84,15 +84,15 @@ export declare class PaymentsController {
                 enterpriseId: string | null;
                 price: number;
                 productId: string;
-                orderId: string;
-                variantId: string | null;
                 quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
         } & {
             id: string;
-            userId: string;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
             shippingFee: number;
             paymentId: string | null;
@@ -120,15 +120,15 @@ export declare class PaymentsController {
                 enterpriseId: string | null;
                 price: number;
                 productId: string;
-                orderId: string;
-                variantId: string | null;
                 quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
         } & {
             id: string;
-            userId: string;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
             shippingFee: number;
             paymentId: string | null;

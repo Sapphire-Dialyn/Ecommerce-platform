@@ -17,9 +17,8 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const logistics_service_1 = require("./logistics.service");
 const logistics_dto_1 = require("./dto/logistics.dto");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
-const roles_guard_1 = require("../auth/guards/roles.guard");
 const roles_decorator_1 = require("../auth/decorators/roles.decorator");
+const public_decorator_1 = require("../auth/decorators/public.decorator");
 const client_1 = require("@prisma/client");
 let LogisticsController = class LogisticsController {
     constructor(logisticsService) {
@@ -48,8 +47,9 @@ let LogisticsController = class LogisticsController {
         return this.logisticsService.createOrder(createLogisticsOrderDto);
     }
     findAllOrders(req) {
-        const partnerId = req.user.role === client_1.Role.LOGISTICS
-            ? this.logisticsService.findOnePartner(req.user.id)['id']
+        var _a, _b;
+        const partnerId = ((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) === client_1.Role.LOGISTICS
+            ? this.logisticsService.findOnePartner((_b = req.user) === null || _b === void 0 ? void 0 : _b.id)['id']
             : undefined;
         return this.logisticsService.findAllOrders(partnerId);
     }
@@ -78,6 +78,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get all logistics partners' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all partners.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('partners'),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
     __metadata("design:type", Function),
@@ -87,6 +88,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get logistics partner by ID' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return the partner.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('partners/:id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -128,6 +130,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get all logistics orders' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all logistics orders.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('orders'),
     (0, roles_decorator_1.Roles)(client_1.Role.LOGISTICS, client_1.Role.ADMIN),
     __param(0, (0, common_1.Request)()),
@@ -138,6 +141,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get logistics order by ID' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return the logistics order.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('orders/:id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -167,8 +171,6 @@ __decorate([
 exports.LogisticsController = LogisticsController = __decorate([
     (0, swagger_1.ApiTags)('logistics'),
     (0, common_1.Controller)('logistics'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [logistics_service_1.LogisticsService])
 ], LogisticsController);
 //# sourceMappingURL=logistics.controller.js.map

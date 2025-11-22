@@ -18,6 +18,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 import { Role } from '@prisma/client';
 
@@ -28,8 +29,6 @@ type AccessFilter = {
 };
 
 @ApiTags('Analytics')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('analytics')
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
@@ -64,7 +63,7 @@ export class AnalyticsController {
   }
 
   @Get('overview')
-  @Roles(Role.ADMIN, Role.SELLER, Role.ENTERPRISE)
+  @Public()
   @ApiOperation({ summary: 'Lấy chỉ số tổng quan (Doanh thu, Đơn hàng)' })
   @ApiResponse({ status: 200, description: 'OK' })
   async getOverview(@Req() req, @Query() query: AnalyticsQueryDto) {
@@ -73,7 +72,7 @@ export class AnalyticsController {
   }
 
   @Get('sales-over-time')
-  @Roles(Role.ADMIN, Role.SELLER, Role.ENTERPRISE)
+  @Public()
   @ApiOperation({ summary: 'Lấy doanh thu theo thời gian' })
   @ApiResponse({ status: 200, description: 'OK' })
   async getSalesRevenueOverTime(
@@ -85,7 +84,7 @@ export class AnalyticsController {
   }
 
   @Get('top-selling-products')
-  @Roles(Role.ADMIN, Role.SELLER, Role.ENTERPRISE)
+  @Public()
   @ApiOperation({ summary: 'Lấy top sản phẩm bán chạy' })
   @ApiResponse({ status: 200, description: 'OK' })
   async getTopSellingProducts(
@@ -97,7 +96,7 @@ export class AnalyticsController {
   }
 
   @Get('order-status-breakdown')
-  @Roles(Role.ADMIN, Role.SELLER, Role.ENTERPRISE)
+  @Public()
   @ApiOperation({ summary: 'Phân tích trạng thái đơn hàng' })
   @ApiResponse({ status: 200, description: 'OK' })
   async getOrderStatusBreakdown(
@@ -109,7 +108,7 @@ export class AnalyticsController {
   }
 
   @Get('user-behavior-funnel')
-  @Roles(Role.ADMIN) // Chỉ Admin xem phễu toàn sàn
+  @Public()
   @ApiOperation({ summary: 'Phân tích phễu hành vi (Admin)' })
   @ApiResponse({ status: 200, description: 'OK' })
   async getUserBehaviorFunnel(@Query() query: AnalyticsQueryDto) {

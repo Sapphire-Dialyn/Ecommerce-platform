@@ -12,11 +12,10 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagg
 import { OrdersService } from './orders.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/orders.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('orders')
 @Controller('orders')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
@@ -29,16 +28,18 @@ export class OrdersController {
 
   @ApiOperation({ summary: 'Get all orders (user or admin)' })
   @ApiResponse({ status: 200, description: 'Return all orders.' })
+  @Public()
   @Get()
   findAll(@Request() req) {
-    return this.ordersService.findAll(req.user.id, req.user.role);
+    return this.ordersService.findAll(req.user?.id, req.user?.role);
   }
 
   @ApiOperation({ summary: 'Get order by ID' })
   @ApiResponse({ status: 200, description: 'Return the order.' })
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req) {
-    return this.ordersService.findOne(id, req.user.id, req.user.role);
+    return this.ordersService.findOne(id, req.user?.id, req.user?.role);
   }
 
   @ApiOperation({ summary: 'Update order status' })

@@ -15,22 +15,20 @@ export declare class EnterpriseService {
     }): Promise<{
         enterprise: {
             id: string;
-            userId: string;
-            verified: boolean;
-            rating: number | null;
-            logoUrl: string | null;
             companyName: string;
             taxCode: string | null;
+            verified: boolean;
             officialBrand: boolean;
+            rating: number | null;
+            logoUrl: string | null;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
+            userId: string;
         };
     } & {
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         email: string;
         password: string;
         avatar: string | null;
@@ -39,6 +37,8 @@ export declare class EnterpriseService {
         isVerified: boolean;
         verificationToken: string | null;
         isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     update(userId: string, data: {
         name?: string;
@@ -49,22 +49,20 @@ export declare class EnterpriseService {
     }): Promise<{
         enterprise: {
             id: string;
-            userId: string;
-            verified: boolean;
-            rating: number | null;
-            logoUrl: string | null;
             companyName: string;
             taxCode: string | null;
+            verified: boolean;
             officialBrand: boolean;
+            rating: number | null;
+            logoUrl: string | null;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
+            userId: string;
         };
     } & {
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         email: string;
         password: string;
         avatar: string | null;
@@ -73,13 +71,26 @@ export declare class EnterpriseService {
         isVerified: boolean;
         verificationToken: string | null;
         isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     findById(id: string): Promise<{
-        user: {
+        products: {
             id: string;
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            description: string;
+            specifications: import("@prisma/client/runtime/library").JsonValue | null;
+            images: string[];
+            active: boolean;
+            categoryId: string;
+            sellerId: string | null;
+            enterpriseId: string | null;
+        }[];
+        user: {
+            id: string;
+            name: string;
             email: string;
             password: string;
             avatar: string | null;
@@ -88,38 +99,39 @@ export declare class EnterpriseService {
             isVerified: boolean;
             verificationToken: string | null;
             isActive: boolean;
-        };
-        products: {
-            id: string;
-            name: string;
-            description: string;
-            images: string[];
-            active: boolean;
             createdAt: Date;
             updatedAt: Date;
-            categoryId: string;
-            sellerId: string | null;
-            enterpriseId: string | null;
-        }[];
+        };
     } & {
         id: string;
-        userId: string;
-        verified: boolean;
-        rating: number | null;
-        logoUrl: string | null;
         companyName: string;
         taxCode: string | null;
+        verified: boolean;
         officialBrand: boolean;
+        rating: number | null;
+        logoUrl: string | null;
         businessLicenseUrl: string | null;
         brandRegistrationUrl: string | null;
         taxDocumentUrl: string | null;
+        userId: string;
     }>;
     findByUserId(userId: string): Promise<{
-        user: {
+        products: {
             id: string;
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            description: string;
+            specifications: import("@prisma/client/runtime/library").JsonValue | null;
+            images: string[];
+            active: boolean;
+            categoryId: string;
+            sellerId: string | null;
+            enterpriseId: string | null;
+        }[];
+        user: {
+            id: string;
+            name: string;
             email: string;
             password: string;
             avatar: string | null;
@@ -128,38 +140,39 @@ export declare class EnterpriseService {
             isVerified: boolean;
             verificationToken: string | null;
             isActive: boolean;
-        };
-        products: {
-            id: string;
-            name: string;
-            description: string;
-            images: string[];
-            active: boolean;
             createdAt: Date;
             updatedAt: Date;
-            categoryId: string;
-            sellerId: string | null;
-            enterpriseId: string | null;
-        }[];
+        };
     } & {
         id: string;
-        userId: string;
-        verified: boolean;
-        rating: number | null;
-        logoUrl: string | null;
         companyName: string;
         taxCode: string | null;
+        verified: boolean;
         officialBrand: boolean;
+        rating: number | null;
+        logoUrl: string | null;
         businessLicenseUrl: string | null;
         brandRegistrationUrl: string | null;
         taxDocumentUrl: string | null;
+        userId: string;
     }>;
     findAll(): Promise<({
-        user: {
+        products: {
             id: string;
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            description: string;
+            specifications: import("@prisma/client/runtime/library").JsonValue | null;
+            images: string[];
+            active: boolean;
+            categoryId: string;
+            sellerId: string | null;
+            enterpriseId: string | null;
+        }[];
+        user: {
+            id: string;
+            name: string;
             email: string;
             password: string;
             avatar: string | null;
@@ -168,31 +181,21 @@ export declare class EnterpriseService {
             isVerified: boolean;
             verificationToken: string | null;
             isActive: boolean;
-        };
-        products: {
-            id: string;
-            name: string;
-            description: string;
-            images: string[];
-            active: boolean;
             createdAt: Date;
             updatedAt: Date;
-            categoryId: string;
-            sellerId: string | null;
-            enterpriseId: string | null;
-        }[];
+        };
     } & {
         id: string;
-        userId: string;
-        verified: boolean;
-        rating: number | null;
-        logoUrl: string | null;
         companyName: string;
         taxCode: string | null;
+        verified: boolean;
         officialBrand: boolean;
+        rating: number | null;
+        logoUrl: string | null;
         businessLicenseUrl: string | null;
         brandRegistrationUrl: string | null;
         taxDocumentUrl: string | null;
+        userId: string;
     })[]>;
     uploadLogo(file: Express.Multer.File, enterpriseId: string): Promise<import("cloudinary").UploadApiResponse | import("cloudinary").UploadApiErrorResponse>;
     updateLogo(file: Express.Multer.File, enterpriseId: string): Promise<import("cloudinary").UploadApiResponse | import("cloudinary").UploadApiErrorResponse>;

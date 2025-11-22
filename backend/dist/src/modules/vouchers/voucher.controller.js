@@ -21,6 +21,7 @@ const swagger_1 = require("@nestjs/swagger");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../auth/guards/roles.guard");
 const roles_decorator_1 = require("../auth/decorators/roles.decorator");
+const public_decorator_1 = require("../auth/decorators/public.decorator");
 const client_1 = require("@prisma/client");
 let VoucherController = class VoucherController {
     constructor(voucherService) {
@@ -44,7 +45,8 @@ let VoucherController = class VoucherController {
         return this.voucherService.claimVoucher(id, userId);
     }
     getAvailableVouchers(req, sellerIds) {
-        const userId = req.user.id;
+        var _a;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const sellerIdArray = Array.isArray(sellerIds) ? sellerIds : [sellerIds].filter(Boolean);
         return this.voucherService.getAvailableVouchers(userId, sellerIdArray);
     }
@@ -103,6 +105,7 @@ __decorate([
 ], VoucherController.prototype, "claimVoucher", null);
 __decorate([
     (0, common_1.Get)('available'),
+    (0, public_decorator_1.Public)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.CUSTOMER),
     (0, swagger_1.ApiOperation)({ summary: 'Lấy voucher khả dụng cho giỏ hàng' }),

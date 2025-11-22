@@ -18,8 +18,6 @@ import { Role } from '@prisma/client';
 
 @ApiTags('payments')
 @Controller('payments')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@ApiBearerAuth()
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
@@ -32,6 +30,7 @@ export class PaymentsController {
 
   @ApiOperation({ summary: 'Get all payments (Admin only)' })
   @ApiResponse({ status: 200, description: 'Return all payments.' })
+  @Public()
   @Get()
   @Roles(Role.ADMIN)
   findAll() {
@@ -40,6 +39,7 @@ export class PaymentsController {
 
   @ApiOperation({ summary: 'Get payment by ID' })
   @ApiResponse({ status: 200, description: 'Return the payment.' })
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.paymentsService.findOne(id);
@@ -47,6 +47,7 @@ export class PaymentsController {
 
   @ApiOperation({ summary: 'Get payment by order ID' })
   @ApiResponse({ status: 200, description: 'Return the payment for the order.' })
+  @Public()
   @Get('order/:orderId')
   findByOrder(@Param('orderId') orderId: string) {
     return this.paymentsService.findByOrder(orderId);

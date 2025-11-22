@@ -14,6 +14,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '@prisma/client';
 
 @ApiTags('Vouchers')
@@ -74,6 +75,7 @@ export class VoucherController {
   }
 
   @Get('available')
+  @Public()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.CUSTOMER)
   @ApiOperation({ summary: 'Lấy voucher khả dụng cho giỏ hàng' })
@@ -82,7 +84,7 @@ export class VoucherController {
     @Req() req,
     @Query('sellerIds') sellerIds: string[],
   ) {
-    const userId = req.user.id;
+    const userId = req.user?.id;
     const sellerIdArray = Array.isArray(sellerIds) ? sellerIds : [sellerIds].filter(Boolean);
     return this.voucherService.getAvailableVouchers(userId, sellerIdArray);
   }

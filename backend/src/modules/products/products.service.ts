@@ -18,12 +18,8 @@ import {
 export class ProductsService {
   constructor(
     private prisma: PrismaService,
-    private cloudinary: CloudinaryService, // 👈 Đã inject
+    private cloudinary: CloudinaryService, // 👈 Đã inject  
   ) {}
-
-  // ======================================================
-  // 0. HELPERS (Từ file gốc của bạn)
-  // ======================================================
 
   async findSellerByUserId(userId: string) {
     const seller = await this.prisma.seller.findUnique({
@@ -50,7 +46,6 @@ export class ProductsService {
   // ======================================================
 
   async createProduct(createProductDto: CreateProductDto) {
-    // 🔽 Logic gốc của bạn (rất tốt) 🔽
     const category = await this.prisma.category.findUnique({
       where: { id: createProductDto.categoryId },
     });
@@ -75,7 +70,7 @@ export class ProductsService {
       });
       if (!enterprise) throw new NotFoundException('Enterprise not found');
     }
-    // 🔼 Logic gốc của bạn (rất tốt) 🔼
+
     
     const { variants, ...productData } = createProductDto;
 
@@ -100,24 +95,42 @@ export class ProductsService {
     take?: number,
     categoryId?: string,
     sellerId?: string,
-    enterpriseId?: string,
   ) {
-    const where = {
-      ...(categoryId && { categoryId }),
-      ...(sellerId && { sellerId }),
-      ...(enterpriseId && { enterpriseId }),
-    };
+    // 🛠️ BƯỚC SỬA QUAN TRỌNG: Xử lý giá trị mặc định an toàn
+    // Nếu skip lỗi hoặc không có -> mặc định là 0
+    const safeSkip = (skip && !isNaN(Number(skip))) ? Number(skip) : 0;
+    
+    const safeTake = (take && !isNaN(Number(take))) ? Number(take) : undefined;
 
-    return this.prisma.product.findMany({ // 👈 Giữ lại logic gốc
-      where,
-      skip,
-      take,
+    return this.prisma.product.findMany({
+      skip: safeSkip, // ✅ Dùng biến an toàn này
+      take: safeTake, // ✅ Dùng biến an toàn này
+      where: {
+        ...(categoryId && { categoryId }),
+        ...(sellerId && { sellerId }),
+      },
       include: {
         category: true,
         variants: true,
-        enterprise: { select: { id: true, companyName: true, verified: true, officialBrand: true } },
-        seller: { select: { id: true, storeName: true, verified: true } },
+        enterprise: {
+          select: {
+            id: true,
+            companyName: true,
+            verified: true,
+            officialBrand: true,
+          },
+        },
+        seller: {
+          select: {
+            id: true,
+            storeName: true,
+            verified: true,
+          },
+        },
       },
+      orderBy: {
+        createdAt: 'desc', // (Tùy chọn) Sắp xếp mới nhất lên đầu
+      }
     });
   }
 

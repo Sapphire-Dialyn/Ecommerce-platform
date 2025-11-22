@@ -100,7 +100,7 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({
-    status: 200,
+    status: 200,  
     description: 'Returns current user information',
   })
   @UseGuards(JwtAuthGuard)

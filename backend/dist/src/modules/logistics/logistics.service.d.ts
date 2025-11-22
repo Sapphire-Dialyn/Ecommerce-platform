@@ -6,81 +6,81 @@ export declare class LogisticsService {
     constructor(prisma: PrismaService);
     createPartner(userId: string, dto: CreateLogisticsPartnerDto): Promise<{
         user: {
-            name: string;
             id: string;
+            name: string;
             email: string;
         };
     } & {
-        name: string;
         id: string;
+        name: string;
         verified: boolean;
-        userId: string;
         rating: number | null;
+        userId: string;
         apiEndpoint: string | null;
         baseRate: number;
     }>;
     findAllPartners(): Promise<({
-        user: {
-            name: string;
-            id: string;
-            email: string;
-        };
         orders: {
             id: string;
+            status: import(".prisma/client").$Enums.LogisticsStatus;
             order: {
                 id: string;
                 status: import(".prisma/client").$Enums.OrderStatus;
                 totalAmount: number;
             };
-            status: import(".prisma/client").$Enums.LogisticsStatus;
             estimatedDelivery: Date;
         }[];
+        user: {
+            id: string;
+            name: string;
+            email: string;
+        };
     } & {
-        name: string;
         id: string;
+        name: string;
         verified: boolean;
-        userId: string;
         rating: number | null;
+        userId: string;
         apiEndpoint: string | null;
         baseRate: number;
     })[]>;
     findOnePartner(id: string): Promise<{
-        user: {
-            name: string;
-            id: string;
-            email: string;
-        };
         orders: {
             id: string;
+            status: import(".prisma/client").$Enums.LogisticsStatus;
             order: {
                 id: string;
                 status: import(".prisma/client").$Enums.OrderStatus;
                 totalAmount: number;
             };
-            status: import(".prisma/client").$Enums.LogisticsStatus;
             estimatedDelivery: Date;
         }[];
+        user: {
+            id: string;
+            name: string;
+            email: string;
+        };
     } & {
-        name: string;
         id: string;
+        name: string;
         verified: boolean;
-        userId: string;
         rating: number | null;
+        userId: string;
         apiEndpoint: string | null;
         baseRate: number;
     }>;
     updatePartner(id: string, dto: UpdateLogisticsPartnerDto): Promise<{
         user: {
-            name: string;
             id: string;
+            name: string;
             email: string;
         };
     } & {
-        name: string;
         id: string;
+        name: string;
         verified: boolean;
-        userId: string;
         rating: number | null;
+        userId: string;
         apiEndpoint: string | null;
         baseRate: number;
     }>;
@@ -88,16 +88,25 @@ export declare class LogisticsService {
         message: string;
     }>;
     createOrder(dto: CreateLogisticsOrderDto): Promise<{
+        logisticsPartner: {
+            id: string;
+            name: string;
+            verified: boolean;
+            rating: number | null;
+            userId: string;
+            apiEndpoint: string | null;
+            baseRate: number;
+        };
         order: {
             orderItems: {
                 id: string;
                 sellerId: string | null;
                 enterpriseId: string | null;
-                quantity: number;
-                productId: string;
-                orderId: string;
-                variantId: string | null;
                 price: number;
+                productId: string;
+                quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
         } & {
             id: string;
@@ -105,23 +114,14 @@ export declare class LogisticsService {
             updatedAt: Date;
             userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
+            shippingFee: number;
             paymentId: string | null;
             subtotal: number;
-            shippingFee: number;
             shopDiscount: number;
             platformDiscount: number;
             freeshipDiscount: number;
             totalDiscount: number;
             totalAmount: number;
-        };
-        logisticsPartner: {
-            name: string;
-            id: string;
-            verified: boolean;
-            userId: string;
-            rating: number | null;
-            apiEndpoint: string | null;
-            baseRate: number;
         };
     } & {
         id: string;
@@ -151,16 +151,25 @@ export declare class LogisticsService {
         feedback: string | null;
     }>;
     findAllOrders(partnerId?: string): Promise<({
+        logisticsPartner: {
+            id: string;
+            name: string;
+            verified: boolean;
+            rating: number | null;
+            userId: string;
+            apiEndpoint: string | null;
+            baseRate: number;
+        };
         order: {
             orderItems: {
                 id: string;
                 sellerId: string | null;
                 enterpriseId: string | null;
-                quantity: number;
-                productId: string;
-                orderId: string;
-                variantId: string | null;
                 price: number;
+                productId: string;
+                quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
         } & {
             id: string;
@@ -168,23 +177,14 @@ export declare class LogisticsService {
             updatedAt: Date;
             userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
+            shippingFee: number;
             paymentId: string | null;
             subtotal: number;
-            shippingFee: number;
             shopDiscount: number;
             platformDiscount: number;
             freeshipDiscount: number;
             totalDiscount: number;
             totalAmount: number;
-        };
-        logisticsPartner: {
-            name: string;
-            id: string;
-            verified: boolean;
-            userId: string;
-            rating: number | null;
-            apiEndpoint: string | null;
-            baseRate: number;
         };
     } & {
         id: string;
@@ -214,16 +214,25 @@ export declare class LogisticsService {
         feedback: string | null;
     })[]>;
     findOneOrder(id: string): Promise<{
+        logisticsPartner: {
+            id: string;
+            name: string;
+            verified: boolean;
+            rating: number | null;
+            userId: string;
+            apiEndpoint: string | null;
+            baseRate: number;
+        };
         order: {
             orderItems: {
                 id: string;
                 sellerId: string | null;
                 enterpriseId: string | null;
-                quantity: number;
-                productId: string;
-                orderId: string;
-                variantId: string | null;
                 price: number;
+                productId: string;
+                quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
         } & {
             id: string;
@@ -231,23 +240,14 @@ export declare class LogisticsService {
             updatedAt: Date;
             userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
+            shippingFee: number;
             paymentId: string | null;
             subtotal: number;
-            shippingFee: number;
             shopDiscount: number;
             platformDiscount: number;
             freeshipDiscount: number;
             totalDiscount: number;
             totalAmount: number;
-        };
-        logisticsPartner: {
-            name: string;
-            id: string;
-            verified: boolean;
-            userId: string;
-            rating: number | null;
-            apiEndpoint: string | null;
-            baseRate: number;
         };
     } & {
         id: string;
@@ -277,16 +277,25 @@ export declare class LogisticsService {
         feedback: string | null;
     }>;
     updateOrderStatus(id: string, dto: UpdateLogisticsOrderDto): Promise<{
+        logisticsPartner: {
+            id: string;
+            name: string;
+            verified: boolean;
+            rating: number | null;
+            userId: string;
+            apiEndpoint: string | null;
+            baseRate: number;
+        };
         order: {
             orderItems: {
                 id: string;
                 sellerId: string | null;
                 enterpriseId: string | null;
-                quantity: number;
-                productId: string;
-                orderId: string;
-                variantId: string | null;
                 price: number;
+                productId: string;
+                quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
         } & {
             id: string;
@@ -294,23 +303,14 @@ export declare class LogisticsService {
             updatedAt: Date;
             userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
+            shippingFee: number;
             paymentId: string | null;
             subtotal: number;
-            shippingFee: number;
             shopDiscount: number;
             platformDiscount: number;
             freeshipDiscount: number;
             totalDiscount: number;
             totalAmount: number;
-        };
-        logisticsPartner: {
-            name: string;
-            id: string;
-            verified: boolean;
-            userId: string;
-            rating: number | null;
-            apiEndpoint: string | null;
-            baseRate: number;
         };
     } & {
         id: string;

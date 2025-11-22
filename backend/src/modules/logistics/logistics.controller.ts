@@ -21,12 +21,11 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '@prisma/client';
 
 @ApiTags('logistics')
 @Controller('logistics')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@ApiBearerAuth()
 export class LogisticsController {
   constructor(private readonly logisticsService: LogisticsService) {}
 
@@ -44,6 +43,7 @@ export class LogisticsController {
 
   @ApiOperation({ summary: 'Get all logistics partners' })
   @ApiResponse({ status: 200, description: 'Return all partners.' })
+  @Public()
   @Get('partners')
   @Roles(Role.ADMIN)
   findAllPartners() {
@@ -52,6 +52,7 @@ export class LogisticsController {
 
   @ApiOperation({ summary: 'Get logistics partner by ID' })
   @ApiResponse({ status: 200, description: 'Return the partner.' })
+  @Public()
   @Get('partners/:id')
   findOnePartner(@Param('id') id: string) {
     return this.logisticsService.findOnePartner(id);
@@ -95,19 +96,21 @@ export class LogisticsController {
 
   @ApiOperation({ summary: 'Get all logistics orders' })
   @ApiResponse({ status: 200, description: 'Return all logistics orders.' })
+  @Public()
   @Get('orders')
   @Roles(Role.LOGISTICS, Role.ADMIN)
   findAllOrders(@Request() req) {
     // If logistics partner, only show their orders
     const partnerId =
-      req.user.role === Role.LOGISTICS
-        ? this.logisticsService.findOnePartner(req.user.id)['id']
+      req.user?.role === Role.LOGISTICS
+        ? this.logisticsService.findOnePartner(req.user?.id)['id']
         : undefined;
     return this.logisticsService.findAllOrders(partnerId);
   }
 
   @ApiOperation({ summary: 'Get logistics order by ID' })
   @ApiResponse({ status: 200, description: 'Return the logistics order.' })
+  @Public()
   @Get('orders/:id')
   findOneOrder(@Param('id') id: string) {
     return this.logisticsService.findOneOrder(id);

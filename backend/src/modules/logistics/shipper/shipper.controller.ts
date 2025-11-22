@@ -5,14 +5,12 @@ import { CreateShipperDto, UpdateShipperDto, UpdateLocationDto } from './shipper
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@modules/auth/guards/roles.guard';
 import { Roles } from '@modules/auth/decorators/roles.decorator';
+import { Public } from '@modules/auth/decorators/public.decorator';
 import { Role } from '@prisma/client';
 import { GetLogisticsPartnerId } from '@modules/logistics/decorators/get-logistics-partner-id.decorator';
 
 @ApiTags('shipper')
 @Controller('logistics/shipper')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.LOGISTICS)
-@ApiBearerAuth()
 export class ShipperController {
   constructor(private readonly shipperService: ShipperService) {}
 
@@ -45,6 +43,7 @@ export class ShipperController {
 
   @ApiOperation({ summary: 'Get all shippers for logistics partner' })
   @ApiResponse({ status: 200, description: 'Return all shippers.' })
+  @Public()
   @Get()
   findAll(@GetLogisticsPartnerId() logisticsPartnerId: string) {
     return this.shipperService.findAll(logisticsPartnerId);
@@ -52,6 +51,7 @@ export class ShipperController {
 
   @ApiOperation({ summary: 'Get shipper by ID' })
   @ApiResponse({ status: 200, description: 'Return the shipper.' })
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.shipperService.findOne(id);

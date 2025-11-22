@@ -87,18 +87,35 @@ let ProductsService = class ProductsService {
             },
         });
     }
-    async findAllProducts(skip, take, categoryId, sellerId, enterpriseId) {
-        const where = Object.assign(Object.assign(Object.assign({}, (categoryId && { categoryId })), (sellerId && { sellerId })), (enterpriseId && { enterpriseId }));
+    async findAllProducts(skip, take, categoryId, sellerId) {
+        const safeSkip = (skip && !isNaN(Number(skip))) ? Number(skip) : 0;
+        const safeTake = (take && !isNaN(Number(take))) ? Number(take) : undefined;
         return this.prisma.product.findMany({
-            where,
-            skip,
-            take,
+            skip: safeSkip,
+            take: safeTake,
+            where: Object.assign(Object.assign({}, (categoryId && { categoryId })), (sellerId && { sellerId })),
             include: {
                 category: true,
                 variants: true,
-                enterprise: { select: { id: true, companyName: true, verified: true, officialBrand: true } },
-                seller: { select: { id: true, storeName: true, verified: true } },
+                enterprise: {
+                    select: {
+                        id: true,
+                        companyName: true,
+                        verified: true,
+                        officialBrand: true,
+                    },
+                },
+                seller: {
+                    select: {
+                        id: true,
+                        storeName: true,
+                        verified: true,
+                    },
+                },
             },
+            orderBy: {
+                createdAt: 'desc',
+            }
         });
     }
     async findOneProduct(id) {

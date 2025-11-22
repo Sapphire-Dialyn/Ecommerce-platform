@@ -4,38 +4,38 @@ export declare class AdminController {
     private readonly adminService;
     constructor(adminService: AdminService);
     getAllUsers(): Promise<({
-        enterprise: {
+        seller: {
             id: string;
             verified: boolean;
-            officialBrand: boolean;
+            rating: number | null;
+            logoUrl: string | null;
             userId: string;
+            storeName: string;
+            businessDocumentUrl: string | null;
+            identityDocumentUrl: string | null;
+            addressDocumentUrl: string | null;
+        };
+        enterprise: {
+            id: string;
             companyName: string;
             taxCode: string | null;
+            verified: boolean;
+            officialBrand: boolean;
             rating: number | null;
             logoUrl: string | null;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
+            userId: string;
         };
         logistics: {
-            name: string;
             id: string;
+            name: string;
             verified: boolean;
-            userId: string;
             rating: number | null;
+            userId: string;
             apiEndpoint: string | null;
             baseRate: number;
-        };
-        seller: {
-            id: string;
-            verified: boolean;
-            userId: string;
-            rating: number | null;
-            logoUrl: string | null;
-            storeName: string;
-            businessDocumentUrl: string | null;
-            identityDocumentUrl: string | null;
-            addressDocumentUrl: string | null;
         };
         addresses: {
             id: string;
@@ -43,12 +43,12 @@ export declare class AdminController {
             createdAt: Date;
             updatedAt: Date;
             userId: string;
-            label: string | null;
             fullName: string;
             province: string;
             district: string;
             ward: string;
             street: string;
+            label: string | null;
             isDefault: boolean;
         }[];
         orders: {
@@ -57,9 +57,9 @@ export declare class AdminController {
             updatedAt: Date;
             userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
+            shippingFee: number;
             paymentId: string | null;
             subtotal: number;
-            shippingFee: number;
             shopDiscount: number;
             platformDiscount: number;
             freeshipDiscount: number;
@@ -67,9 +67,8 @@ export declare class AdminController {
             totalAmount: number;
         }[];
     } & {
-        name: string;
-        isActive: boolean;
         id: string;
+        name: string;
         email: string;
         password: string;
         avatar: string | null;
@@ -77,42 +76,43 @@ export declare class AdminController {
         role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
         verificationToken: string | null;
+        isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
     })[]>;
     getUserById(id: string): Promise<{
-        enterprise: {
+        seller: {
             id: string;
             verified: boolean;
-            officialBrand: boolean;
+            rating: number | null;
+            logoUrl: string | null;
             userId: string;
+            storeName: string;
+            businessDocumentUrl: string | null;
+            identityDocumentUrl: string | null;
+            addressDocumentUrl: string | null;
+        };
+        enterprise: {
+            id: string;
             companyName: string;
             taxCode: string | null;
+            verified: boolean;
+            officialBrand: boolean;
             rating: number | null;
             logoUrl: string | null;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
+            userId: string;
         };
         logistics: {
-            name: string;
             id: string;
+            name: string;
             verified: boolean;
-            userId: string;
             rating: number | null;
+            userId: string;
             apiEndpoint: string | null;
             baseRate: number;
-        };
-        seller: {
-            id: string;
-            verified: boolean;
-            userId: string;
-            rating: number | null;
-            logoUrl: string | null;
-            storeName: string;
-            businessDocumentUrl: string | null;
-            identityDocumentUrl: string | null;
-            addressDocumentUrl: string | null;
         };
         addresses: {
             id: string;
@@ -120,12 +120,12 @@ export declare class AdminController {
             createdAt: Date;
             updatedAt: Date;
             userId: string;
-            label: string | null;
             fullName: string;
             province: string;
             district: string;
             ward: string;
             street: string;
+            label: string | null;
             isDefault: boolean;
         }[];
         orders: ({
@@ -133,11 +133,11 @@ export declare class AdminController {
                 id: string;
                 sellerId: string | null;
                 enterpriseId: string | null;
-                quantity: number;
-                productId: string;
-                orderId: string;
-                variantId: string | null;
                 price: number;
+                productId: string;
+                quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
             payment: {
                 id: string;
@@ -181,9 +181,9 @@ export declare class AdminController {
             updatedAt: Date;
             userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
+            shippingFee: number;
             paymentId: string | null;
             subtotal: number;
-            shippingFee: number;
             shopDiscount: number;
             platformDiscount: number;
             freeshipDiscount: number;
@@ -191,9 +191,8 @@ export declare class AdminController {
             totalAmount: number;
         })[];
     } & {
-        name: string;
-        isActive: boolean;
         id: string;
+        name: string;
         email: string;
         password: string;
         avatar: string | null;
@@ -201,6 +200,7 @@ export declare class AdminController {
         role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
         verificationToken: string | null;
+        isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
     }>;
@@ -209,21 +209,20 @@ export declare class AdminController {
     }>;
     updateEnterpriseBrandStatus(id: string, officialBrand: boolean): Promise<{
         id: string;
-        verified: boolean;
-        officialBrand: boolean;
-        userId: string;
         companyName: string;
         taxCode: string | null;
+        verified: boolean;
+        officialBrand: boolean;
         rating: number | null;
         logoUrl: string | null;
         businessLicenseUrl: string | null;
         brandRegistrationUrl: string | null;
         taxDocumentUrl: string | null;
+        userId: string;
     }>;
     updateUserStatus(id: string, active: boolean): Promise<{
-        name: string;
-        isActive: boolean;
         id: string;
+        name: string;
         email: string;
         password: string;
         avatar: string | null;
@@ -231,34 +230,36 @@ export declare class AdminController {
         role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
         verificationToken: string | null;
+        isActive: boolean;
         createdAt: Date;
         updatedAt: Date;
     }>;
     getAllSellers(): Promise<({
         products: {
-            name: string;
-            description: string;
             id: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
+            description: string;
+            specifications: import("@prisma/client/runtime/library").JsonValue | null;
+            images: string[];
             active: boolean;
             categoryId: string;
             sellerId: string | null;
             enterpriseId: string | null;
-            images: string[];
         }[];
         user: {
-            name: string;
             id: string;
+            name: string;
             email: string;
             isVerified: boolean;
         };
     } & {
         id: string;
         verified: boolean;
-        userId: string;
         rating: number | null;
         logoUrl: string | null;
+        userId: string;
         storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
@@ -268,68 +269,69 @@ export declare class AdminController {
         message: string;
     }>;
     getAllProducts(): Promise<({
-        enterprise: {
+        category: {
             id: string;
-            verified: boolean;
-            officialBrand: boolean;
-            companyName: string;
+            name: string;
+            parentId: string | null;
         };
         seller: {
             id: string;
             verified: boolean;
             storeName: string;
         };
+        enterprise: {
+            id: string;
+            companyName: string;
+            verified: boolean;
+            officialBrand: boolean;
+        };
         reviews: {
             id: string;
             createdAt: Date;
-            userId: string;
             rating: number;
+            userId: string;
             productId: string;
             comment: string | null;
         }[];
-        category: {
-            name: string;
-            id: string;
-            parentId: string | null;
-        };
         variants: {
             id: string;
-            productId: string;
-            price: number;
             color: string | null;
             size: string | null;
+            price: number;
             stock: number;
             sku: string | null;
+            productId: string;
         }[];
     } & {
-        name: string;
-        description: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
+        images: string[];
         active: boolean;
         categoryId: string;
         sellerId: string | null;
         enterpriseId: string | null;
-        images: string[];
     })[]>;
     updateProductStatus(id: string, active: boolean): Promise<{
-        name: string;
-        description: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
+        images: string[];
         active: boolean;
         categoryId: string;
         sellerId: string | null;
         enterpriseId: string | null;
-        images: string[];
     }>;
     getAllOrders(): Promise<({
         user: {
-            name: string;
-            isActive: boolean;
             id: string;
+            name: string;
             email: string;
             password: string;
             avatar: string | null;
@@ -337,31 +339,33 @@ export declare class AdminController {
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
             verificationToken: string | null;
+            isActive: boolean;
             createdAt: Date;
             updatedAt: Date;
         };
         orderItems: ({
             product: {
-                name: string;
-                description: string;
                 id: string;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                description: string;
+                specifications: import("@prisma/client/runtime/library").JsonValue | null;
+                images: string[];
                 active: boolean;
                 categoryId: string;
                 sellerId: string | null;
                 enterpriseId: string | null;
-                images: string[];
             };
         } & {
             id: string;
             sellerId: string | null;
             enterpriseId: string | null;
-            quantity: number;
-            productId: string;
-            orderId: string;
-            variantId: string | null;
             price: number;
+            productId: string;
+            quantity: number;
+            variantId: string | null;
+            orderId: string;
         })[];
         payment: {
             id: string;
@@ -405,9 +409,9 @@ export declare class AdminController {
         updatedAt: Date;
         userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
+        shippingFee: number;
         paymentId: string | null;
         subtotal: number;
-        shippingFee: number;
         shopDiscount: number;
         platformDiscount: number;
         freeshipDiscount: number;
@@ -415,9 +419,14 @@ export declare class AdminController {
         totalAmount: number;
     })[]>;
     createVoucher(createVoucherDto: CreateVoucherDto): Promise<{
+        id: string;
+        isActive: boolean;
         description: string | null;
+        sellerId: string | null;
+        enterpriseId: string | null;
         title: string;
         code: string;
+        scope: import(".prisma/client").$Enums.VoucherScope;
         discountType: import(".prisma/client").$Enums.DiscountType;
         discountValue: number;
         maxDiscountValue: number | null;
@@ -425,17 +434,17 @@ export declare class AdminController {
         startDate: Date;
         endDate: Date;
         usageLimit: number | null;
-        isActive: boolean;
-        id: string;
-        sellerId: string | null;
-        enterpriseId: string | null;
-        scope: import(".prisma/client").$Enums.VoucherScope;
         usedCount: number;
     }>;
     updateVoucher(id: string, updateVoucherDto: UpdateVoucherDto): Promise<{
+        id: string;
+        isActive: boolean;
         description: string | null;
+        sellerId: string | null;
+        enterpriseId: string | null;
         title: string;
         code: string;
+        scope: import(".prisma/client").$Enums.VoucherScope;
         discountType: import(".prisma/client").$Enums.DiscountType;
         discountValue: number;
         maxDiscountValue: number | null;
@@ -443,11 +452,6 @@ export declare class AdminController {
         startDate: Date;
         endDate: Date;
         usageLimit: number | null;
-        isActive: boolean;
-        id: string;
-        sellerId: string | null;
-        enterpriseId: string | null;
-        scope: import(".prisma/client").$Enums.VoucherScope;
         usedCount: number;
     }>;
     getAllVouchers(): Promise<({
@@ -456,9 +460,14 @@ export declare class AdminController {
             totalAmount: number;
         }[];
     } & {
+        id: string;
+        isActive: boolean;
         description: string | null;
+        sellerId: string | null;
+        enterpriseId: string | null;
         title: string;
         code: string;
+        scope: import(".prisma/client").$Enums.VoucherScope;
         discountType: import(".prisma/client").$Enums.DiscountType;
         discountValue: number;
         maxDiscountValue: number | null;
@@ -466,84 +475,81 @@ export declare class AdminController {
         startDate: Date;
         endDate: Date;
         usageLimit: number | null;
-        isActive: boolean;
-        id: string;
-        sellerId: string | null;
-        enterpriseId: string | null;
-        scope: import(".prisma/client").$Enums.VoucherScope;
         usedCount: number;
     })[]>;
     createFlashSale(createFlashSaleDto: CreateFlashSaleDto): Promise<{
         products: ({
             product: {
-                name: string;
-                description: string;
                 id: string;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                description: string;
+                specifications: import("@prisma/client/runtime/library").JsonValue | null;
+                images: string[];
                 active: boolean;
                 categoryId: string;
                 sellerId: string | null;
                 enterpriseId: string | null;
-                images: string[];
             };
         } & {
             id: string;
-            discountPercentage: number;
-            quantity: number | null;
-            soldQuantity: number | null;
             productId: string;
+            quantity: number | null;
+            discountPercentage: number;
+            soldQuantity: number | null;
             promotionId: string;
         })[];
     } & {
-        name: string;
-        type: import(".prisma/client").$Enums.PromotionType;
-        description: string | null;
-        startDate: Date;
-        endDate: Date;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
+        type: import(".prisma/client").$Enums.PromotionType;
+        startDate: Date;
+        endDate: Date;
         discountPercentage: number | null;
     }>;
     getAllFlashSales(): Promise<({
         products: ({
             product: {
-                name: string;
-                description: string;
                 id: string;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                description: string;
+                specifications: import("@prisma/client/runtime/library").JsonValue | null;
+                images: string[];
                 active: boolean;
                 categoryId: string;
                 sellerId: string | null;
                 enterpriseId: string | null;
-                images: string[];
             };
         } & {
             id: string;
-            discountPercentage: number;
-            quantity: number | null;
-            soldQuantity: number | null;
             productId: string;
+            quantity: number | null;
+            discountPercentage: number;
+            soldQuantity: number | null;
             promotionId: string;
         })[];
     } & {
-        name: string;
-        type: import(".prisma/client").$Enums.PromotionType;
-        description: string | null;
-        startDate: Date;
-        endDate: Date;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
+        type: import(".prisma/client").$Enums.PromotionType;
+        startDate: Date;
+        endDate: Date;
         discountPercentage: number | null;
     })[]>;
     createCampaign(createCampaignDto: CreateCampaignDto): Promise<{
         categories: ({
             category: {
-                name: string;
                 id: string;
+                name: string;
                 parentId: string | null;
             };
         } & {
@@ -552,21 +558,21 @@ export declare class AdminController {
             promotionId: string;
         })[];
     } & {
-        name: string;
-        type: import(".prisma/client").$Enums.PromotionType;
-        description: string | null;
-        startDate: Date;
-        endDate: Date;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
+        type: import(".prisma/client").$Enums.PromotionType;
+        startDate: Date;
+        endDate: Date;
         discountPercentage: number | null;
     }>;
     getAllCampaigns(): Promise<({
         categories: ({
             category: {
-                name: string;
                 id: string;
+                name: string;
                 parentId: string | null;
             };
         } & {
@@ -575,14 +581,14 @@ export declare class AdminController {
             promotionId: string;
         })[];
     } & {
-        name: string;
-        type: import(".prisma/client").$Enums.PromotionType;
-        description: string | null;
-        startDate: Date;
-        endDate: Date;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
+        description: string | null;
+        type: import(".prisma/client").$Enums.PromotionType;
+        startDate: Date;
+        endDate: Date;
         discountPercentage: number | null;
     })[]>;
     getSystemStats(systemStatsDto: SystemStatsDto): Promise<{

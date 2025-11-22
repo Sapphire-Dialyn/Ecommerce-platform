@@ -17,10 +17,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const admin_service_1 = require("./admin.service");
 const admin_dto_1 = require("./dto/admin.dto");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
-const roles_guard_1 = require("../auth/guards/roles.guard");
-const roles_decorator_1 = require("../auth/decorators/roles.decorator");
-const client_1 = require("@prisma/client");
+const public_decorator_1 = require("../auth/decorators/public.decorator");
 let AdminController = class AdminController {
     constructor(adminService) {
         this.adminService = adminService;
@@ -87,6 +84,7 @@ exports.AdminController = AdminController;
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get all users' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all users.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('users'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -95,6 +93,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get user by ID' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return the user.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('users/:id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -134,6 +133,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get all sellers' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all sellers.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('sellers'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -152,6 +152,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get all products' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all products.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('products'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -256,9 +257,6 @@ __decorate([
 exports.AdminController = AdminController = __decorate([
     (0, swagger_1.ApiTags)('admin'),
     (0, common_1.Controller)('admin'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
-    (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [admin_service_1.AdminService])
 ], AdminController);
 //# sourceMappingURL=admin.controller.js.map

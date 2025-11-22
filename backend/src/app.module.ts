@@ -12,6 +12,7 @@ import { VouchersModule } from '@modules/vouchers/vouchers.module';
 import { AnalyticsModule } from '@modules/analytics/analytics.module';
 import { AdminModule } from '@modules/admin/admin.module';
 import { EnterpriseModule } from '@modules/enterprise/enterprise.module';
+import { CartModule } from '@modules/cart/cart.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { EnterpriseModule } from '@modules/enterprise/enterprise.module';
     AnalyticsModule,
     AdminModule,
     EnterpriseModule,
+    CartModule,
   ],
 })
 export class AppModule {}

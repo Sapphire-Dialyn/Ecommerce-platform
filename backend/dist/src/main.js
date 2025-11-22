@@ -7,7 +7,11 @@ const app_module_1 = require("./app.module");
 const file_upload_exception_filter_1 = require("./common/filters/file-upload-exception.filter");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
-    app.enableCors();
+    app.enableCors({
+        origin: true,
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+        credentials: true,
+    });
     app.useGlobalPipes(new common_1.ValidationPipe({ transform: true }));
     app.useGlobalFilters(new file_upload_exception_filter_1.FileUploadExceptionFilter());
     const config = new swagger_1.DocumentBuilder()

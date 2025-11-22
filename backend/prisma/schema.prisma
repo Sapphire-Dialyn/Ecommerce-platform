@@ -15,7 +15,8 @@ datasource db {
 //
 
 enum Role {
-  CUSTOMER
+  GUEST      // Không đăng nhập
+  CUSTOMER   // Đã đăng nhập (được giảm 2%)
   SELLER
   ENTERPRISE
   LOGISTICS
@@ -112,6 +113,7 @@ model User {
   reviews           Review[]
   behaviors         UserBehavior[]
   voucherClaims     VoucherDistribution[] // 👈 Voucher user đã "lưu"
+  carts             Cart[] // 👈 Giỏ hàng cho user đăng nhập
 }
 
 model Address {
@@ -178,6 +180,7 @@ model Product {
   id           String      @id @default(cuid())
   name         String
   description  String
+  specifications Json?
   categoryId   String
   category     Category    @relation(fields: [categoryId], references: [id])
   sellerId     String?
@@ -206,6 +209,7 @@ model ProductVariant {
   price     Float // 👈 Giá gốc của biến thể
   stock     Int   // 👈 Tồn kho của biến thể
   sku       String? @unique
+  cartItems CartItem[]
 }
 
 model Category {
@@ -475,4 +479,34 @@ model PromotionCategory {
 
   promotion Promotion @relation(fields: [promotionId], references: [id])
   category  Category  @relation(fields: [categoryId], references: [id])
+}
+
+//
+// SHOPPING CART
+//
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?    @unique// NULL nếu là GUEST
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String?    // Cho GUEST users
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([userId, sessionId]) // Đảm bảo một cart cho mỗi user/session
+}
+
+model CartItem {
+  id            String  @id @default(cuid())
+  cartId        String
+  cart          Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId     String
+  variant       ProductVariant @relation(fields: [variantId], references: [id])
+  quantity      Int
+  selectedPrice Float   // Giá tại thời điểm thêm vào giỏ (có áp dụng discount nếu CUSTOMER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([cartId, variantId])
 }

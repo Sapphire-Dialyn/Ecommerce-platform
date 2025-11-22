@@ -25,8 +25,7 @@ let PrismaService = PrismaService_1 = class PrismaService extends client_1.Prism
         this.logger = new common_1.Logger(PrismaService_1.name);
     }
     async onModuleInit() {
-        await this.$connect();
-        this.logger.log('✅ Prisma connected');
+        this.logger.log('Initializing Prisma...');
         this.$on('query', (event) => {
             if ('query' in event) {
                 this.logger.debug(`Query: ${event.query}`);
@@ -37,6 +36,13 @@ let PrismaService = PrismaService_1 = class PrismaService extends client_1.Prism
         this.$on('error', (event) => this.logger.error(event.message));
         this.$on('warn', (event) => this.logger.warn(event.message));
         this.registerSoftDeleteMiddleware();
+        try {
+            await this.$connect();
+            this.logger.log('✅ Prisma connected');
+        }
+        catch (error) {
+            this.logger.error('❌ Prisma failed to connect', error);
+        }
     }
     async onModuleDestroy() {
         await this.$disconnect();
@@ -52,7 +58,12 @@ let PrismaService = PrismaService_1 = class PrismaService extends client_1.Prism
                 }
                 if (params.action === 'deleteMany') {
                     params.action = 'updateMany';
-                    params.args['data'] = Object.assign(Object.assign({}, (params.args.data || {})), { active: false });
+                    if (params.args.data) {
+                        params.args.data['active'] = false;
+                    }
+                    else {
+                        params.args['data'] = { active: false };
+                    }
                 }
                 return next(params);
             });

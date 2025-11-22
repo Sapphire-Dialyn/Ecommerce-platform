@@ -6,13 +6,13 @@ export declare class VoucherController {
     constructor(voucherService: VoucherService);
     createShopVoucher(createDto: CreateVoucherDto, req: any): Promise<{
         id: string;
+        isActive: boolean;
         description: string | null;
         sellerId: string | null;
         enterpriseId: string | null;
-        isActive: boolean;
-        scope: import(".prisma/client").$Enums.VoucherScope;
-        code: string;
         title: string;
+        code: string;
+        scope: import(".prisma/client").$Enums.VoucherScope;
         discountType: import(".prisma/client").$Enums.DiscountType;
         discountValue: number;
         maxDiscountValue: number | null;
@@ -24,13 +24,13 @@ export declare class VoucherController {
     }>;
     createPlatformVoucher(createDto: CreateVoucherDto): Promise<{
         id: string;
+        isActive: boolean;
         description: string | null;
         sellerId: string | null;
         enterpriseId: string | null;
-        isActive: boolean;
-        scope: import(".prisma/client").$Enums.VoucherScope;
-        code: string;
         title: string;
+        code: string;
+        scope: import(".prisma/client").$Enums.VoucherScope;
         discountType: import(".prisma/client").$Enums.DiscountType;
         discountValue: number;
         maxDiscountValue: number | null;
@@ -42,13 +42,13 @@ export declare class VoucherController {
     }>;
     createFreeShipVoucher(createDto: CreateVoucherDto): Promise<{
         id: string;
+        isActive: boolean;
         description: string | null;
         sellerId: string | null;
         enterpriseId: string | null;
-        isActive: boolean;
-        scope: import(".prisma/client").$Enums.VoucherScope;
-        code: string;
         title: string;
+        code: string;
+        scope: import(".prisma/client").$Enums.VoucherScope;
         discountType: import(".prisma/client").$Enums.DiscountType;
         discountValue: number;
         maxDiscountValue: number | null;
@@ -62,20 +62,20 @@ export declare class VoucherController {
         id: string;
         userId: string;
         orderId: string | null;
+        voucherId: string;
         claimedAt: Date;
         used: boolean;
-        voucherId: string;
     }>;
     getAvailableVouchers(req: any, sellerIds: string[]): Promise<{
         shopVouchers: {
             id: string;
+            isActive: boolean;
             description: string | null;
             sellerId: string | null;
             enterpriseId: string | null;
-            isActive: boolean;
-            scope: import(".prisma/client").$Enums.VoucherScope;
-            code: string;
             title: string;
+            code: string;
+            scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
             maxDiscountValue: number | null;
@@ -87,13 +87,13 @@ export declare class VoucherController {
         }[];
         platformVouchers: {
             id: string;
+            isActive: boolean;
             description: string | null;
             sellerId: string | null;
             enterpriseId: string | null;
-            isActive: boolean;
-            scope: import(".prisma/client").$Enums.VoucherScope;
-            code: string;
             title: string;
+            code: string;
+            scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
             maxDiscountValue: number | null;
@@ -105,13 +105,13 @@ export declare class VoucherController {
         }[];
         freeShipVouchers: {
             id: string;
+            isActive: boolean;
             description: string | null;
             sellerId: string | null;
             enterpriseId: string | null;
-            isActive: boolean;
-            scope: import(".prisma/client").$Enums.VoucherScope;
-            code: string;
             title: string;
+            code: string;
+            scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
             maxDiscountValue: number | null;

@@ -5,9 +5,8 @@ export declare class ShipperController {
     constructor(shipperService: ShipperService);
     create(logisticsPartnerId: string, createShipperDto: CreateShipperDto): Promise<{
         user: {
-            name: string;
-            isActive: boolean;
             id: string;
+            name: string;
             email: string;
             password: string;
             avatar: string | null;
@@ -15,58 +14,58 @@ export declare class ShipperController {
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
             verificationToken: string | null;
+            isActive: boolean;
             createdAt: Date;
             updatedAt: Date;
         };
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         rating: number | null;
+        userId: string;
         active: boolean;
-        status: import(".prisma/client").$Enums.ShipperStatus;
-        logisticsPartnerId: string;
         currentLocation: import("@prisma/client/runtime/library").JsonValue | null;
+        status: import(".prisma/client").$Enums.ShipperStatus;
         totalDeliveries: number;
         totalRatings: number;
         deliveryRange: number;
         deliveryHistory: import("@prisma/client/runtime/library").JsonValue[];
+        logisticsPartnerId: string;
     }>;
     update(id: string, updateShipperDto: UpdateShipperDto): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         rating: number | null;
+        userId: string;
         active: boolean;
-        status: import(".prisma/client").$Enums.ShipperStatus;
-        logisticsPartnerId: string;
         currentLocation: import("@prisma/client/runtime/library").JsonValue | null;
+        status: import(".prisma/client").$Enums.ShipperStatus;
         totalDeliveries: number;
         totalRatings: number;
         deliveryRange: number;
         deliveryHistory: import("@prisma/client/runtime/library").JsonValue[];
+        logisticsPartnerId: string;
     }>;
     updateLocation(id: string, updateLocationDto: UpdateLocationDto): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         rating: number | null;
+        userId: string;
         active: boolean;
-        status: import(".prisma/client").$Enums.ShipperStatus;
-        logisticsPartnerId: string;
         currentLocation: import("@prisma/client/runtime/library").JsonValue | null;
+        status: import(".prisma/client").$Enums.ShipperStatus;
         totalDeliveries: number;
         totalRatings: number;
         deliveryRange: number;
         deliveryHistory: import("@prisma/client/runtime/library").JsonValue[];
+        logisticsPartnerId: string;
     }>;
     findAll(logisticsPartnerId: string): Promise<({
         user: {
-            name: string;
-            isActive: boolean;
             id: string;
+            name: string;
             email: string;
             password: string;
             avatar: string | null;
@@ -74,6 +73,7 @@ export declare class ShipperController {
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
             verificationToken: string | null;
+            isActive: boolean;
             createdAt: Date;
             updatedAt: Date;
         };
@@ -84,9 +84,9 @@ export declare class ShipperController {
                 updatedAt: Date;
                 userId: string;
                 status: import(".prisma/client").$Enums.OrderStatus;
+                shippingFee: number;
                 paymentId: string | null;
                 subtotal: number;
-                shippingFee: number;
                 shopDiscount: number;
                 platformDiscount: number;
                 freeshipDiscount: number;
@@ -124,22 +124,21 @@ export declare class ShipperController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         rating: number | null;
+        userId: string;
         active: boolean;
-        status: import(".prisma/client").$Enums.ShipperStatus;
-        logisticsPartnerId: string;
         currentLocation: import("@prisma/client/runtime/library").JsonValue | null;
+        status: import(".prisma/client").$Enums.ShipperStatus;
         totalDeliveries: number;
         totalRatings: number;
         deliveryRange: number;
         deliveryHistory: import("@prisma/client/runtime/library").JsonValue[];
+        logisticsPartnerId: string;
     })[]>;
     findOne(id: string): Promise<{
         user: {
-            name: string;
-            isActive: boolean;
             id: string;
+            name: string;
             email: string;
             password: string;
             avatar: string | null;
@@ -147,6 +146,7 @@ export declare class ShipperController {
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
             verificationToken: string | null;
+            isActive: boolean;
             createdAt: Date;
             updatedAt: Date;
         };
@@ -157,9 +157,9 @@ export declare class ShipperController {
                 updatedAt: Date;
                 userId: string;
                 status: import(".prisma/client").$Enums.OrderStatus;
+                shippingFee: number;
                 paymentId: string | null;
                 subtotal: number;
-                shippingFee: number;
                 shopDiscount: number;
                 platformDiscount: number;
                 freeshipDiscount: number;
@@ -197,16 +197,16 @@ export declare class ShipperController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         rating: number | null;
+        userId: string;
         active: boolean;
-        status: import(".prisma/client").$Enums.ShipperStatus;
-        logisticsPartnerId: string;
         currentLocation: import("@prisma/client/runtime/library").JsonValue | null;
+        status: import(".prisma/client").$Enums.ShipperStatus;
         totalDeliveries: number;
         totalRatings: number;
         deliveryRange: number;
         deliveryHistory: import("@prisma/client/runtime/library").JsonValue[];
+        logisticsPartnerId: string;
     }>;
     assignOrder(id: string, orderId: string): Promise<{
         id: string;

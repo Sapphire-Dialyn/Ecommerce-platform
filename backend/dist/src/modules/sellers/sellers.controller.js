@@ -20,6 +20,7 @@ const sellers_dto_1 = require("./dto/sellers.dto");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../auth/guards/roles.guard");
 const roles_decorator_1 = require("../auth/decorators/roles.decorator");
+const public_decorator_1 = require("../auth/decorators/public.decorator");
 const client_1 = require("@prisma/client");
 const platform_express_1 = require("@nestjs/platform-express");
 const interceptors_1 = require("../../common/interceptors");
@@ -83,6 +84,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get all sellers' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all sellers.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -91,6 +93,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get seller by ID' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return the seller.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -195,8 +198,6 @@ __decorate([
 exports.SellersController = SellersController = __decorate([
     (0, swagger_1.ApiTags)('sellers'),
     (0, common_1.Controller)('sellers'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [sellers_service_1.SellersService])
 ], SellersController);
 //# sourceMappingURL=sellers.controller.js.map

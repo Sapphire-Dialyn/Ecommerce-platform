@@ -20,19 +20,18 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '@prisma/client';
 
 @ApiTags('admin')
 @Controller('admin')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN)
-@ApiBearerAuth()
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   // User Management
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, description: 'Return all users.' })
+  @Public()
   @Get('users')
   getAllUsers() {
     return this.adminService.getAllUsers();
@@ -40,6 +39,7 @@ export class AdminController {
 
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'Return the user.' })
+  @Public()
   @Get('users/:id')
   getUserById(@Param('id') id: string) {
     return this.adminService.getUserById(id);
@@ -75,6 +75,7 @@ export class AdminController {
   // Seller Management
   @ApiOperation({ summary: 'Get all sellers' })
   @ApiResponse({ status: 200, description: 'Return all sellers.' })
+  @Public()
   @Get('sellers')
   getAllSellers() {
     return this.adminService.getAllSellers();
@@ -90,6 +91,7 @@ export class AdminController {
   // Product Management
   @ApiOperation({ summary: 'Get all products' })
   @ApiResponse({ status: 200, description: 'Return all products.' })
+  @Public()
   @Get('products')
   getAllProducts() {
     return this.adminService.getAllProducts();

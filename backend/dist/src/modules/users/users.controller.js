@@ -16,7 +16,7 @@ exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
 const users_service_1 = require("./users.service");
 const users_dto_1 = require("./dto/users.dto");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const public_decorator_1 = require("../auth/decorators/public.decorator");
 const swagger_1 = require("@nestjs/swagger");
 const client_1 = require("@prisma/client");
 let UsersController = class UsersController {
@@ -52,6 +52,7 @@ exports.UsersController = UsersController;
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get all users (Admin only)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all users.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -60,6 +61,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get user by ID' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return the user.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -102,8 +104,6 @@ __decorate([
 exports.UsersController = UsersController = __decorate([
     (0, swagger_1.ApiTags)('users'),
     (0, common_1.Controller)('users'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [users_service_1.UsersService])
 ], UsersController);
 //# sourceMappingURL=users.controller.js.map

@@ -8,16 +8,21 @@ export declare class OrdersController {
             id: string;
             sellerId: string | null;
             enterpriseId: string | null;
-            quantity: number;
-            productId: string;
-            orderId: string;
-            variantId: string | null;
             price: number;
+            productId: string;
+            quantity: number;
+            variantId: string | null;
+            orderId: string;
         }[];
         appliedVouchers: {
+            id: string;
+            isActive: boolean;
             description: string | null;
+            sellerId: string | null;
+            enterpriseId: string | null;
             title: string;
             code: string;
+            scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
             maxDiscountValue: number | null;
@@ -25,11 +30,6 @@ export declare class OrdersController {
             startDate: Date;
             endDate: Date;
             usageLimit: number | null;
-            isActive: boolean;
-            id: string;
-            sellerId: string | null;
-            enterpriseId: string | null;
-            scope: import(".prisma/client").$Enums.VoucherScope;
             usedCount: number;
         }[];
     } & {
@@ -38,9 +38,9 @@ export declare class OrdersController {
         updatedAt: Date;
         userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
+        shippingFee: number;
         paymentId: string | null;
         subtotal: number;
-        shippingFee: number;
         shopDiscount: number;
         platformDiscount: number;
         freeshipDiscount: number;
@@ -52,16 +52,21 @@ export declare class OrdersController {
             id: string;
             sellerId: string | null;
             enterpriseId: string | null;
-            quantity: number;
-            productId: string;
-            orderId: string;
-            variantId: string | null;
             price: number;
+            productId: string;
+            quantity: number;
+            variantId: string | null;
+            orderId: string;
         }[];
         appliedVouchers: {
+            id: string;
+            isActive: boolean;
             description: string | null;
+            sellerId: string | null;
+            enterpriseId: string | null;
             title: string;
             code: string;
+            scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
             maxDiscountValue: number | null;
@@ -69,11 +74,6 @@ export declare class OrdersController {
             startDate: Date;
             endDate: Date;
             usageLimit: number | null;
-            isActive: boolean;
-            id: string;
-            sellerId: string | null;
-            enterpriseId: string | null;
-            scope: import(".prisma/client").$Enums.VoucherScope;
             usedCount: number;
         }[];
     } & {
@@ -82,9 +82,9 @@ export declare class OrdersController {
         updatedAt: Date;
         userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
+        shippingFee: number;
         paymentId: string | null;
         subtotal: number;
-        shippingFee: number;
         shopDiscount: number;
         platformDiscount: number;
         freeshipDiscount: number;
@@ -96,16 +96,21 @@ export declare class OrdersController {
             id: string;
             sellerId: string | null;
             enterpriseId: string | null;
-            quantity: number;
-            productId: string;
-            orderId: string;
-            variantId: string | null;
             price: number;
+            productId: string;
+            quantity: number;
+            variantId: string | null;
+            orderId: string;
         }[];
         appliedVouchers: {
+            id: string;
+            isActive: boolean;
             description: string | null;
+            sellerId: string | null;
+            enterpriseId: string | null;
             title: string;
             code: string;
+            scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
             maxDiscountValue: number | null;
@@ -113,11 +118,6 @@ export declare class OrdersController {
             startDate: Date;
             endDate: Date;
             usageLimit: number | null;
-            isActive: boolean;
-            id: string;
-            sellerId: string | null;
-            enterpriseId: string | null;
-            scope: import(".prisma/client").$Enums.VoucherScope;
             usedCount: number;
         }[];
     } & {
@@ -126,9 +126,9 @@ export declare class OrdersController {
         updatedAt: Date;
         userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
+        shippingFee: number;
         paymentId: string | null;
         subtotal: number;
-        shippingFee: number;
         shopDiscount: number;
         platformDiscount: number;
         freeshipDiscount: number;
@@ -141,9 +141,9 @@ export declare class OrdersController {
         updatedAt: Date;
         userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
+        shippingFee: number;
         paymentId: string | null;
         subtotal: number;
-        shippingFee: number;
         shopDiscount: number;
         platformDiscount: number;
         freeshipDiscount: number;

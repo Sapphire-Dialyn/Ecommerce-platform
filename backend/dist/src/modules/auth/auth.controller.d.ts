@@ -10,14 +10,14 @@ export declare class AuthController {
     register(data: RegisterDto): Promise<{
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         email: string;
         avatar: string | null;
         phone: string | null;
         role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
         isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     verifyEmail(token: string): Promise<{
         message: string;

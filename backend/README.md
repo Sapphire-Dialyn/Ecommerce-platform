@@ -188,3 +188,8 @@ npm run start:prod
 - [NestJS Documentation](https://docs.nestjs.com/)
 - [Prisma Documentation](https://www.prisma.io/docs/)
 - [Swagger OpenAPI](https://swagger.io/specification/)
+
+
+
+##chạy lệnh này để seed dữ liệu
+npx ts-node prisma/seed.ts

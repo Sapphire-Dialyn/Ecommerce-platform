@@ -59,6 +59,7 @@ export declare class ProductsService {
         id: string;
         name: string;
         description: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
         images: string[];
         active: boolean;
         createdAt: Date;
@@ -67,7 +68,7 @@ export declare class ProductsService {
         sellerId: string | null;
         enterpriseId: string | null;
     }>;
-    findAllProducts(skip?: number, take?: number, categoryId?: string, sellerId?: string, enterpriseId?: string): Promise<({
+    findAllProducts(skip?: number, take?: number, categoryId?: string, sellerId?: string): Promise<({
         seller: {
             id: string;
             storeName: string;
@@ -97,6 +98,7 @@ export declare class ProductsService {
         id: string;
         name: string;
         description: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
         images: string[];
         active: boolean;
         createdAt: Date;
@@ -148,6 +150,7 @@ export declare class ProductsService {
         id: string;
         name: string;
         description: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
         images: string[];
         active: boolean;
         createdAt: Date;
@@ -175,6 +178,7 @@ export declare class ProductsService {
         id: string;
         name: string;
         description: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
         images: string[];
         active: boolean;
         createdAt: Date;
@@ -187,6 +191,7 @@ export declare class ProductsService {
         id: string;
         name: string;
         description: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
         images: string[];
         active: boolean;
         createdAt: Date;
@@ -199,6 +204,7 @@ export declare class ProductsService {
         id: string;
         name: string;
         description: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
         images: string[];
         active: boolean;
         createdAt: Date;
@@ -268,6 +274,7 @@ export declare class ProductsService {
             id: string;
             name: string;
             description: string;
+            specifications: import("@prisma/client/runtime/library").JsonValue | null;
             images: string[];
             active: boolean;
             createdAt: Date;

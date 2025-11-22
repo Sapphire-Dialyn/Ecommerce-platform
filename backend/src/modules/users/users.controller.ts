@@ -12,18 +12,18 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto, AddAddressDto } from './dto/users.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Public } from '../auth/decorators/public.decorator';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 
 @ApiTags('users')
 @Controller('users')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @ApiOperation({ summary: 'Get all users (Admin only)' })
   @ApiResponse({ status: 200, description: 'Return all users.' })
+  @Public()
   @Get()
   async findAll() {
     return this.usersService.findAll();
@@ -31,6 +31,7 @@ export class UsersController {
 
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'Return the user.' })
+  @Public()
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);

@@ -11,60 +11,60 @@ export declare class LogisticsController {
         };
     } & {
         id: string;
-        userId: string;
+        name: string;
         verified: boolean;
         rating: number | null;
-        name: string;
+        userId: string;
         apiEndpoint: string | null;
         baseRate: number;
     }>;
     findAllPartners(): Promise<({
-        user: {
-            id: string;
-            name: string;
-            email: string;
-        };
         orders: {
             id: string;
             status: import(".prisma/client").$Enums.LogisticsStatus;
-            estimatedDelivery: Date;
             order: {
                 id: string;
                 status: import(".prisma/client").$Enums.OrderStatus;
                 totalAmount: number;
             };
+            estimatedDelivery: Date;
         }[];
+        user: {
+            id: string;
+            name: string;
+            email: string;
+        };
     } & {
         id: string;
-        userId: string;
+        name: string;
         verified: boolean;
         rating: number | null;
-        name: string;
+        userId: string;
         apiEndpoint: string | null;
         baseRate: number;
     })[]>;
     findOnePartner(id: string): Promise<{
-        user: {
-            id: string;
-            name: string;
-            email: string;
-        };
         orders: {
             id: string;
             status: import(".prisma/client").$Enums.LogisticsStatus;
-            estimatedDelivery: Date;
             order: {
                 id: string;
                 status: import(".prisma/client").$Enums.OrderStatus;
                 totalAmount: number;
             };
+            estimatedDelivery: Date;
         }[];
+        user: {
+            id: string;
+            name: string;
+            email: string;
+        };
     } & {
         id: string;
-        userId: string;
+        name: string;
         verified: boolean;
         rating: number | null;
-        name: string;
+        userId: string;
         apiEndpoint: string | null;
         baseRate: number;
     }>;
@@ -76,10 +76,10 @@ export declare class LogisticsController {
         };
     } & {
         id: string;
-        userId: string;
+        name: string;
         verified: boolean;
         rating: number | null;
-        name: string;
+        userId: string;
         apiEndpoint: string | null;
         baseRate: number;
     }>;
@@ -89,10 +89,10 @@ export declare class LogisticsController {
     createOrder(createLogisticsOrderDto: CreateLogisticsOrderDto): Promise<{
         logisticsPartner: {
             id: string;
-            userId: string;
+            name: string;
             verified: boolean;
             rating: number | null;
-            name: string;
+            userId: string;
             apiEndpoint: string | null;
             baseRate: number;
         };
@@ -103,15 +103,15 @@ export declare class LogisticsController {
                 enterpriseId: string | null;
                 price: number;
                 productId: string;
-                orderId: string;
-                variantId: string | null;
                 quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
         } & {
             id: string;
-            userId: string;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
             shippingFee: number;
             paymentId: string | null;
@@ -124,8 +124,8 @@ export declare class LogisticsController {
         };
     } & {
         id: string;
-        rating: number | null;
         updatedAt: Date;
+        rating: number | null;
         sellerId: string | null;
         enterpriseId: string | null;
         status: import(".prisma/client").$Enums.LogisticsStatus;
@@ -152,10 +152,10 @@ export declare class LogisticsController {
     findAllOrders(req: any): Promise<({
         logisticsPartner: {
             id: string;
-            userId: string;
+            name: string;
             verified: boolean;
             rating: number | null;
-            name: string;
+            userId: string;
             apiEndpoint: string | null;
             baseRate: number;
         };
@@ -166,15 +166,15 @@ export declare class LogisticsController {
                 enterpriseId: string | null;
                 price: number;
                 productId: string;
-                orderId: string;
-                variantId: string | null;
                 quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
         } & {
             id: string;
-            userId: string;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
             shippingFee: number;
             paymentId: string | null;
@@ -187,8 +187,8 @@ export declare class LogisticsController {
         };
     } & {
         id: string;
-        rating: number | null;
         updatedAt: Date;
+        rating: number | null;
         sellerId: string | null;
         enterpriseId: string | null;
         status: import(".prisma/client").$Enums.LogisticsStatus;
@@ -215,10 +215,10 @@ export declare class LogisticsController {
     findOneOrder(id: string): Promise<{
         logisticsPartner: {
             id: string;
-            userId: string;
+            name: string;
             verified: boolean;
             rating: number | null;
-            name: string;
+            userId: string;
             apiEndpoint: string | null;
             baseRate: number;
         };
@@ -229,15 +229,15 @@ export declare class LogisticsController {
                 enterpriseId: string | null;
                 price: number;
                 productId: string;
-                orderId: string;
-                variantId: string | null;
                 quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
         } & {
             id: string;
-            userId: string;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
             shippingFee: number;
             paymentId: string | null;
@@ -250,8 +250,8 @@ export declare class LogisticsController {
         };
     } & {
         id: string;
-        rating: number | null;
         updatedAt: Date;
+        rating: number | null;
         sellerId: string | null;
         enterpriseId: string | null;
         status: import(".prisma/client").$Enums.LogisticsStatus;
@@ -278,10 +278,10 @@ export declare class LogisticsController {
     updateOrderStatus(id: string, updateLogisticsOrderDto: UpdateLogisticsOrderDto): Promise<{
         logisticsPartner: {
             id: string;
-            userId: string;
+            name: string;
             verified: boolean;
             rating: number | null;
-            name: string;
+            userId: string;
             apiEndpoint: string | null;
             baseRate: number;
         };
@@ -292,15 +292,15 @@ export declare class LogisticsController {
                 enterpriseId: string | null;
                 price: number;
                 productId: string;
-                orderId: string;
-                variantId: string | null;
                 quantity: number;
+                variantId: string | null;
+                orderId: string;
             }[];
         } & {
             id: string;
-            userId: string;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             status: import(".prisma/client").$Enums.OrderStatus;
             shippingFee: number;
             paymentId: string | null;
@@ -313,8 +313,8 @@ export declare class LogisticsController {
         };
     } & {
         id: string;
-        rating: number | null;
         updatedAt: Date;
+        rating: number | null;
         sellerId: string | null;
         enterpriseId: string | null;
         status: import(".prisma/client").$Enums.LogisticsStatus;

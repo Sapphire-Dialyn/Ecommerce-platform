@@ -17,8 +17,6 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const payments_service_1 = require("./payments.service");
 const payments_dto_1 = require("./dto/payments.dto");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
-const roles_guard_1 = require("../auth/guards/roles.guard");
 const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const public_decorator_1 = require("../auth/decorators/public.decorator");
 const client_1 = require("@prisma/client");
@@ -58,6 +56,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get all payments (Admin only)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all payments.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)(),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
     __metadata("design:type", Function),
@@ -67,6 +66,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get payment by ID' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return the payment.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -76,6 +76,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get payment by order ID' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return the payment for the order.' }),
+    (0, public_decorator_1.Public)(),
     (0, common_1.Get)('order/:orderId'),
     __param(0, (0, common_1.Param)('orderId')),
     __metadata("design:type", Function),
@@ -105,8 +106,6 @@ __decorate([
 exports.PaymentsController = PaymentsController = __decorate([
     (0, swagger_1.ApiTags)('payments'),
     (0, common_1.Controller)('payments'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, swagger_1.ApiBearerAuth)(),
     __metadata("design:paramtypes", [payments_service_1.PaymentsService])
 ], PaymentsController);
 //# sourceMappingURL=payments.controller.js.map

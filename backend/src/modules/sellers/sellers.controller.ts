@@ -26,14 +26,13 @@ import { CreateSellerDto, UpdateSellerDto } from './dto/sellers.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileUploadInterceptor } from '../../common/interceptors';
 
 @ApiTags('sellers')
 @Controller('sellers')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class SellersController {
   constructor(private readonly sellersService: SellersService) {}
 
@@ -46,6 +45,7 @@ export class SellersController {
 
   @ApiOperation({ summary: 'Get all sellers' })
   @ApiResponse({ status: 200, description: 'Return all sellers.' })
+  @Public()
   @Get()
   findAll() {
     return this.sellersService.findAll();
@@ -53,6 +53,7 @@ export class SellersController {
 
   @ApiOperation({ summary: 'Get seller by ID' })
   @ApiResponse({ status: 200, description: 'Return the seller.' })
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.sellersService.findOne(id);

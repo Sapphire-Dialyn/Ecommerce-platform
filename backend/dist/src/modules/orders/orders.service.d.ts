@@ -10,19 +10,19 @@ export declare class OrdersService {
             enterpriseId: string | null;
             price: number;
             productId: string;
-            orderId: string;
-            variantId: string | null;
             quantity: number;
+            variantId: string | null;
+            orderId: string;
         }[];
         appliedVouchers: {
             id: string;
+            isActive: boolean;
             description: string | null;
             sellerId: string | null;
             enterpriseId: string | null;
-            isActive: boolean;
-            scope: import(".prisma/client").$Enums.VoucherScope;
-            code: string;
             title: string;
+            code: string;
+            scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
             maxDiscountValue: number | null;
@@ -34,9 +34,9 @@ export declare class OrdersService {
         }[];
     } & {
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
         shippingFee: number;
         paymentId: string | null;
@@ -54,19 +54,19 @@ export declare class OrdersService {
             enterpriseId: string | null;
             price: number;
             productId: string;
-            orderId: string;
-            variantId: string | null;
             quantity: number;
+            variantId: string | null;
+            orderId: string;
         }[];
         appliedVouchers: {
             id: string;
+            isActive: boolean;
             description: string | null;
             sellerId: string | null;
             enterpriseId: string | null;
-            isActive: boolean;
-            scope: import(".prisma/client").$Enums.VoucherScope;
-            code: string;
             title: string;
+            code: string;
+            scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
             maxDiscountValue: number | null;
@@ -78,9 +78,9 @@ export declare class OrdersService {
         }[];
     } & {
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
         shippingFee: number;
         paymentId: string | null;
@@ -98,19 +98,19 @@ export declare class OrdersService {
             enterpriseId: string | null;
             price: number;
             productId: string;
-            orderId: string;
-            variantId: string | null;
             quantity: number;
+            variantId: string | null;
+            orderId: string;
         }[];
         appliedVouchers: {
             id: string;
+            isActive: boolean;
             description: string | null;
             sellerId: string | null;
             enterpriseId: string | null;
-            isActive: boolean;
-            scope: import(".prisma/client").$Enums.VoucherScope;
-            code: string;
             title: string;
+            code: string;
+            scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
             maxDiscountValue: number | null;
@@ -122,9 +122,9 @@ export declare class OrdersService {
         }[];
     } & {
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
         shippingFee: number;
         paymentId: string | null;
@@ -137,9 +137,9 @@ export declare class OrdersService {
     }>;
     updateStatus(id: string, dto: UpdateOrderStatusDto, userId: string, role: string): Promise<{
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
         shippingFee: number;
         paymentId: string | null;

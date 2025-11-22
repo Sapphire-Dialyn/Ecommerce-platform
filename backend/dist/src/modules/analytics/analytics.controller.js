@@ -16,9 +16,7 @@ exports.AnalyticsController = void 0;
 const common_1 = require("@nestjs/common");
 const analytics_service_1 = require("./analytics.service");
 const swagger_1 = require("@nestjs/swagger");
-const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
-const roles_guard_1 = require("../auth/guards/roles.guard");
-const roles_decorator_1 = require("../auth/decorators/roles.decorator");
+const public_decorator_1 = require("../auth/decorators/public.decorator");
 const analytics_query_dto_1 = require("./dto/analytics-query.dto");
 const client_1 = require("@prisma/client");
 let AnalyticsController = class AnalyticsController {
@@ -69,7 +67,7 @@ let AnalyticsController = class AnalyticsController {
 exports.AnalyticsController = AnalyticsController;
 __decorate([
     (0, common_1.Get)('overview'),
-    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SELLER, client_1.Role.ENTERPRISE),
+    (0, public_decorator_1.Public)(),
     (0, swagger_1.ApiOperation)({ summary: 'Lấy chỉ số tổng quan (Doanh thu, Đơn hàng)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'OK' }),
     __param(0, (0, common_1.Req)()),
@@ -80,7 +78,7 @@ __decorate([
 ], AnalyticsController.prototype, "getOverview", null);
 __decorate([
     (0, common_1.Get)('sales-over-time'),
-    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SELLER, client_1.Role.ENTERPRISE),
+    (0, public_decorator_1.Public)(),
     (0, swagger_1.ApiOperation)({ summary: 'Lấy doanh thu theo thời gian' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'OK' }),
     __param(0, (0, common_1.Req)()),
@@ -91,7 +89,7 @@ __decorate([
 ], AnalyticsController.prototype, "getSalesRevenueOverTime", null);
 __decorate([
     (0, common_1.Get)('top-selling-products'),
-    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SELLER, client_1.Role.ENTERPRISE),
+    (0, public_decorator_1.Public)(),
     (0, swagger_1.ApiOperation)({ summary: 'Lấy top sản phẩm bán chạy' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'OK' }),
     __param(0, (0, common_1.Req)()),
@@ -102,7 +100,7 @@ __decorate([
 ], AnalyticsController.prototype, "getTopSellingProducts", null);
 __decorate([
     (0, common_1.Get)('order-status-breakdown'),
-    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SELLER, client_1.Role.ENTERPRISE),
+    (0, public_decorator_1.Public)(),
     (0, swagger_1.ApiOperation)({ summary: 'Phân tích trạng thái đơn hàng' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'OK' }),
     __param(0, (0, common_1.Req)()),
@@ -113,7 +111,7 @@ __decorate([
 ], AnalyticsController.prototype, "getOrderStatusBreakdown", null);
 __decorate([
     (0, common_1.Get)('user-behavior-funnel'),
-    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
+    (0, public_decorator_1.Public)(),
     (0, swagger_1.ApiOperation)({ summary: 'Phân tích phễu hành vi (Admin)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'OK' }),
     __param(0, (0, common_1.Query)()),
@@ -123,8 +121,6 @@ __decorate([
 ], AnalyticsController.prototype, "getUserBehaviorFunnel", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, swagger_1.ApiTags)('Analytics'),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, common_1.Controller)('analytics'),
     __metadata("design:paramtypes", [analytics_service_1.AnalyticsService])
 ], AnalyticsController);

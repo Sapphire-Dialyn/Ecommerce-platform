@@ -15,86 +15,86 @@ export declare class SellersService {
         };
     } & {
         id: string;
-        userId: string;
-        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
+        userId: string;
+        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
     }>;
     findAll(): Promise<({
+        products: {
+            id: string;
+            name: string;
+            variants: {
+                price: number;
+                stock: number;
+            }[];
+        }[];
         user: {
             id: string;
             name: string;
             email: string;
         };
-        products: {
-            id: string;
-            name: string;
-            variants: {
-                stock: number;
-                price: number;
-            }[];
-        }[];
     } & {
         id: string;
-        userId: string;
-        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
+        userId: string;
+        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
     })[]>;
     findOne(id: string): Promise<{
+        products: {
+            id: string;
+            name: string;
+            variants: {
+                price: number;
+                stock: number;
+            }[];
+        }[];
         user: {
             id: string;
             name: string;
             email: string;
         };
-        products: {
-            id: string;
-            name: string;
-            variants: {
-                stock: number;
-                price: number;
-            }[];
-        }[];
     } & {
         id: string;
-        userId: string;
-        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
+        userId: string;
+        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
     }>;
     findByUserId(userId: string): Promise<{
+        products: {
+            id: string;
+            name: string;
+            variants: {
+                price: number;
+                stock: number;
+            }[];
+        }[];
         user: {
             id: string;
             name: string;
             email: string;
         };
-        products: {
-            id: string;
-            name: string;
-            variants: {
-                stock: number;
-                price: number;
-            }[];
-        }[];
     } & {
         id: string;
-        userId: string;
-        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
+        userId: string;
+        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
@@ -107,11 +107,11 @@ export declare class SellersService {
         };
     } & {
         id: string;
-        userId: string;
-        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
+        userId: string;
+        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
@@ -124,11 +124,11 @@ export declare class SellersService {
         };
     } & {
         id: string;
-        userId: string;
-        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
+        userId: string;
+        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;

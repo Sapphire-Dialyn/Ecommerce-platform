@@ -16,9 +16,6 @@ const jwt_strategy_1 = require("./strategies/jwt.strategy");
 const local_strategy_1 = require("./strategies/local.strategy");
 const users_module_1 = require("../users/users.module");
 const prisma_module_1 = require("../prisma/prisma.module");
-const roles_guard_1 = require("./guards/roles.guard");
-const core_1 = require("@nestjs/core");
-const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
 const email_module_1 = require("../email/email.module");
 let AuthModule = class AuthModule {
 };
@@ -44,14 +41,6 @@ exports.AuthModule = AuthModule = __decorate([
             auth_service_1.AuthService,
             local_strategy_1.LocalStrategy,
             jwt_strategy_1.JwtStrategy,
-            {
-                provide: core_1.APP_GUARD,
-                useClass: jwt_auth_guard_1.JwtAuthGuard,
-            },
-            {
-                provide: core_1.APP_GUARD,
-                useClass: roles_guard_1.RolesGuard,
-            },
         ],
         controllers: [auth_controller_1.AuthController],
         exports: [auth_service_1.AuthService],

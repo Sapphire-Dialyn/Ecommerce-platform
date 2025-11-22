@@ -17,14 +17,14 @@ export declare class AuthService {
     register(data: RegisterDto): Promise<{
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         email: string;
         avatar: string | null;
         phone: string | null;
         role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
         isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     refreshToken(userId: string): Promise<{
         access_token: string;
