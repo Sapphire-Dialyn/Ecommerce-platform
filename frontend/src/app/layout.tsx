@@ -4,7 +4,7 @@ import "./globals.css";
 
 // Import các thành phần hạ tầng
 import ReduxProvider from "@/store/ReduxProvider";
-import AuthProvider from "@/providers/AuthProvider"; // 👈 1. Import AuthProvider
+import AuthProvider from "@/providers/AuthProvider";
 import Navbar from "@/component/Navbar";
 import Footer from "@/component/Footer";
 import { Toaster } from "react-hot-toast"; 
@@ -23,7 +23,10 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "beauty&skincare | Đánh thức vẻ đẹp thuần khiết",
+  title: {
+    template: '%s | Beauty & Skincare', // Template title: "Trang chủ | Beauty & Skincare"
+    default: 'Beauty & Skincare | Đánh thức vẻ đẹp thuần khiết',
+  },
   description: "Nền tảng thương mại điện tử mỹ phẩm chính hãng, uy tín hàng đầu.",
   icons: {
     icon: "/logo.png", 
@@ -36,46 +39,42 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    // 1. Thêm scroll-smooth để cuộn trang mượt mà
+    <html lang="vi" className="scroll-smooth"> 
       <body
-        className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-white text-gray-900 flex flex-col min-h-screen`}
+        // 2. Thay bg-white thành bg-fuchsia-50 để đồng bộ nền hồng toàn app
+        // 3. Thêm selection:... để bôi đen chữ có màu đẹp
+        className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-fuchsia-50 text-gray-900 flex flex-col min-h-screen selection:bg-fuchsia-200 selection:text-fuchsia-900`}
       >
-        {/* Bọc toàn bộ ứng dụng trong Redux để quản lý State */}
         <ReduxProvider>
-          
-          {/* 👈 2. Bọc nội dung bên trong AuthProvider.
-             AuthProvider cần nằm TRONG ReduxProvider (để dùng dispatch) 
-             nhưng nằm NGOÀI Navbar (để Navbar có dữ liệu mà dùng)
-          */}
           <AuthProvider>
 
-            {/* Thanh điều hướng nằm cố định trên cùng */}
+            {/* Navbar Fixed */}
             <Navbar />
-
-            {/* Nội dung chính của từng trang (Page) */}
-            <main className="grow pt-24"> 
+            <main className="grow min-h-screen flex flex-col">
               {children}
             </main>
 
-            {/* Chân trang nằm cố định dưới cùng */}
             <Footer />
 
-            {/* Cấu hình thông báo Toast */}
             <Toaster
               position="top-center"
               toastOptions={{
                 duration: 3000,
+                // Tùy chỉnh Toast mặc định đẹp hơn
+                className: 'backdrop-blur-md bg-white/80 border border-gray-100 shadow-xl',
                 style: {
-                  borderRadius: '10px',
-                  background: '#333',
-                  color: '#fff',
+                  borderRadius: '16px',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  color: '#374151',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                 },
                 success: {
                   style: {
                     background: '#fdf4ff', // fuchsia-50
                     color: '#c026d3',      // fuchsia-600
                     border: '1px solid #f0abfc',
-                    fontWeight: '500',
+                    fontWeight: '600',
                   },
                   iconTheme: {
                     primary: '#c026d3',
@@ -87,6 +86,7 @@ export default function RootLayout({
                     background: '#fff1f2',
                     color: '#e11d48',
                     border: '1px solid #fecdd3',
+                    fontWeight: '600',
                   },
                 },
               }}

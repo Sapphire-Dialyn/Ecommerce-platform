@@ -1,50 +1,65 @@
 @import "tailwindcss";
-@import "tailwindcss/preflight";
-@tailwind utilities;
 
+/* 1. Cấu hình Theme và Animation cho Tailwind v4 */
+@theme {
+  --color--background: 255 255 255;
+  --color--foreground: 23 23 23;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 
+  /* Khai báo animation blob ở đây để Tailwind tự tạo class 'animate-blob' */
+  --animate-blob: blob 7s infinite;
+
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+  }
+}
+
+/* 2. Các Utility Classes tự thêm (vì Tailwind chưa có sẵn animation-delay) */
+/* Bạn có thể dùng trực tiếp các class này trong code React */
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* 3. Cấu hình Root Variables (Giữ nguyên của Next.js) */
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --navbar-height: 4rem;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #eee9e9;
     --foreground: #ededed;
-    --navbar-height: 96px;
   }
 }
 
+/* 4. Base styles */
 body {
-  background-color: #fff;
-  color: #1f2937;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+  background-color: #fdf2f8;
 }
 
-@layer utilities {
-  .animate-blob {
-    animation: blob 7s infinite;
-  }
-  @keyframes blob {
-    0% { transform: translate(0px, 0px) scale(1); }
-    33% { transform: translate(30px, -50px) scale(1.1); }
-    66% { transform: translate(-20px, 20px) scale(0.9); }
-    100% { transform: translate(0px, 0px) scale(1); }
-  }
-  .animation-delay-2000 {
-    animation-delay: 2s;
-  }
-}
-
-body {
-  background-color: #fdf2f8; /* Màu hồng nhạt (pink-50) */
-  color: #374151;
+/* PARALLAX SCROLL */
+.parallax-img {
+  transform: translateY(var(--parallax-offset, 0px));
+  transition: transform 0.1s linear;
+  will-change: transform;
 }

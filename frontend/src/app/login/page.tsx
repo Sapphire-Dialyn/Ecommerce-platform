@@ -3,17 +3,18 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAppDispatch } from '@/hook/useRedux';
-import { loginSuccess } from '@/store/slices/authSlice';
-import { authService } from '@/services/auth.service';
+import { useAppDispatch } from '@/hook/useRedux'; 
+import { loginSuccess } from '@/store/slices/authSlice'; 
+import { authService } from '@/services/auth.service'; 
 import { toast } from 'react-hot-toast';
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, Sparkles } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  
+
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); 
   const [formData, setFormData] = useState({ email: '', password: '' });
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -21,153 +22,162 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // 1. Gọi API
       const data = await authService.login(formData.email, formData.password);
-      
-      // 2. Lưu vào Redux (Navbar sẽ tự cập nhật)
-      // Backend trả về cấu trúc: { user: {...}, accessToken: "..." } (hoặc access_token)
-      // Hãy chắc chắn backend trả về đúng key, nếu là 'access_token' thì sửa lại dòng dưới
-      dispatch(loginSuccess({ 
-          user: data.user, 
-          token: data.accessToken || data.access_token 
+
+      dispatch(loginSuccess({
+        user: data.user,
+        token: data.accessToken || data.access_token
       }));
 
-      toast.success(`Chào mừng trở lại, ${data.user.name}!`);
-      
-      // 3. Điều hướng dựa trên Role
+      toast.success(`Chào mừng, ${data.user.name}!`);
+
       if (['ADMIN', 'SELLER', 'ENTERPRISE', 'SHIPPER'].includes(data.user.role)) {
-         router.push('/admin'); // Hoặc trang quản lý tương ứng
+        router.push('/admin');
       } else {
-         router.push('/'); // Khách hàng về trang chủ
+        router.push('/');
       }
 
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại.');
+      toast.error(error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-  <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-fuchsia-50 to-pink-50 px-4 py-10">
-    <div className="w-full max-w-md">
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-fuchsia-50">
+      
+      {/* Decorative Background Blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+      <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+      <div className="absolute -bottom-32 left-20 w-96 h-96 bg-fuchsia-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
 
-      {/* CARD LOGIN */}
-      <div className="relative bg-white/90 backdrop-blur-xl p-10 rounded-3xl shadow-2xl border border-fuchsia-100">
-        
-        {/* LOGO + TITLE */}
-        <div className="text-center mb-8">
-          <Link 
-            href="/" 
-            className="text-4xl font-serif font-bold text-gray-900 tracking-wide"
-          >
-            beauty
-            <span className="text-fuchsia-600 italic">&</span>
-            skincare
-          </Link>
-
-          <h2 className="mt-4 text-2xl font-semibold text-gray-800">
-            Đăng nhập tài khoản
-          </h2>
-
-          <p className="mt-2 text-sm text-gray-600">
-            Chưa có tài khoản?{' '}
-            <Link
-              href="/register"
-              className="font-semibold text-fuchsia-600 hover:text-fuchsia-700 transition"
+      {/* Main Card */}
+      <div className="relative z-10 w-full max-w-[480px] px-4">
+        {/* Tăng rounded và chỉnh padding giống form Register */}
+        <div className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] py-10 px-6 sm:px-12">
+          
+          {/* Header */}
+          <div className="text-center mb-8">
+            <Link 
+              href="/" 
+              className="inline-flex items-center justify-center gap-2 text-3xl font-serif font-bold text-gray-900 tracking-tight hover:scale-105 transition-transform duration-300"
             >
-              Đăng ký ngay
+              <Sparkles className="w-6 h-6 text-fuchsia-500" strokeWidth={2.5} />
+              <span>beauty<span className="text-fuchsia-600 italic">&</span>skincare</span>
             </Link>
-          </p>
+            <p className="text-gray-500 text-sm mt-2">
+              Đánh thức vẻ đẹp tiềm ẩn của bạn
+            </p>
+          </div>
+
+          {/* Form: Thêm flex-col items-center để căn giữa */}
+          <form onSubmit={handleLogin} className="flex flex-col items-center space-y-6 w-full">
+            
+            {/* Email Field - Giới hạn width sm:w-[90%] */}
+            <div className="w-full sm:w-[90%] space-y-1.5">
+              <label className="text-sm font-semibold text-gray-700 ml-1">Email</label>
+              <div className="relative group">
+                {/* Đã bật lại Icon để đẹp hơn */}
+                {/* <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-fuchsia-600 transition-colors" />
+                </div> */}
+                <input
+                  type="email"
+                  required
+                  placeholder="name@example.com"
+                  className="block w-full pl-11 pr-4 py-3.5 
+                             bg-white border border-gray-200 rounded-2xl 
+                             text-gray-900 text-sm font-medium placeholder:text-gray-400/80
+                             focus:border-fuchsia-500 focus:ring-4 focus:ring-fuchsia-500/10 focus:bg-white
+                             hover:border-fuchsia-300
+                             outline-none transition-all duration-200 shadow-sm"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Password Field - Giới hạn width sm:w-[90%] */}
+            <div className="w-full sm:w-[90%] space-y-1.5">
+              <div className="flex justify-between items-center ml-1">
+                <label className="text-sm font-semibold text-gray-700">Mật khẩu</label>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-fuchsia-600 hover:text-fuchsia-700 transition-colors"
+                  onClick={() => toast.success('Tính năng đang cập nhật!')}
+                >
+                  Quên mật khẩu?
+                </button>
+              </div>
+              
+              <div className="relative group">
+                {/* Đã bật lại Icon */}
+                {/* <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-fuchsia-600 transition-colors" />
+                </div> */}
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  placeholder="••••••••"
+                  className="block w-full pl-11 pr-12 py-3.5 
+                             bg-white border border-gray-200 rounded-2xl 
+                             text-gray-900 text-sm font-medium placeholder:text-gray-400/80
+                             focus:border-fuchsia-500 focus:ring-4 focus:ring-fuchsia-500/10 focus:bg-white
+                             hover:border-fuchsia-300
+                             outline-none transition-all duration-200 shadow-sm"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+                {/* Eye Icon Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer transition-colors"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button - Giới hạn width sm:w-[90%] */}
+            <div className="w-full sm:w-[90%] pt-2">
+                <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full group relative flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-2xl text-white 
+                            bg-linear-to-r from-fuchsia-600 to-pink-600 
+                            shadow-lg shadow-fuchsia-500/30 
+                            hover:from-fuchsia-500 hover:to-pink-500 hover:scale-[1.01] hover:shadow-fuchsia-500/40
+                            active:scale-[0.98] 
+                            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-fuchsia-500 
+                            transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                {isLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                    <span className="flex items-center gap-2">
+                    Đăng nhập <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
+                    </span>
+                )}
+                </button>
+            </div>
+
+            {/* Register Link - Giới hạn width sm:w-[90%] */}
+            <div className="w-full sm:w-[90%] text-center">
+              <p className="text-sm text-gray-500">
+                Chưa có tài khoản?{' '}
+                <Link
+                  href="/register"
+                  className="font-semibold text-fuchsia-600 hover:text-fuchsia-500 transition-colors"
+                >
+                  Đăng ký miễn phí
+                </Link>
+              </p>
+            </div>
+          </form>
         </div>
-
-        {/* FORM */}
-        <form onSubmit={handleLogin} className="space-y-6">
-
-          {/* EMAIL */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                type="email"
-                required
-                placeholder="name@example.com"
-                className="w-full pl-11 pr-3 py-3 rounded-xl border border-gray-300 bg-gray-50/50 
-                  focus:border-fuchsia-500 focus:ring-2 focus:ring-fuchsia-300 transition"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-              />
-            </div>
-          </div>
-
-          {/* PASSWORD */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mật khẩu
-            </label>
-
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                className="w-full pl-11 pr-3 py-3 rounded-xl border border-gray-300 bg-gray-50/50 
-                  focus:border-fuchsia-500 focus:ring-2 focus:ring-fuchsia-300 transition"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="flex justify-end mt-2">
-              <button
-                type="button"
-                className="text-sm font-medium text-fuchsia-600 hover:text-fuchsia-700 transition"
-              >
-                Quên mật khẩu?
-              </button>
-            </div>
-          </div>
-
-          {/* SUBMIT */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 rounded-xl font-semibold text-white bg-linear-to-r from-fuchsia-600 to-pink-500 
-              shadow-lg shadow-pink-200 hover:opacity-90 transition disabled:opacity-70 flex items-center justify-center gap-2"
-          >
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <>
-                Đăng nhập <ArrowRight size={18} />
-              </>
-            )}
-          </button>
-
-          {/* DIVIDER */}
-          <div className="relative py-2">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-white text-gray-500">
-                Hoặc tiếp tục với
-              </span>
-            </div>
-          </div>
-
-        </form>
       </div>
     </div>
-  </div>
-);
+  );
 }

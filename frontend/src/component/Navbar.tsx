@@ -162,11 +162,11 @@ export default function Navbar() {
             ) : (
               
               // CASE C: CHƯA ĐĂNG NHẬP -> Hiện nút Login/Register
-              <div className="flex items-center gap-2">
-                <Link href="/login" className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-fuchsia-700 transition">
+              <div className="flex items-center gap-3">
+                <Link href="/login" className="px-5 py-3 text-sm font-bold text-gray-600 hover:text-fuchsia-700 hover:bg-fuchsia-50 rounded-full transition-all duration-300">
                   Đăng nhập
                 </Link>
-                <Link href="/register" className="px-5 py-2.5 text-sm font-bold text-white bg-fuchsia-600 rounded-full shadow-md shadow-fuchsia-200 hover:bg-fuchsia-700 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+                <Link href="/register" className="px-8 py-3 text-sm font-bold text-white bg-linear-to-r from-fuchsia-600 to-pink-600 rounded-full shadow-md shadow-fuchsia-200 hover:shadow-lg hover:shadow-fuchsia-300 hover:-translate-y-0.5 hover:opacity-90 transition-all duration-300">
                   Đăng ký
                 </Link>
               </div>
