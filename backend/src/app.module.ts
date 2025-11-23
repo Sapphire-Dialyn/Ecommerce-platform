@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { PrismaModule } from '@modules/prisma/prisma.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { UsersModule } from '@modules/users/users.module';
@@ -16,6 +18,10 @@ import { CartModule } from '@modules/cart/cart.module';
 
 @Module({
   imports: [
+    // ServeStaticModule.forRoot({
+    //   rootPath: join(__dirname, '..', 'uploads'), // Trỏ ra thư mục uploads ở root (ngoài dist)
+    //   serveRoot: '/uploads', // Prefix URL: localhost:3000/uploads/...
+    // }),
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,

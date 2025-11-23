@@ -15,11 +15,11 @@ export declare class SellersService {
         };
     } & {
         id: string;
+        userId: string;
+        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
-        userId: string;
-        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
@@ -29,8 +29,8 @@ export declare class SellersService {
             id: string;
             name: string;
             variants: {
-                price: number;
                 stock: number;
+                price: number;
             }[];
         }[];
         user: {
@@ -40,11 +40,11 @@ export declare class SellersService {
         };
     } & {
         id: string;
+        userId: string;
+        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
-        userId: string;
-        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
@@ -54,8 +54,8 @@ export declare class SellersService {
             id: string;
             name: string;
             variants: {
-                price: number;
                 stock: number;
+                price: number;
             }[];
         }[];
         user: {
@@ -65,11 +65,11 @@ export declare class SellersService {
         };
     } & {
         id: string;
+        userId: string;
+        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
-        userId: string;
-        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
@@ -79,8 +79,8 @@ export declare class SellersService {
             id: string;
             name: string;
             variants: {
-                price: number;
                 stock: number;
+                price: number;
             }[];
         }[];
         user: {
@@ -90,11 +90,11 @@ export declare class SellersService {
         };
     } & {
         id: string;
+        userId: string;
+        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
-        userId: string;
-        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
@@ -107,11 +107,11 @@ export declare class SellersService {
         };
     } & {
         id: string;
+        userId: string;
+        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
-        userId: string;
-        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
@@ -124,11 +124,11 @@ export declare class SellersService {
         };
     } & {
         id: string;
+        userId: string;
+        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
-        userId: string;
-        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;

@@ -2,6 +2,7 @@ import { ProductsService } from './products.service';
 import { CreateProductDto, UpdateProductDto, CreateCategoryDto, UpdateCategoryDto, CreateReviewDto } from './dto/products.dto';
 export declare class ProductsController {
     private readonly productsService;
+    private readonly logger;
     constructor(productsService: ProductsService);
     createCategory(dto: CreateCategoryDto, req: any): import(".prisma/client").Prisma.Prisma__CategoryClient<{
         id: string;
@@ -28,7 +29,17 @@ export declare class ProductsController {
         name: string;
         parentId: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import(".prisma/client").Prisma.PrismaClientOptions>;
-    createProduct(req: any, dto: CreateProductDto): Promise<{
+    createProduct(req: any, dto: CreateProductDto, file: Express.Multer.File): Promise<{
+        variants: {
+            id: string;
+            stock: number;
+            color: string | null;
+            size: string | null;
+            price: number;
+            sku: string | null;
+            productId: string;
+        }[];
+    } & {
         id: string;
         name: string;
         description: string;
@@ -74,12 +85,12 @@ export declare class ProductsController {
         };
         variants: {
             id: string;
-            productId: string;
+            stock: number;
             color: string | null;
             size: string | null;
             price: number;
-            stock: number;
             sku: string | null;
+            productId: string;
         }[];
         id: string;
         name: string;
@@ -109,6 +120,15 @@ export declare class ProductsController {
             identityDocumentUrl: string | null;
             addressDocumentUrl: string | null;
         };
+        variants: {
+            id: string;
+            stock: number;
+            color: string | null;
+            size: string | null;
+            price: number;
+            sku: string | null;
+            productId: string;
+        }[];
     } & {
         id: string;
         name: string;
@@ -143,12 +163,12 @@ export declare class ProductsController {
         };
         variants: {
             id: string;
-            productId: string;
+            stock: number;
             color: string | null;
             size: string | null;
             price: number;
-            stock: number;
             sku: string | null;
+            productId: string;
         }[];
     } & {
         id: string;
@@ -194,7 +214,7 @@ export declare class ProductsController {
         productId: string;
         comment: string | null;
     })[]>;
-    findOneProduct(id: string): import(".prisma/client").Prisma.Prisma__ProductClient<{
+    findOneProduct(id: string): Promise<{
         category: {
             id: string;
             name: string;
@@ -226,13 +246,36 @@ export declare class ProductsController {
         };
         variants: {
             id: string;
-            productId: string;
+            stock: number;
             color: string | null;
             size: string | null;
             price: number;
-            stock: number;
             sku: string | null;
+            productId: string;
         }[];
+        reviews: ({
+            user: {
+                id: string;
+                name: string;
+                createdAt: Date;
+                updatedAt: Date;
+                email: string;
+                password: string;
+                avatar: string | null;
+                phone: string | null;
+                role: import(".prisma/client").$Enums.Role;
+                isVerified: boolean;
+                verificationToken: string | null;
+                isActive: boolean;
+            };
+        } & {
+            id: string;
+            userId: string;
+            rating: number;
+            createdAt: Date;
+            productId: string;
+            comment: string | null;
+        })[];
     } & {
         id: string;
         name: string;
@@ -245,8 +288,8 @@ export declare class ProductsController {
         categoryId: string;
         sellerId: string | null;
         enterpriseId: string | null;
-    }, null, import("@prisma/client/runtime/library").DefaultArgs, import(".prisma/client").Prisma.PrismaClientOptions>;
-    updateProduct(id: string, dto: UpdateProductDto, req: any): Promise<{
+    }>;
+    updateProduct(id: string, dto: UpdateProductDto, req: any, file: Express.Multer.File): Promise<{
         id: string;
         name: string;
         description: string;

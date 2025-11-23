@@ -6,11 +6,17 @@ import {
   Patch,
   Param,
   Delete,
+  Logger,
   UseGuards,
   Request,
   Query,
+  UploadedFile,
+  UseInterceptors,
+  ForbiddenException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiConsumes } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer'; // <--- QUAN TRỌNG: Import memoryStorage
 import { ProductsService } from './products.service';
 
 import {
@@ -19,7 +25,6 @@ import {
   CreateCategoryDto,
   UpdateCategoryDto,
   CreateReviewDto,
-  GetProductsDto
 } from './dto/products.dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -29,8 +34,8 @@ import { Public } from '../auth/decorators/public.decorator';
 @ApiTags('products')
 @Controller('products')
 export class ProductsController {
+  private readonly logger = new Logger(ProductsController.name);
   constructor(private readonly productsService: ProductsService) {}
-  
 
   // ==================================================================
   // CATEGORY ENDPOINTS
@@ -81,7 +86,18 @@ export class ProductsController {
   @ApiBearerAuth()
   @Post()
   @ApiOperation({ summary: 'Create product (Seller or Enterprise only)' })
-  async createProduct(@Request() req, @Body() dto: CreateProductDto) {
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(), // <--- QUAN TRỌNG: Lưu file vào RAM để CloudinaryService đọc được
+    }),
+  )
+  async createProduct(
+    @Request() req,
+    @Body() dto: CreateProductDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    this.logger.log(`Create Product Request Received`);
     if (![Role.SELLER, Role.ENTERPRISE].includes(req.user.role))
       throw new Error('Only sellers and enterprises can create products');
 
@@ -97,7 +113,7 @@ export class ProductsController {
       data = { ...dto, enterpriseId: enterprise.id };
     }
 
-    return this.productsService.createProduct(data);
+    return this.productsService.createProduct(data, file);
   }
 
   // ==================================================================
@@ -117,15 +133,15 @@ export class ProductsController {
     @Query('sellerId') sellerId?: string,
     @Query('enterpriseId') enterpriseId?: string,
   ) {
-  const skipNumber = skip ? Number(skip) : 0;
-  const takeNumber = take ? Number(take) : 100;      // mặc định lấy 100 sản phẩm
+    const skipNumber = skip ? Number(skip) : 0;
+    const takeNumber = take ? Number(take) : 100;
     return this.productsService.findAllProducts(
-    skipNumber,
-    takeNumber,
-    categoryId,
-    sellerId,
-    enterpriseId,
-  );
+      skipNumber,
+      takeNumber,
+      categoryId,
+      sellerId,
+      enterpriseId,
+    );
   }
 
   // ==================================================================
@@ -184,20 +200,48 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Patch(':id')
-  async updateProduct(@Param('id') id: string, @Body() dto: UpdateProductDto, @Request() req) {
-    if (req.user.role !== Role.SELLER) throw new Error('Only sellers can update products');
-
-    const seller = await this.productsService.findSellerByUserId(req.user.id);
-    return this.productsService.updateProduct(id, seller.id, dto);
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(), // <--- QUAN TRỌNG: Lưu file vào RAM
+    }),
+  )
+  async updateProduct(
+    @Param('id') id: string,
+    @Body() dto: UpdateProductDto,
+    @Request() req,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (![Role.SELLER, Role.ENTERPRISE].includes(req.user.role)) {
+      throw new ForbiddenException('Only sellers and enterprises can update products');
+    }
+    let ownerId = '';
+    if (req.user.role === Role.SELLER) {
+      const seller = await this.productsService.findSellerByUserId(req.user.id);
+      ownerId = seller.id;
+    } else {
+      const enterprise = await this.productsService.findEnterpriseByUserId(req.user.id);
+      ownerId = enterprise.id;
+    }
+    return this.productsService.updateProduct(id, ownerId, req.user.role, dto, file);
   }
 
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Delete(':id')
   async deleteProduct(@Param('id') id: string, @Request() req) {
-    if (req.user.role !== Role.SELLER) throw new Error('Only sellers can delete products');
+    if (![Role.SELLER, Role.ENTERPRISE].includes(req.user.role)) {
+      throw new ForbiddenException('Only sellers and enterprises can delete products');
+    }
 
-    const seller = await this.productsService.findSellerByUserId(req.user.id);
-    return this.productsService.deleteProduct(id, seller.id);
+    let ownerId = '';
+    if (req.user.role === Role.SELLER) {
+      const seller = await this.productsService.findSellerByUserId(req.user.id);
+      ownerId = seller.id;
+    } else {
+      const enterprise = await this.productsService.findEnterpriseByUserId(req.user.id);
+      ownerId = enterprise.id;
+    }
+    return this.productsService.deleteProduct(id, ownerId, req.user.role);
   }
 }

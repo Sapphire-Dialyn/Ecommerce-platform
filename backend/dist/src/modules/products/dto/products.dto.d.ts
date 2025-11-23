@@ -8,18 +8,18 @@ export declare class CreateProductDto {
     enterpriseId?: string;
     variants?: ProductVariantDto[];
 }
-export declare class GetProductsDto {
-    skip?: string;
-    take?: string;
-    categoryId?: string;
-    sellerId?: string;
-    enterpriseId?: string;
-}
 export declare class ProductVariantDto {
     color?: string;
     size?: string;
     price: number;
     stock: number;
+}
+export declare class GetProductsDto {
+    skip?: number;
+    take?: number;
+    categoryId?: string;
+    sellerId?: string;
+    enterpriseId?: string;
 }
 export declare class UpdateProductDto {
     name?: string;
