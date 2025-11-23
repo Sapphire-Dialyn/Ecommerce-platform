@@ -57,8 +57,8 @@ export default function ProductsPage() {
         // TRƯỜNG HỢP 3: Xem tất cả
         else {
           data = await productService.getAllProducts();
-          setSubTitle("Mua sắm");
-          setPageTitle("TẤT CẢ SẢN PHẨM");
+          setSubTitle("DANH SÁCH");
+          setPageTitle("SẢN PHẨM");
         }
 
         setProducts(data);
@@ -96,7 +96,7 @@ export default function ProductsPage() {
     if (totalPages <= 1) return null;
 
     return (
-      <div className="flex justify-center items-center gap-2 py-4">
+      <div className="flex justify-center items-center gap-2 py-0">
         <button
           onClick={handlePrev}
           disabled={currentPage === 1}
@@ -140,18 +140,18 @@ export default function ProductsPage() {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center pt-20">
+      <div className="min-h-screen flex items-center justify-center pt-5">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-fuchsia-600"></div>
       </div>
     );
 
   return (
-    <div className="container mx-auto p-8 min-h-screen pt-32"> {/* Thêm pt-32 để tránh Header che */}
+    <div className="container mx-auto p-8 min-h-screen pt-1"> {/* Thêm pt-32 để tránh Header che */}
       
       {/* HEADER */}
-      <div className="py-8 flex flex-col items-center justify-center mb-6">
+      <div className="py-2 flex flex-col items-center justify-center mb-2">
         <div className="relative text-center">
-          <div className="absolute -top-5 -right-6 text-pink-400 text-2xl animate-pulse">
+          <div className="absolute -top-2 -right-6 text-pink-400 text-2xl animate-pulse">
             ✦
           </div>
 
@@ -159,7 +159,7 @@ export default function ProductsPage() {
           <h1 className="font-serif font-extrabold text-center tracking-tighter">
             
             {/* SỬA 1: Tăng mb-1.5 lên mb-4 để giãn cách xa ra */}
-            <span className="block text-sm text-gray-500 font-sans mb-4 tracking-widest uppercase font-bold leading-9">
+            <span className="block text-sm text-gray-500 font-sans mb-1 tracking-widest uppercase font-bold leading-2">
               {subTitle}
             </span>
 

@@ -79,9 +79,9 @@ export default function RegisterPage() {
             <div className="w-full sm:w-[90%] space-y-1.5">
               <label className="text-sm font-semibold text-gray-700 ml-1">Họ và tên</label>
               <div className="relative group">
-                {/* <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <User className="h-5 w-5 text-gray-400 group-focus-within:text-fuchsia-600 transition-colors" />
-                </div> */}
+                </div>
                 <input
                   type="text"
                   required
@@ -102,9 +102,9 @@ export default function RegisterPage() {
             <div className="w-full sm:w-[90%] space-y-1.5">
               <label className="text-sm font-semibold text-gray-700 ml-1">Email</label>
               <div className="relative group">
-                {/* <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-fuchsia-600 transition-colors" />
-                </div> */}
+                </div>
                 <input
                   type="email"
                   required
@@ -125,9 +125,9 @@ export default function RegisterPage() {
             <div className="w-full sm:w-[90%] space-y-1.5">
               <label className="text-sm font-semibold text-gray-700 ml-1">Mật khẩu</label>
               <div className="relative group">
-                {/* <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-fuchsia-600 transition-colors" />
-                </div> */}
+                </div>
                 <input
                   type={showPassword ? "text" : "password"}
                   required

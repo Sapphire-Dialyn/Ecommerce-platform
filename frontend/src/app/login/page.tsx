@@ -79,9 +79,9 @@ export default function LoginPage() {
               <label className="text-sm font-semibold text-gray-700 ml-1">Email</label>
               <div className="relative group">
                 {/* Đã bật lại Icon để đẹp hơn */}
-                {/* <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-fuchsia-600 transition-colors" />
-                </div> */}
+                </div>
                 <input
                   type="email"
                   required
@@ -113,9 +113,9 @@ export default function LoginPage() {
               
               <div className="relative group">
                 {/* Đã bật lại Icon */}
-                {/* <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-fuchsia-600 transition-colors" />
-                </div> */}
+                </div>
                 <input
                   type={showPassword ? "text" : "password"}
                   required
