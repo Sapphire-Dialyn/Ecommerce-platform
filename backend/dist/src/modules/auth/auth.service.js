@@ -38,18 +38,22 @@ let AuthService = class AuthService {
     }
     async validateUser(email, password) {
         const user = await this.prisma.user.findUnique({ where: { email } });
-        if (user && (await bcrypt.compare(password, user.password))) {
-            const { password } = user, result = __rest(user, ["password"]);
-            return result;
+        if (!user)
+            return null;
+        if (!user.isActive) {
+            throw new common_1.ForbiddenException('Tài khoản của bạn đã bị ban. Liên hệ admin để mở lại.');
         }
-        return null;
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid)
+            return null;
+        const { password: pwd } = user, result = __rest(user, ["password"]);
+        return result;
     }
     async login(user) {
-        const payload = {
-            sub: user.id,
-            email: user.email,
-            role: user.role
-        };
+        if (!user.isActive) {
+            throw new common_1.ForbiddenException('Tài khoản của bạn đã bị ban. Liên hệ admin để mở lại.');
+        }
+        const payload = { sub: user.id, email: user.email, role: user.role };
         let userDetails = {
             id: user.id,
             email: user.email,
@@ -62,28 +66,14 @@ let AuthService = class AuthService {
             case 'SELLER':
                 const sellerProfile = await this.prisma.seller.findUnique({
                     where: { userId: user.id },
-                    include: {
-                        products: {
-                            select: {
-                                id: true,
-                                name: true,
-                            },
-                        },
-                    },
+                    include: { products: { select: { id: true, name: true } } },
                 });
                 userDetails.seller = sellerProfile;
                 break;
             case 'ENTERPRISE':
                 const enterpriseProfile = await this.prisma.enterprise.findUnique({
                     where: { userId: user.id },
-                    include: {
-                        products: {
-                            select: {
-                                id: true,
-                                name: true,
-                            },
-                        },
-                    },
+                    include: { products: { select: { id: true, name: true } } },
                 });
                 userDetails.enterprise = enterpriseProfile;
                 break;

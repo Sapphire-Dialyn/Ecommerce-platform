@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
@@ -21,19 +21,26 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const { password, ...result } = user;
-      return result;
+
+    if (!user) return null;
+
+    if (!user.isActive) {
+      throw new ForbiddenException('Tài khoản của bạn đã bị ban. Liên hệ admin để mở lại.');
     }
-    return null;
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) return null;
+
+    const { password: pwd, ...result } = user;
+    return result;
   }
 
   async login(user: User) {
-    const payload = { 
-      sub: user.id, 
-      email: user.email, 
-      role: user.role 
-    };
+    if (!user.isActive) {
+      throw new ForbiddenException('Tài khoản của bạn đã bị ban. Liên hệ admin để mở lại.');
+    }
+
+    const payload = { sub: user.id, email: user.email, role: user.role };
 
     // Get user details including related entities based on role
     let userDetails: any = {
@@ -45,19 +52,11 @@ export class AuthService {
       role: user.role,
     };
 
-    // Include role-specific profiles
     switch (user.role) {
       case 'SELLER':
         const sellerProfile = await this.prisma.seller.findUnique({
           where: { userId: user.id },
-          include: {
-            products: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
+          include: { products: { select: { id: true, name: true } } },
         });
         userDetails.seller = sellerProfile;
         break;
@@ -65,14 +64,7 @@ export class AuthService {
       case 'ENTERPRISE':
         const enterpriseProfile = await this.prisma.enterprise.findUnique({
           where: { userId: user.id },
-          include: {
-            products: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
+          include: { products: { select: { id: true, name: true } } },
         });
         userDetails.enterprise = enterpriseProfile;
         break;

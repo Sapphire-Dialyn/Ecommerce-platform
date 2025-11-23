@@ -18,31 +18,37 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  e.preventDefault();
+  setIsLoading(true);
 
-    try {
-      const data = await authService.login(formData.email, formData.password);
+  try {
+    const data = await authService.login(formData.email, formData.password);
 
-      dispatch(loginSuccess({
-        user: data.user,
-        token: data.accessToken || data.access_token
-      }));
+    dispatch(loginSuccess({
+      user: data.user,
+      token: data.accessToken || data.access_token
+    }));
 
-      toast.success(`Chào mừng, ${data.user.name}!`);
+    toast.success(`Chào mừng, ${data.user.name}!`);
 
-      if (['ADMIN', 'SELLER', 'ENTERPRISE', 'SHIPPER'].includes(data.user.role)) {
-        router.push('/admin');
-      } else {
-        router.push('/');
-      }
-
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
-    } finally {
-      setIsLoading(false);
+    if (['ADMIN', 'SELLER', 'ENTERPRISE', 'SHIPPER'].includes(data.user.role)) {
+      router.push('/admin');
+    } else {
+      router.push('/');
     }
-  };
+
+  } catch (error: any) {
+    // ✅ Bắt lỗi tài khoản bị ban
+    if (error.response?.status === 403) {
+      toast.error(error.response.data.message || 'Tài khoản của bạn đã bị ban. Liên hệ admin để mở lại.');
+    } else {
+      toast.error(error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-fuchsia-50">
