@@ -265,4 +265,29 @@ export declare class OrdersService {
         totalDiscount: number;
         totalAmount: number;
     }>;
+    updatePaymentStatus(idOrRef: string, status: string, paymentMethod: string): Promise<{
+        payment: {
+            id: string;
+            status: import(".prisma/client").$Enums.PaymentStatus;
+            createdAt: Date;
+            orderId: string;
+            method: import(".prisma/client").$Enums.PaymentMethod;
+            transactionId: string | null;
+            amount: number;
+        };
+    } & {
+        id: string;
+        userId: string;
+        status: import(".prisma/client").$Enums.OrderStatus;
+        paymentId: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        subtotal: number;
+        shippingFee: number;
+        shopDiscount: number;
+        platformDiscount: number;
+        freeshipDiscount: number;
+        totalDiscount: number;
+        totalAmount: number;
+    }>;
 }

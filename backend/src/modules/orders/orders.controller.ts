@@ -5,9 +5,10 @@ import {
   Body,
   Patch,
   Param,
-  Query, // 👈 Thêm Query để lấy ?status=...
+  Query,
   UseGuards,
   Request,
+  Put, // <--- 1. Đã thêm import Put ở đây
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
@@ -29,15 +30,11 @@ export class OrdersController {
     return this.ordersService.create(req.user.id, dto);
   }
 
-  // ==================================================================
-  // 👇 QUAN TRỌNG: Route tĩnh 'my-orders' phải đặt TRƯỚC route động ':id'
-  // ==================================================================
   @ApiOperation({ summary: 'Get current user orders' })
   @ApiResponse({ status: 200, description: 'Return list of my orders.' })
   @ApiQuery({ name: 'status', required: false, enum: OrderStatus })
   @Get('my-orders')
   findMyOrders(@Request() req, @Query('status') status?: OrderStatus) {
-    // Gọi hàm riêng cho my-orders để clear logic
     return this.ordersService.findMyOrders(req.user.id, status);
   }
 
@@ -64,5 +61,18 @@ export class OrdersController {
     @Request() req,
   ) {
     return this.ordersService.updateStatus(id, dto, req.user.id, req.user.role);
+  }
+
+  // ==================================================================
+  // 👇 API MỚI: Frontend gọi cái này sau khi VNPay success
+  // ==================================================================
+  @ApiOperation({ summary: 'Update payment status (Called by Frontend/IPN)' })
+  @ApiResponse({ status: 200, description: 'Payment status updated.' })
+  @Put(':id/payment-status')
+  async updatePaymentStatus(
+    @Param('id') id: string,
+    @Body() body: { status: string; paymentMethod: string },
+  ) {
+    return this.ordersService.updatePaymentStatus(id, body.status, body.paymentMethod);
   }
 }

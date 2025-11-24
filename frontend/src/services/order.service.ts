@@ -11,7 +11,7 @@ api.interceptors.request.use((config) => {
 });
 
 export const orderService = {
-  // Lấy danh sách
+  // 1. Lấy danh sách đơn hàng
   getMyOrders: async (status?: OrderStatus | "ALL") => {
     try {
       const params: any = {};
@@ -24,13 +24,24 @@ export const orderService = {
     }
   },
 
-  // Lấy chi tiết
+  // 2. Lấy chi tiết đơn hàng
   getOrderById: async (id: string) => {
-    try {
-      const res = await api.get<Order>(`/orders/${id}`);
-      return res.data;
-    } catch (error) {
-      throw error; // Ném lỗi để trang chi tiết xử lý
-    }
+    const res = await api.get<Order>(`/orders/${id}`);
+    return res.data;
+  },
+
+  // 3. TẠO ĐƠN HÀNG
+  createOrder: async (orderData: any) => {
+    // Gọi API POST /orders xuống Backend
+    const res = await api.post("/orders", orderData);
+    return res.data; 
+  },
+
+  // 4. CẬP NHẬT TRẠNG THÁI THANH TOÁN (Mới thêm để fix lỗi)
+  updatePaymentStatus: async (payload: { orderId: string; status: string; paymentMethod: string }) => {
+    // Gọi API PUT /orders/:id/payment-status xuống Backend
+    // Lưu ý: Bạn cần đảm bảo Backend (NestJS/NodeJS) đã có endpoint xử lý logic này.
+    const res = await api.put(`/orders/${payload.orderId}/payment-status`, payload);
+    return res.data;
   }
 };

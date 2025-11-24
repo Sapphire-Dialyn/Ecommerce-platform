@@ -18,10 +18,12 @@ export class CreateOrderItemDto {
   @IsNotEmpty()
   productId: string;
 
-  @ApiProperty({ description: 'ID của ProductVariant' })
+  // 👇👇👇 ĐÃ SỬA Ở ĐÂY 👇👇👇
+  @ApiPropertyOptional({ description: 'ID của ProductVariant (Có thể null)' })
+  @IsOptional() // Cho phép null hoặc undefined
   @IsString()
-  @IsNotEmpty()
-  variantId: string;
+  variantId?: string; 
+  // 👆👆👆 ---------------------
 
   @ApiProperty()
   @IsNumber()

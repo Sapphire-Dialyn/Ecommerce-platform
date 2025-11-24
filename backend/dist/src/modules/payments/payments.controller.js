@@ -24,8 +24,8 @@ let PaymentsController = class PaymentsController {
     constructor(paymentsService) {
         this.paymentsService = paymentsService;
     }
-    create(createPaymentDto) {
-        return this.paymentsService.create(createPaymentDto);
+    create(createPaymentDto, ip) {
+        return this.paymentsService.create(createPaymentDto, ip);
     }
     findAll() {
         return this.paymentsService.findAll();
@@ -49,16 +49,16 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 201, description: 'Payment has been created.' }),
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Ip)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [payments_dto_1.CreatePaymentDto]),
+    __metadata("design:paramtypes", [payments_dto_1.CreatePaymentDto, String]),
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "create", null);
 __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get all payments (Admin only)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Return all payments.' }),
-    (0, public_decorator_1.Public)(),
-    (0, common_1.Get)(),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN),
+    (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
@@ -90,7 +90,7 @@ __decorate([
     (0, common_1.Get)('vnpay-callback'),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [payments_dto_1.VNPayCallbackDto]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "handleVNPayCallback", null);
 __decorate([

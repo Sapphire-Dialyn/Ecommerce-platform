@@ -26,11 +26,7 @@ export class UpdatePaymentDto {
 export class VNPayCallbackDto {
   @ApiProperty()
   @IsString()
-  vnp_TransactionNo: string;
-
-  @ApiProperty()
-  @IsString()
-  vnp_ResponseCode: string;
+  vnp_TxnRef: string; // Mã tham chiếu (Payment ID)
 
   @ApiProperty()
   @IsString()
@@ -38,7 +34,30 @@ export class VNPayCallbackDto {
 
   @ApiProperty()
   @IsString()
+  vnp_ResponseCode: string;
+
+  @ApiProperty()
+  @IsString()
+  vnp_TransactionNo: string;
+
+  @ApiProperty()
+  @IsString()
+  vnp_BankCode: string;
+
+  @ApiProperty()
+  @IsString()
+  vnp_PayDate: string;
+
+  @ApiProperty()
+  @IsString()
   vnp_OrderInfo: string;
+
+  @ApiProperty()
+  @IsString()
+  vnp_SecureHash: string;
+  
+  // Cho phép các trường khác để tránh lỗi validation khi VNPAY trả về thêm tham số
+  [key: string]: any; 
 }
 
 export class PayPalCallbackDto {

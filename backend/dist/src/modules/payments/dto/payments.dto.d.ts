@@ -8,10 +8,15 @@ export declare class UpdatePaymentDto {
     transactionId?: string;
 }
 export declare class VNPayCallbackDto {
-    vnp_TransactionNo: string;
-    vnp_ResponseCode: string;
+    vnp_TxnRef: string;
     vnp_Amount: string;
+    vnp_ResponseCode: string;
+    vnp_TransactionNo: string;
+    vnp_BankCode: string;
+    vnp_PayDate: string;
     vnp_OrderInfo: string;
+    vnp_SecureHash: string;
+    [key: string]: any;
 }
 export declare class PayPalCallbackDto {
     paymentId: string;

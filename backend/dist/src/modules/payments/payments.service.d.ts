@@ -1,68 +1,24 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { CreatePaymentDto, UpdatePaymentDto, VNPayCallbackDto, PayPalCallbackDto } from './dto/payments.dto';
+import { CreatePaymentDto, UpdatePaymentDto } from './dto/payments.dto';
 export declare class PaymentsService {
     private prisma;
     constructor(prisma: PrismaService);
-    private generateSignature;
-    create(dto: CreatePaymentDto): Promise<any>;
+    private sortObject;
+    create(dto: CreatePaymentDto, ipAddr?: string): Promise<any>;
     private createVNPayPayment;
+    handleVNPayCallback(params: any): Promise<{
+        message: string;
+        code: any;
+    }>;
     private createPayPalPayment;
     private createCODPayment;
-    handleVNPayCallback(params: VNPayCallbackDto): Promise<{
-        order: {
-            orderItems: {
-                id: string;
-                sellerId: string | null;
-                enterpriseId: string | null;
-                quantity: number;
-                price: number;
-                productId: string;
-                variantId: string | null;
-                orderId: string;
-            }[];
-        } & {
-            id: string;
-            status: import(".prisma/client").$Enums.OrderStatus;
-            paymentId: string | null;
-            createdAt: Date;
-            updatedAt: Date;
-            subtotal: number;
-            shippingFee: number;
-            shopDiscount: number;
-            platformDiscount: number;
-            freeshipDiscount: number;
-            totalDiscount: number;
-            totalAmount: number;
-            userId: string;
-        };
-    } & {
-        id: string;
-        status: import(".prisma/client").$Enums.PaymentStatus;
-        createdAt: Date;
-        orderId: string;
-        method: import(".prisma/client").$Enums.PaymentMethod;
-        transactionId: string | null;
-        amount: number;
-    }>;
-    handlePayPalCallback(params: PayPalCallbackDto): Promise<{
-        message: string;
-    }>;
+    handlePayPalCallback(params: any): Promise<{}>;
     findAll(): Promise<({
         order: {
-            orderItems: {
-                id: string;
-                sellerId: string | null;
-                enterpriseId: string | null;
-                quantity: number;
-                price: number;
-                productId: string;
-                variantId: string | null;
-                orderId: string;
-            }[];
-        } & {
             id: string;
-            status: import(".prisma/client").$Enums.OrderStatus;
             paymentId: string | null;
+            userId: string;
+            status: import(".prisma/client").$Enums.OrderStatus;
             createdAt: Date;
             updatedAt: Date;
             subtotal: number;
@@ -72,7 +28,6 @@ export declare class PaymentsService {
             freeshipDiscount: number;
             totalDiscount: number;
             totalAmount: number;
-            userId: string;
         };
     } & {
         id: string;
@@ -85,20 +40,10 @@ export declare class PaymentsService {
     })[]>;
     findOne(id: string): Promise<{
         order: {
-            orderItems: {
-                id: string;
-                sellerId: string | null;
-                enterpriseId: string | null;
-                quantity: number;
-                price: number;
-                productId: string;
-                variantId: string | null;
-                orderId: string;
-            }[];
-        } & {
             id: string;
-            status: import(".prisma/client").$Enums.OrderStatus;
             paymentId: string | null;
+            userId: string;
+            status: import(".prisma/client").$Enums.OrderStatus;
             createdAt: Date;
             updatedAt: Date;
             subtotal: number;
@@ -108,7 +53,6 @@ export declare class PaymentsService {
             freeshipDiscount: number;
             totalDiscount: number;
             totalAmount: number;
-            userId: string;
         };
     } & {
         id: string;
@@ -121,20 +65,10 @@ export declare class PaymentsService {
     }>;
     findByOrder(orderId: string): Promise<{
         order: {
-            orderItems: {
-                id: string;
-                sellerId: string | null;
-                enterpriseId: string | null;
-                quantity: number;
-                price: number;
-                productId: string;
-                variantId: string | null;
-                orderId: string;
-            }[];
-        } & {
             id: string;
-            status: import(".prisma/client").$Enums.OrderStatus;
             paymentId: string | null;
+            userId: string;
+            status: import(".prisma/client").$Enums.OrderStatus;
             createdAt: Date;
             updatedAt: Date;
             subtotal: number;
@@ -144,7 +78,6 @@ export declare class PaymentsService {
             freeshipDiscount: number;
             totalDiscount: number;
             totalAmount: number;
-            userId: string;
         };
     } & {
         id: string;
@@ -156,33 +89,6 @@ export declare class PaymentsService {
         amount: number;
     }>;
     updatePayment(id: string, dto: UpdatePaymentDto): Promise<{
-        order: {
-            orderItems: {
-                id: string;
-                sellerId: string | null;
-                enterpriseId: string | null;
-                quantity: number;
-                price: number;
-                productId: string;
-                variantId: string | null;
-                orderId: string;
-            }[];
-        } & {
-            id: string;
-            status: import(".prisma/client").$Enums.OrderStatus;
-            paymentId: string | null;
-            createdAt: Date;
-            updatedAt: Date;
-            subtotal: number;
-            shippingFee: number;
-            shopDiscount: number;
-            platformDiscount: number;
-            freeshipDiscount: number;
-            totalDiscount: number;
-            totalAmount: number;
-            userId: string;
-        };
-    } & {
         id: string;
         status: import(".prisma/client").$Enums.PaymentStatus;
         createdAt: Date;

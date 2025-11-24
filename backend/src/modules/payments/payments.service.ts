@@ -1,59 +1,67 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreatePaymentDto, UpdatePaymentDto, VNPayCallbackDto, PayPalCallbackDto } from './dto/payments.dto';
+import { CreatePaymentDto, UpdatePaymentDto } from './dto/payments.dto'; // Bỏ import VNPayCallbackDto ở đây cho gọn
 import { PaymentMethod, PaymentStatus, OrderStatus } from '@prisma/client';
 import * as crypto from 'crypto';
+import * as qs from 'qs';
+import { format } from 'date-fns';
 
 @Injectable()
 export class PaymentsService {
   constructor(private prisma: PrismaService) {}
 
-  private generateSignature(params: any): string {
-    const sortedParams = Object.keys(params)
-      .sort()
-      .reduce((acc, key) => {
-        acc[key] = params[key];
-        return acc;
-      }, {});
-
-    const signData = Object.entries(sortedParams)
-      .map(([key, value]) => `${key}=${value}`)
-      .join('&');
-
-    return crypto
-      .createHmac('sha256', process.env.VNPAY_HASH_SECRET)
-      .update(signData)
-      .digest('hex');
+  private sortObject(obj: any) {
+    const sorted = {};
+    const str = [];
+    let key;
+    for (key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        str.push(encodeURIComponent(key));
+      }
+    }
+    str.sort();
+    for (key = 0; key < str.length; key++) {
+      sorted[str[key]] = encodeURIComponent(obj[str[key]]).replace(/%20/g, '+');
+    }
+    return sorted;
   }
 
-  async create(dto: CreatePaymentDto) {
+  async create(dto: CreatePaymentDto, ipAddr: string = '127.0.0.1') {
     const order = await this.prisma.order.findUnique({
       where: { id: dto.orderId },
-      include: {
-        payment: true,
-      },
+      include: { payment: true },
     });
 
     if (!order) {
       throw new NotFoundException('Order not found');
     }
 
-    if (order.payment) {
-      throw new BadRequestException('Payment already exists for this order');
-    }
+    let payment = order.payment;
 
-    const payment = await this.prisma.payment.create({
-      data: {
-        orderId: dto.orderId,
-        method: dto.method,
-        status: PaymentStatus.PENDING,
-        amount: 123456,
-      },
-    });
+    if (payment) {
+      if (payment.status === PaymentStatus.SUCCESS) {
+        throw new BadRequestException('Order is already paid');
+      }
+      if (payment.method !== dto.method) {
+         payment = await this.prisma.payment.update({
+            where: { id: payment.id },
+            data: { method: dto.method }
+         });
+      }
+    } else {
+      payment = await this.prisma.payment.create({
+        data: {
+          orderId: dto.orderId,
+          method: dto.method,
+          status: PaymentStatus.PENDING,
+          amount: order.totalAmount,
+        },
+      });
+    }
 
     switch (dto.method) {
       case PaymentMethod.VNPAY:
-        return this.createVNPayPayment(payment, order);
+        return this.createVNPayPayment(payment, order, ipAddr);
       case PaymentMethod.PAYPAL:
         return this.createPayPalPayment(payment, order);
       case PaymentMethod.COD:
@@ -63,167 +71,140 @@ export class PaymentsService {
     }
   }
 
-  private async createVNPayPayment(payment: any, order: any) {
-    const vnpParams = {
-      vnp_Version: '2.1.0',
-      vnp_Command: 'pay',
-      vnp_TmnCode: process.env.VNPAY_TMN_CODE,
-      vnp_Locale: 'vn',
-      vnp_CurrCode: 'VND',
-      vnp_TxnRef: payment.id,
-      vnp_OrderInfo: `Payment for order ${order.id}`,
-      vnp_Amount: Math.round(order.totalAmount * 100), // Convert to VND with no decimal
-      vnp_ReturnUrl: `${process.env.FRONTEND_URL}/payment/vnpay-callback`,
-      vnp_IpAddr: '127.0.0.1', // Should be replaced with actual IP in production
-      vnp_CreateDate: new Date().toISOString().replace(/[-T:]/g, '').slice(0, 14),
-    };
+  private async createVNPayPayment(payment: any, order: any, ipAddr: string) {
+    const tmnCode = process.env.VNPAY_TMN_CODE;
+    const secretKey = process.env.VNPAY_HASH_SECRET;
+    const vnpUrl = process.env.VNPAY_URL;
+    const returnUrl = `${process.env.FRONTEND_URL}/payment/vnpay-return`;
 
-    // Generate signature
-    vnpParams['vnp_SecureHash'] = this.generateSignature(vnpParams);
+    const date = new Date();
+    const createDate = format(date, 'yyyyMMddHHmmss');
+    const txnRef = payment.id; 
+    const amount = Math.round(order.totalAmount * 100);
 
-    // Generate payment URL
-    const queryString = Object.entries(vnpParams)
-      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-      .join('&');
+    // 👇 SỬA: Khai báo kiểu 'any' để tránh lỗi Type '{}' missing properties...
+    let vnp_Params: any = {}; 
+    
+    vnp_Params['vnp_Version'] = '2.1.0';
+    vnp_Params['vnp_Command'] = 'pay';
+    vnp_Params['vnp_TmnCode'] = tmnCode;
+    vnp_Params['vnp_Locale'] = 'vn';
+    vnp_Params['vnp_CurrCode'] = 'VND';
+    vnp_Params['vnp_TxnRef'] = txnRef;
+    vnp_Params['vnp_OrderInfo'] = `Thanh toan don hang #${order.id.slice(-8)}`;
+    vnp_Params['vnp_OrderType'] = 'other';
+    vnp_Params['vnp_Amount'] = amount;
+    vnp_Params['vnp_ReturnUrl'] = returnUrl;
+    vnp_Params['vnp_IpAddr'] = ipAddr || '127.0.0.1';
+    vnp_Params['vnp_CreateDate'] = createDate;
+
+    vnp_Params = this.sortObject(vnp_Params);
+
+    const signData = qs.stringify(vnp_Params, { encode: false });
+    const hmac = crypto.createHmac('sha512', secretKey);
+    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+    
+    vnp_Params['vnp_SecureHash'] = signed;
+
+    let paymentUrl = vnpUrl;
+    paymentUrl += '?' + qs.stringify(vnp_Params, { encode: false });
 
     return {
       ...payment,
-      paymentUrl: `${process.env.VNPAY_URL}?${queryString}`,
+      paymentUrl: paymentUrl,
     };
   }
 
-  private async createPayPalPayment(payment: any, order: any) {
-    // TODO: Implement PayPal payment creation
-    // This would involve using the PayPal SDK to create a payment
-    // and return the approval URL
-    return {
-      ...payment,
-      paymentUrl: 'PayPal payment URL will be implemented',
-    };
-  }
+  // 👇 SỬA: Dùng 'any' cho params đầu vào để xử lý linh hoạt
+  async handleVNPayCallback(params: any) {
+    console.log("🔹 VNPAY Callback Params:", params); // LOG 1: Xem params nhận được
 
-  private async createCODPayment(payment: any, order: any) {
-    // For COD, we just mark the payment as pending and update the order status
-    await this.prisma.order.update({
-      where: { id: order.id },
-      data: { status: OrderStatus.PROCESSING },
-    });
+    let vnp_Params = { ...params };
+    const secureHash = vnp_Params['vnp_SecureHash'];
 
-    return payment;
-  }
+    // Xóa tham số hash để tính toán lại
+    delete vnp_Params['vnp_SecureHash'];
+    delete vnp_Params['vnp_SecureHashType'];
 
-  async handleVNPayCallback(params: VNPayCallbackDto) {
-    // Verify the callback parameters
-    const receivedSecureHash = params['vnp_SecureHash'];
-    delete params['vnp_SecureHash'];
+    // Sắp xếp lại
+    vnp_Params = this.sortObject(vnp_Params);
 
-    const calculatedSecureHash = this.generateSignature(params);
-    if (calculatedSecureHash !== receivedSecureHash) {
-      throw new BadRequestException('Invalid signature');
-    }
+    const secretKey = process.env.VNPAY_HASH_SECRET;
+    
+    // Log Secret Key (ẩn bớt ký tự để check xem có load đc env không)
+    console.log("🔹 Hash Secret:", secretKey ? `${secretKey.substring(0, 5)}...` : "UNDEFINED"); 
 
-    const paymentId = params.vnp_OrderInfo.split(' ')[3]; // Extract payment ID
-    const success = params.vnp_ResponseCode === '00';
+    const signData = qs.stringify(vnp_Params, { encode: false });
+    const hmac = crypto.createHmac('sha512', secretKey);
+    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
-    return this.updatePayment(paymentId, {
-      status: success ? PaymentStatus.SUCCESS : PaymentStatus.FAILED,
-      transactionId: params.vnp_TransactionNo,
-    });
-  }
+    console.log("🔹 My Signed Hash:", signed);
+    console.log("🔹 VNPAY Hash:   ", secureHash);
 
-  async handlePayPalCallback(params: PayPalCallbackDto) {
-    // TODO: Implement PayPal callback handling
-    // This would involve verifying the payment with PayPal
-    // and updating the payment status accordingly
-    return {
-      message: 'PayPal callback handling will be implemented',
-    };
-  }
+    // Kiểm tra chữ ký
+    if (secureHash === signed) {
+      const paymentId = vnp_Params['vnp_TxnRef'];
+      const rspCode = vnp_Params['vnp_ResponseCode']; 
 
-  async findAll() {
-    return this.prisma.payment.findMany({
-      include: {
-        order: {
-          include: {
-            orderItems: true,
-          },
-        },
-      },
-    });
-  }
+      console.log(`✅ Chữ ký hợp lệ. PaymentID: ${paymentId}, Code: ${rspCode}`);
 
-  async findOne(id: string) {
-    const payment = await this.prisma.payment.findUnique({
-      where: { id },
-      include: {
-        order: {
-          include: {
-            orderItems: true,
-          },
-        },
-      },
-    });
-
-    if (!payment) {
-      throw new NotFoundException(`Payment with ID ${id} not found`);
-    }
-
-    return payment;
-  }
-
-  async findByOrder(orderId: string) {
-    const payment = await this.prisma.payment.findUnique({
-      where: { orderId },
-      include: {
-        order: {
-          include: {
-            orderItems: true,
-          },
-        },
-      },
-    });
-
-    if (!payment) {
-      throw new NotFoundException(`Payment for order ${orderId} not found`);
-    }
-
-    return payment;
-  }
-
-  async updatePayment(id: string, dto: UpdatePaymentDto) {
-    const payment = await this.prisma.payment.findUnique({
-      where: { id },
-      include: { order: true },
-    });
-
-    if (!payment) {
-      throw new NotFoundException(`Payment with ID ${id} not found`);
-    }
-
-    // Update payment and order status
-    await this.prisma.$transaction(async (prisma) => {
-      await prisma.payment.update({
-        where: { id },
-        data: {
-          status: dto.status,
-          transactionId: dto.transactionId,
-        },
+      // Tìm Payment
+      const payment = await this.prisma.payment.findUnique({
+        where: { id: paymentId },
       });
 
-      // Update order status based on payment status
-      if (dto.status === PaymentStatus.SUCCESS) {
-        await prisma.order.update({
-          where: { id: payment.orderId },
-          data: { status: OrderStatus.PROCESSING },
-        });
-      } else if (dto.status === PaymentStatus.FAILED) {
-        await prisma.order.update({
-          where: { id: payment.orderId },
-          data: { status: OrderStatus.CANCELLED },
-        });
+      if (!payment) {
+          console.error("❌ Không tìm thấy Payment ID trong DB");
+          throw new NotFoundException('Payment not found');
       }
-    });
 
-    return this.findOne(id);
+      if (rspCode === '00') {
+        console.log("🚀 Đang cập nhật trạng thái SUCCESS...");
+        
+        // SUCCESS
+        await this.prisma.$transaction([
+            this.prisma.payment.update({
+                where: { id: paymentId },
+                data: { 
+                    status: PaymentStatus.SUCCESS,
+                    transactionId: vnp_Params['vnp_TransactionNo'] 
+                },
+            }),
+            this.prisma.order.update({
+                where: { id: payment.orderId },
+                data: { status: OrderStatus.PROCESSING } // Cập nhật Order sang Processing
+            })
+        ]);
+        
+        console.log("🎉 Cập nhật thành công!");
+        return { message: 'Success', code: '00' };
+
+      } else {
+        console.log("⚠️ Thanh toán thất bại/Hủy từ phía VNPAY");
+        await this.prisma.payment.update({
+            where: { id: paymentId },
+            data: { status: PaymentStatus.FAILED },
+        });
+        return { message: 'Failed', code: rspCode };
+      }
+
+    } else {
+      console.error("❌ Chữ ký KHÔNG hợp lệ!");
+      throw new BadRequestException('Invalid signature'); 
+    }
+  }
+
+  // MOCK METHODS
+  private async createPayPalPayment(payment: any, order: any) { return { ...payment, paymentUrl: '' }; }
+  private async createCODPayment(payment: any, order: any) { return payment; }
+  async handlePayPalCallback(params: any) { return {}; }
+
+  // CRUD
+  async findAll() { return this.prisma.payment.findMany({ include: { order: true } }); }
+  async findOne(id: string) { return this.prisma.payment.findUnique({ where: { id }, include: { order: true } }); }
+  async findByOrder(orderId: string) { return this.prisma.payment.findUnique({ where: { orderId }, include: { order: true } }); }
+  
+  async updatePayment(id: string, dto: UpdatePaymentDto) {
+      return this.prisma.payment.update({ where: { id }, data: { status: dto.status }});
   }
 }

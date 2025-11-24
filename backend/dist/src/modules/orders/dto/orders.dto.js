@@ -24,9 +24,9 @@ __decorate([
     __metadata("design:type", String)
 ], CreateOrderItemDto.prototype, "productId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'ID của ProductVariant' }),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'ID của ProductVariant (Có thể null)' }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateOrderItemDto.prototype, "variantId", void 0);
 __decorate([

@@ -1,7 +1,7 @@
 import { OrderStatus, PaymentMethod } from '@prisma/client';
 export declare class CreateOrderItemDto {
     productId: string;
-    variantId: string;
+    variantId?: string;
     quantity: number;
 }
 export declare class CreateOrderDto {
