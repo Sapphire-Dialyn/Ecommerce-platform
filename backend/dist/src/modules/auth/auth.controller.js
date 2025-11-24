@@ -18,8 +18,9 @@ const auth_service_1 = require("./auth.service");
 const local_auth_guard_1 = require("./guards/local-auth.guard");
 const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
 const swagger_1 = require("@nestjs/swagger");
-const dto_1 = require("./dto");
+const auth_dto_1 = require("./dto/auth.dto");
 const public_decorator_1 = require("./decorators/public.decorator");
+const platform_express_1 = require("@nestjs/platform-express");
 let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
@@ -27,8 +28,8 @@ let AuthController = class AuthController {
     async login(req) {
         return this.authService.login(req.user);
     }
-    async register(data) {
-        return this.authService.register(data);
+    async register(data, files) {
+        return this.authService.register(data, files);
     }
     async verifyEmail(token) {
         return this.authService.verifyEmail(token);
@@ -54,7 +55,7 @@ __decorate([
         status: 200,
         description: 'Returns JWT access token and user info',
     }),
-    (0, swagger_1.ApiBody)({ type: dto_1.LoginDto }),
+    (0, swagger_1.ApiBody)({ type: auth_dto_1.LoginDto }),
     (0, common_1.UseGuards)(local_auth_guard_1.LocalAuthGuard),
     (0, common_1.Post)('login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
@@ -68,14 +69,22 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Register new user' }),
     (0, swagger_1.ApiResponse)({
         status: 201,
-        description: 'User has been successfully created. Check email for verification if required.',
+        description: 'User has been successfully created.',
     }),
-    (0, swagger_1.ApiBody)({ type: dto_1.RegisterDto }),
-    (0, public_decorator_1.Public)(),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
     (0, common_1.Post)('register'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileFieldsInterceptor)([
+        { name: 'businessLicense', maxCount: 1 },
+        { name: 'brandRegistration', maxCount: 1 },
+        { name: 'taxDocument', maxCount: 1 },
+        { name: 'businessDocument', maxCount: 1 },
+        { name: 'identityDocument', maxCount: 1 },
+        { name: 'addressDocument', maxCount: 1 },
+    ])),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.UploadedFiles)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [dto_1.RegisterDto]),
+    __metadata("design:paramtypes", [auth_dto_1.RegisterDto, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "register", null);
 __decorate([
@@ -131,7 +140,7 @@ __decorate([
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, dto_1.ChangePasswordDto]),
+    __metadata("design:paramtypes", [Object, auth_dto_1.ChangePasswordDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "changePassword", null);
 __decorate([
@@ -142,7 +151,7 @@ __decorate([
     }),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.Post)('me'),
+    (0, common_1.Get)('me'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),

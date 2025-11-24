@@ -20,6 +20,7 @@ exports.CreateOrderItemDto = CreateOrderItemDto;
 __decorate([
     (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateOrderItemDto.prototype, "productId", void 0);
 __decorate([
@@ -47,7 +48,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         description: 'Mảng các ID voucher (Shop, Platform, Freeship)',
-        example: ['voucher-id-1', 'voucher-id-2'],
+        example: ['voucher-id-1'],
     }),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),
@@ -63,6 +64,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "addressId", void 0);
 __decorate([

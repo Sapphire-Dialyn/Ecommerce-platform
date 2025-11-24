@@ -10,37 +10,25 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { OrderStatus, PaymentMethod } from '@prisma/client'; // 👈 Import Enums
+import { OrderStatus, PaymentMethod } from '@prisma/client';
 
-/**
- * 🚀 DTO ĐÃ SỬA:
- * - Bỏ 'price' (Service sẽ tự lấy giá từ DB)
- * - 'variantId' là bắt buộc
- */
 export class CreateOrderItemDto {
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
   productId: string;
 
   @ApiProperty({ description: 'ID của ProductVariant' })
   @IsString()
-  @IsNotEmpty() // 👈 Bắt buộc
+  @IsNotEmpty()
   variantId: string;
 
   @ApiProperty()
   @IsNumber()
   @Min(1)
   quantity: number;
-
-  // ❌ Đã XÓA 'price'. Service sẽ tự lấy giá từ 'variant.price'.
 }
 
-/**
- * 🚀 DTO ĐÃ SỬA:
- * - 'voucherId' -> 'voucherIds' (mảng)
- * - Thêm 'shippingFee'
- * - 'paymentMethod' dùng Enum
- */
 export class CreateOrderDto {
   @ApiProperty({ type: [CreateOrderItemDto] })
   @IsArray()
@@ -50,33 +38,30 @@ export class CreateOrderDto {
 
   @ApiPropertyOptional({
     description: 'Mảng các ID voucher (Shop, Platform, Freeship)',
-    example: ['voucher-id-1', 'voucher-id-2'],
+    example: ['voucher-id-1'],
   })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  voucherIds?: string[]; // 👈 Đã sửa
+  voucherIds?: string[];
 
   @ApiProperty({ description: 'Phí vận chuyển gốc' })
   @IsNumber()
   @Min(0)
-  shippingFee: number; // 👈 Đã thêm
+  shippingFee: number;
 
   @ApiProperty()
   @IsString()
-  addressId: string; // 👈 Giữ nguyên (Giả sử bạn có logic lấy address)
+  @IsNotEmpty()
+  addressId: string;
 
   @ApiProperty({ enum: PaymentMethod, example: PaymentMethod.COD })
-  @IsEnum(PaymentMethod) // 👈 Dùng Enum
+  @IsEnum(PaymentMethod)
   paymentMethod: PaymentMethod;
 }
 
-/**
- * 🚀 DTO ĐÃ SỬA:
- * - Dùng OrderStatus enum
- */
 export class UpdateOrderStatusDto {
   @ApiProperty({ enum: OrderStatus, example: OrderStatus.PROCESSING })
-  @IsEnum(OrderStatus) // 👈 Dùng Enum từ Prisma
+  @IsEnum(OrderStatus)
   status: OrderStatus;
 }

@@ -18,13 +18,11 @@ let OrdersService = class OrdersService {
         this.prisma = prisma;
     }
     async create(userId, dto) {
+        const { items, voucherIds, shippingFee, paymentMethod, addressId } = dto;
         let subtotal = 0;
         const orderItemsData = [];
         const variantIdsToUpdate = [];
-        for (const item of dto.items) {
-            if (!item.variantId) {
-                throw new common_1.BadRequestException('All items must have a variantId');
-            }
+        for (const item of items) {
             const variant = await this.prisma.productVariant.findUnique({
                 where: { id: item.variantId },
                 include: { product: true },
@@ -33,9 +31,10 @@ let OrdersService = class OrdersService {
                 throw new common_1.NotFoundException(`Product Variant ${item.variantId} not found`);
             }
             if (variant.stock < item.quantity) {
-                throw new common_1.BadRequestException(`Not enough stock for ${variant.product.name}`);
+                throw new common_1.BadRequestException(`Sản phẩm "${variant.product.name}" không đủ tồn kho (Còn: ${variant.stock})`);
             }
-            subtotal += variant.price * item.quantity;
+            const itemTotal = variant.price * item.quantity;
+            subtotal += itemTotal;
             orderItemsData.push({
                 productId: item.productId,
                 variantId: item.variantId,
@@ -44,78 +43,137 @@ let OrdersService = class OrdersService {
                 sellerId: variant.product.sellerId,
                 enterpriseId: variant.product.enterpriseId,
             });
-            variantIdsToUpdate.push({ id: item.variantId, quantity: item.quantity });
+            variantIdsToUpdate.push({
+                id: item.variantId,
+                quantity: item.quantity,
+                productName: variant.product.name
+            });
         }
-        const voucherIdsToConnect = (dto.voucherIds || []).map((id) => ({ id }));
-        const shippingFee = dto.shippingFee || 0;
-        const totalAmount = subtotal + shippingFee;
+        const voucherIdsToConnect = (voucherIds || []).map((id) => ({ id }));
+        const totalDiscount = 0;
+        const totalAmount = subtotal + shippingFee - totalDiscount;
         try {
-            const order = await this.prisma.$transaction(async (tx) => {
+            const result = await this.prisma.$transaction(async (tx) => {
+                for (const item of variantIdsToUpdate) {
+                    const currentVariant = await tx.productVariant.findUnique({ where: { id: item.id } });
+                    if (!currentVariant || currentVariant.stock < item.quantity) {
+                        throw new common_1.BadRequestException(`Hết hàng: ${item.productName} vừa bị mua hết!`);
+                    }
+                    await tx.productVariant.update({
+                        where: { id: item.id },
+                        data: { stock: { decrement: item.quantity } }
+                    });
+                }
                 const newOrder = await tx.order.create({
                     data: {
                         userId,
+                        status: client_1.OrderStatus.PENDING,
                         subtotal,
                         shippingFee,
+                        totalDiscount,
                         totalAmount,
                         shopDiscount: 0,
                         platformDiscount: 0,
                         freeshipDiscount: 0,
-                        totalDiscount: 0,
-                        status: client_1.OrderStatus.PENDING,
                         appliedVouchers: {
                             connect: voucherIdsToConnect,
                         },
                         orderItems: {
                             create: orderItemsData,
                         },
+                        payment: {
+                            create: {
+                                method: paymentMethod,
+                                amount: totalAmount,
+                                status: client_1.PaymentStatus.PENDING
+                            }
+                        }
                     },
                     include: {
                         orderItems: true,
-                        appliedVouchers: true,
+                        payment: true,
                     },
                 });
-                for (const item of variantIdsToUpdate) {
-                    await tx.productVariant.update({
-                        where: { id: item.id },
-                        data: {
-                            stock: {
-                                decrement: item.quantity,
-                            },
-                        },
-                    });
-                }
                 return newOrder;
             });
-            return order;
+            return result;
         }
         catch (error) {
             if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
-                throw new common_1.BadRequestException(`Failed to create order: ${error.message}`);
             }
             throw error;
         }
     }
-    async findAll(userId, role) {
-        const where = role === 'ADMIN' ? {} : { userId };
+    async findMyOrders(userId, status) {
+        const whereCondition = {
+            userId: userId,
+        };
+        if (status && status !== 'ALL') {
+            whereCondition.status = status;
+        }
         return this.prisma.order.findMany({
-            where,
-            include: { orderItems: true, appliedVouchers: true },
+            where: whereCondition,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                orderItems: {
+                    include: {
+                        product: {
+                            select: { id: true, name: true, images: true }
+                        },
+                        variant: {
+                            select: { id: true, size: true, color: true }
+                        }
+                    }
+                },
+                payment: true,
+            }
+        });
+    }
+    async findAll(userId, role) {
+        const whereCondition = {};
+        if (role === client_1.Role.CUSTOMER) {
+            whereCondition.userId = userId;
+        }
+        return this.prisma.order.findMany({
+            where: whereCondition,
+            include: {
+                orderItems: {
+                    include: {
+                        product: true,
+                        variant: true
+                    }
+                },
+                payment: true,
+                appliedVouchers: true,
+            },
+            orderBy: { createdAt: 'desc' }
         });
     }
     async findOne(id, userId, role) {
         const order = await this.prisma.order.findUnique({
             where: { id },
-            include: { orderItems: true, appliedVouchers: true },
+            include: {
+                orderItems: {
+                    include: {
+                        product: true,
+                        variant: true
+                    }
+                },
+                payment: true,
+                appliedVouchers: true,
+                user: { select: { id: true, name: true, email: true, phone: true } }
+            },
         });
         if (!order)
             throw new common_1.NotFoundException('Order not found');
-        if (role !== 'ADMIN' && order.userId !== userId) {
-            throw new common_1.ForbiddenException('Forbidden');
+        if (role !== client_1.Role.ADMIN && order.userId !== userId) {
+            throw new common_1.ForbiddenException('You do not have permission to view this order');
         }
         return order;
     }
     async updateStatus(id, dto, userId, role) {
-        const order = await this.findOne(id, userId, role);
+        if (role !== client_1.Role.SELLER && role !== client_1.Role.ENTERPRISE) {
+        }
         return this.prisma.order.update({
             where: { id },
             data: { status: dto.status },

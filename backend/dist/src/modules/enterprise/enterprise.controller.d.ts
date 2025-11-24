@@ -7,21 +7,22 @@ export declare class EnterpriseController {
         enterprise: {
             id: string;
             userId: string;
-            verified: boolean;
-            rating: number | null;
-            logoUrl: string | null;
             companyName: string;
             taxCode: string | null;
+            verified: boolean;
             officialBrand: boolean;
+            rating: number | null;
+            logoUrl: string | null;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
         };
     } & {
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
+        name: string;
         email: string;
         password: string;
         avatar: string | null;
@@ -29,27 +30,27 @@ export declare class EnterpriseController {
         role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
         verificationToken: string | null;
-        isActive: boolean;
     }>;
     update(userId: string, updateEnterpriseDto: UpdateEnterpriseDto): Promise<{
         enterprise: {
             id: string;
             userId: string;
-            verified: boolean;
-            rating: number | null;
-            logoUrl: string | null;
             companyName: string;
             taxCode: string | null;
+            verified: boolean;
             officialBrand: boolean;
+            rating: number | null;
+            logoUrl: string | null;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
         };
     } & {
         id: string;
-        name: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
+        name: string;
         email: string;
         password: string;
         avatar: string | null;
@@ -57,27 +58,14 @@ export declare class EnterpriseController {
         role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
         verificationToken: string | null;
-        isActive: boolean;
     }>;
     findById(id: string): Promise<{
-        products: {
-            id: string;
-            name: string;
-            description: string;
-            specifications: import("@prisma/client/runtime/library").JsonValue | null;
-            images: string[];
-            active: boolean;
-            createdAt: Date;
-            updatedAt: Date;
-            categoryId: string;
-            sellerId: string | null;
-            enterpriseId: string | null;
-        }[];
         user: {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            isActive: boolean;
+            name: string;
             email: string;
             password: string;
             avatar: string | null;
@@ -85,40 +73,40 @@ export declare class EnterpriseController {
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
             verificationToken: string | null;
-            isActive: boolean;
         };
+        products: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            description: string;
+            sellerId: string | null;
+            enterpriseId: string | null;
+            name: string;
+            specifications: import("@prisma/client/runtime/library").JsonValue | null;
+            categoryId: string;
+            images: string[];
+            active: boolean;
+        }[];
     } & {
         id: string;
         userId: string;
-        verified: boolean;
-        rating: number | null;
-        logoUrl: string | null;
         companyName: string;
         taxCode: string | null;
+        verified: boolean;
         officialBrand: boolean;
+        rating: number | null;
+        logoUrl: string | null;
         businessLicenseUrl: string | null;
         brandRegistrationUrl: string | null;
         taxDocumentUrl: string | null;
     }>;
     findByUserId(userId: string): Promise<{
-        products: {
-            id: string;
-            name: string;
-            description: string;
-            specifications: import("@prisma/client/runtime/library").JsonValue | null;
-            images: string[];
-            active: boolean;
-            createdAt: Date;
-            updatedAt: Date;
-            categoryId: string;
-            sellerId: string | null;
-            enterpriseId: string | null;
-        }[];
         user: {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            isActive: boolean;
+            name: string;
             email: string;
             password: string;
             avatar: string | null;
@@ -126,40 +114,40 @@ export declare class EnterpriseController {
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
             verificationToken: string | null;
-            isActive: boolean;
         };
+        products: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            description: string;
+            sellerId: string | null;
+            enterpriseId: string | null;
+            name: string;
+            specifications: import("@prisma/client/runtime/library").JsonValue | null;
+            categoryId: string;
+            images: string[];
+            active: boolean;
+        }[];
     } & {
         id: string;
         userId: string;
-        verified: boolean;
-        rating: number | null;
-        logoUrl: string | null;
         companyName: string;
         taxCode: string | null;
+        verified: boolean;
         officialBrand: boolean;
+        rating: number | null;
+        logoUrl: string | null;
         businessLicenseUrl: string | null;
         brandRegistrationUrl: string | null;
         taxDocumentUrl: string | null;
     }>;
     findAll(): Promise<({
-        products: {
-            id: string;
-            name: string;
-            description: string;
-            specifications: import("@prisma/client/runtime/library").JsonValue | null;
-            images: string[];
-            active: boolean;
-            createdAt: Date;
-            updatedAt: Date;
-            categoryId: string;
-            sellerId: string | null;
-            enterpriseId: string | null;
-        }[];
         user: {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            isActive: boolean;
+            name: string;
             email: string;
             password: string;
             avatar: string | null;
@@ -167,17 +155,29 @@ export declare class EnterpriseController {
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
             verificationToken: string | null;
-            isActive: boolean;
         };
+        products: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            description: string;
+            sellerId: string | null;
+            enterpriseId: string | null;
+            name: string;
+            specifications: import("@prisma/client/runtime/library").JsonValue | null;
+            categoryId: string;
+            images: string[];
+            active: boolean;
+        }[];
     } & {
         id: string;
         userId: string;
-        verified: boolean;
-        rating: number | null;
-        logoUrl: string | null;
         companyName: string;
         taxCode: string | null;
+        verified: boolean;
         officialBrand: boolean;
+        rating: number | null;
+        logoUrl: string | null;
         businessLicenseUrl: string | null;
         brandRegistrationUrl: string | null;
         taxDocumentUrl: string | null;

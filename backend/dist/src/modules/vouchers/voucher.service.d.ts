@@ -6,12 +6,9 @@ export declare class VoucherService {
     constructor(prisma: PrismaService);
     createShopVoucher(dto: CreateVoucherDto, sellerId: string): Promise<{
         id: string;
-        isActive: boolean;
-        description: string | null;
-        sellerId: string | null;
-        enterpriseId: string | null;
-        title: string;
         code: string;
+        title: string;
+        description: string | null;
         scope: import(".prisma/client").$Enums.VoucherScope;
         discountType: import(".prisma/client").$Enums.DiscountType;
         discountValue: number;
@@ -21,15 +18,15 @@ export declare class VoucherService {
         endDate: Date;
         usageLimit: number | null;
         usedCount: number;
+        isActive: boolean;
+        sellerId: string | null;
+        enterpriseId: string | null;
     }>;
     createPlatformVoucher(dto: CreateVoucherDto): Promise<{
         id: string;
-        isActive: boolean;
-        description: string | null;
-        sellerId: string | null;
-        enterpriseId: string | null;
-        title: string;
         code: string;
+        title: string;
+        description: string | null;
         scope: import(".prisma/client").$Enums.VoucherScope;
         discountType: import(".prisma/client").$Enums.DiscountType;
         discountValue: number;
@@ -39,15 +36,15 @@ export declare class VoucherService {
         endDate: Date;
         usageLimit: number | null;
         usedCount: number;
+        isActive: boolean;
+        sellerId: string | null;
+        enterpriseId: string | null;
     }>;
     createFreeShipVoucher(dto: CreateVoucherDto): Promise<{
         id: string;
-        isActive: boolean;
-        description: string | null;
-        sellerId: string | null;
-        enterpriseId: string | null;
-        title: string;
         code: string;
+        title: string;
+        description: string | null;
         scope: import(".prisma/client").$Enums.VoucherScope;
         discountType: import(".prisma/client").$Enums.DiscountType;
         discountValue: number;
@@ -57,6 +54,9 @@ export declare class VoucherService {
         endDate: Date;
         usageLimit: number | null;
         usedCount: number;
+        isActive: boolean;
+        sellerId: string | null;
+        enterpriseId: string | null;
     }>;
     private checkCodeExists;
     claimVoucher(voucherId: string, userId: string): Promise<{
@@ -70,12 +70,9 @@ export declare class VoucherService {
     getAvailableVouchers(userId: string, sellerIdsInCart: string[]): Promise<{
         shopVouchers: {
             id: string;
-            isActive: boolean;
-            description: string | null;
-            sellerId: string | null;
-            enterpriseId: string | null;
-            title: string;
             code: string;
+            title: string;
+            description: string | null;
             scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
@@ -85,15 +82,15 @@ export declare class VoucherService {
             endDate: Date;
             usageLimit: number | null;
             usedCount: number;
+            isActive: boolean;
+            sellerId: string | null;
+            enterpriseId: string | null;
         }[];
         platformVouchers: {
             id: string;
-            isActive: boolean;
-            description: string | null;
-            sellerId: string | null;
-            enterpriseId: string | null;
-            title: string;
             code: string;
+            title: string;
+            description: string | null;
             scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
@@ -103,15 +100,15 @@ export declare class VoucherService {
             endDate: Date;
             usageLimit: number | null;
             usedCount: number;
+            isActive: boolean;
+            sellerId: string | null;
+            enterpriseId: string | null;
         }[];
         freeShipVouchers: {
             id: string;
-            isActive: boolean;
-            description: string | null;
-            sellerId: string | null;
-            enterpriseId: string | null;
-            title: string;
             code: string;
+            title: string;
+            description: string | null;
             scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
@@ -121,6 +118,9 @@ export declare class VoucherService {
             endDate: Date;
             usageLimit: number | null;
             usedCount: number;
+            isActive: boolean;
+            sellerId: string | null;
+            enterpriseId: string | null;
         }[];
     }>;
     calculateCheckout(userId: string, dto: ApplyVoucherDto): Promise<{

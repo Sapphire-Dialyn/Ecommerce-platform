@@ -32,40 +32,35 @@ export declare class ProductsController {
     createProduct(req: any, dto: CreateProductDto, file: Express.Multer.File): Promise<{
         variants: {
             id: string;
-            stock: number;
+            price: number;
+            productId: string;
             color: string | null;
             size: string | null;
-            price: number;
+            stock: number;
             sku: string | null;
-            productId: string;
         }[];
     } & {
         id: string;
-        name: string;
-        description: string;
-        specifications: import("@prisma/client/runtime/library").JsonValue | null;
-        images: string[];
-        active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string;
+        description: string;
         sellerId: string | null;
         enterpriseId: string | null;
+        name: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
+        categoryId: string;
+        images: string[];
+        active: boolean;
     }>;
     findAllProducts(skip?: number, take?: number, categoryId?: string, sellerId?: string, enterpriseId?: string): Promise<{
         images: string[];
-        category: {
-            id: string;
-            name: string;
-            parentId: string | null;
-        };
         seller: {
             id: string;
             userId: string;
-            storeName: string;
             verified: boolean;
             rating: number | null;
             logoUrl: string | null;
+            storeName: string;
             businessDocumentUrl: string | null;
             identityDocumentUrl: string | null;
             addressDocumentUrl: string | null;
@@ -73,130 +68,136 @@ export declare class ProductsController {
         enterprise: {
             id: string;
             userId: string;
-            verified: boolean;
-            rating: number | null;
-            logoUrl: string | null;
             companyName: string;
             taxCode: string | null;
+            verified: boolean;
             officialBrand: boolean;
+            rating: number | null;
+            logoUrl: string | null;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
         };
+        category: {
+            id: string;
+            name: string;
+            parentId: string | null;
+        };
         variants: {
             id: string;
-            stock: number;
+            price: number;
+            productId: string;
             color: string | null;
             size: string | null;
-            price: number;
+            stock: number;
             sku: string | null;
-            productId: string;
         }[];
         id: string;
-        name: string;
-        description: string;
-        specifications: import("@prisma/client/runtime/library").JsonValue | null;
-        active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string;
+        description: string;
         sellerId: string | null;
         enterpriseId: string | null;
+        name: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
+        categoryId: string;
+        active: boolean;
     }[]>;
     getProductsBySeller(sellerId: string): import(".prisma/client").Prisma.PrismaPromise<({
-        category: {
-            id: string;
-            name: string;
-            parentId: string | null;
-        };
         seller: {
             id: string;
             userId: string;
-            storeName: string;
             verified: boolean;
             rating: number | null;
             logoUrl: string | null;
+            storeName: string;
             businessDocumentUrl: string | null;
             identityDocumentUrl: string | null;
             addressDocumentUrl: string | null;
         };
-        variants: {
-            id: string;
-            stock: number;
-            color: string | null;
-            size: string | null;
-            price: number;
-            sku: string | null;
-            productId: string;
-        }[];
-    } & {
-        id: string;
-        name: string;
-        description: string;
-        specifications: import("@prisma/client/runtime/library").JsonValue | null;
-        images: string[];
-        active: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-        categoryId: string;
-        sellerId: string | null;
-        enterpriseId: string | null;
-    })[]>;
-    getProductsByEnterprise(enterpriseId: string): import(".prisma/client").Prisma.PrismaPromise<({
         category: {
             id: string;
             name: string;
             parentId: string | null;
         };
+        variants: {
+            id: string;
+            price: number;
+            productId: string;
+            color: string | null;
+            size: string | null;
+            stock: number;
+            sku: string | null;
+        }[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        sellerId: string | null;
+        enterpriseId: string | null;
+        name: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
+        categoryId: string;
+        images: string[];
+        active: boolean;
+    })[]>;
+    getProductsByEnterprise(enterpriseId: string): import(".prisma/client").Prisma.PrismaPromise<({
         enterprise: {
             id: string;
             userId: string;
-            verified: boolean;
-            rating: number | null;
-            logoUrl: string | null;
             companyName: string;
             taxCode: string | null;
+            verified: boolean;
             officialBrand: boolean;
+            rating: number | null;
+            logoUrl: string | null;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
         };
+        category: {
+            id: string;
+            name: string;
+            parentId: string | null;
+        };
         variants: {
             id: string;
-            stock: number;
+            price: number;
+            productId: string;
             color: string | null;
             size: string | null;
-            price: number;
+            stock: number;
             sku: string | null;
-            productId: string;
         }[];
     } & {
         id: string;
-        name: string;
-        description: string;
-        specifications: import("@prisma/client/runtime/library").JsonValue | null;
-        images: string[];
-        active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string;
+        description: string;
         sellerId: string | null;
         enterpriseId: string | null;
+        name: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
+        categoryId: string;
+        images: string[];
+        active: boolean;
     })[]>;
     createReview(productId: string, dto: CreateReviewDto, req: any): import(".prisma/client").Prisma.Prisma__ReviewClient<{
         id: string;
-        userId: string;
-        rating: number;
         createdAt: Date;
+        userId: string;
         productId: string;
+        rating: number;
         comment: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import(".prisma/client").Prisma.PrismaClientOptions>;
     getProductReviews(productId: string): import(".prisma/client").Prisma.PrismaPromise<({
         user: {
             id: string;
-            name: string;
             createdAt: Date;
             updatedAt: Date;
+            isActive: boolean;
+            name: string;
             email: string;
             password: string;
             avatar: string | null;
@@ -204,29 +205,23 @@ export declare class ProductsController {
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
             verificationToken: string | null;
-            isActive: boolean;
         };
     } & {
         id: string;
-        userId: string;
-        rating: number;
         createdAt: Date;
+        userId: string;
         productId: string;
+        rating: number;
         comment: string | null;
     })[]>;
     findOneProduct(id: string): Promise<{
-        category: {
-            id: string;
-            name: string;
-            parentId: string | null;
-        };
         seller: {
             id: string;
             userId: string;
-            storeName: string;
             verified: boolean;
             rating: number | null;
             logoUrl: string | null;
+            storeName: string;
             businessDocumentUrl: string | null;
             identityDocumentUrl: string | null;
             addressDocumentUrl: string | null;
@@ -234,31 +229,37 @@ export declare class ProductsController {
         enterprise: {
             id: string;
             userId: string;
-            verified: boolean;
-            rating: number | null;
-            logoUrl: string | null;
             companyName: string;
             taxCode: string | null;
+            verified: boolean;
             officialBrand: boolean;
+            rating: number | null;
+            logoUrl: string | null;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
         };
+        category: {
+            id: string;
+            name: string;
+            parentId: string | null;
+        };
         variants: {
             id: string;
-            stock: number;
+            price: number;
+            productId: string;
             color: string | null;
             size: string | null;
-            price: number;
+            stock: number;
             sku: string | null;
-            productId: string;
         }[];
         reviews: ({
             user: {
                 id: string;
-                name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                isActive: boolean;
+                name: string;
                 email: string;
                 password: string;
                 avatar: string | null;
@@ -266,53 +267,52 @@ export declare class ProductsController {
                 role: import(".prisma/client").$Enums.Role;
                 isVerified: boolean;
                 verificationToken: string | null;
-                isActive: boolean;
             };
         } & {
             id: string;
-            userId: string;
-            rating: number;
             createdAt: Date;
+            userId: string;
             productId: string;
+            rating: number;
             comment: string | null;
         })[];
     } & {
         id: string;
-        name: string;
-        description: string;
-        specifications: import("@prisma/client/runtime/library").JsonValue | null;
-        images: string[];
-        active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string;
+        description: string;
         sellerId: string | null;
         enterpriseId: string | null;
+        name: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
+        categoryId: string;
+        images: string[];
+        active: boolean;
     }>;
     updateProduct(id: string, dto: UpdateProductDto, req: any, file: Express.Multer.File): Promise<{
         id: string;
-        name: string;
-        description: string;
-        specifications: import("@prisma/client/runtime/library").JsonValue | null;
-        images: string[];
-        active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string;
+        description: string;
         sellerId: string | null;
         enterpriseId: string | null;
+        name: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
+        categoryId: string;
+        images: string[];
+        active: boolean;
     }>;
     deleteProduct(id: string, req: any): Promise<{
         id: string;
-        name: string;
-        description: string;
-        specifications: import("@prisma/client/runtime/library").JsonValue | null;
-        images: string[];
-        active: boolean;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string;
+        description: string;
         sellerId: string | null;
         enterpriseId: string | null;
+        name: string;
+        specifications: import("@prisma/client/runtime/library").JsonValue | null;
+        categoryId: string;
+        images: string[];
+        active: boolean;
     }>;
 }

@@ -6,6 +6,9 @@ export declare class ShipperController {
     create(logisticsPartnerId: string, createShipperDto: CreateShipperDto): Promise<{
         user: {
             id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
             name: string;
             email: string;
             password: string;
@@ -14,18 +17,15 @@ export declare class ShipperController {
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
             verificationToken: string | null;
-            isActive: boolean;
-            createdAt: Date;
-            updatedAt: Date;
         };
         id: string;
+        status: import(".prisma/client").$Enums.ShipperStatus;
         createdAt: Date;
         updatedAt: Date;
-        rating: number | null;
         userId: string;
         active: boolean;
+        rating: number | null;
         currentLocation: import("@prisma/client/runtime/library").JsonValue | null;
-        status: import(".prisma/client").$Enums.ShipperStatus;
         totalDeliveries: number;
         totalRatings: number;
         deliveryRange: number;
@@ -34,13 +34,13 @@ export declare class ShipperController {
     }>;
     update(id: string, updateShipperDto: UpdateShipperDto): Promise<{
         id: string;
+        status: import(".prisma/client").$Enums.ShipperStatus;
         createdAt: Date;
         updatedAt: Date;
-        rating: number | null;
         userId: string;
         active: boolean;
+        rating: number | null;
         currentLocation: import("@prisma/client/runtime/library").JsonValue | null;
-        status: import(".prisma/client").$Enums.ShipperStatus;
         totalDeliveries: number;
         totalRatings: number;
         deliveryRange: number;
@@ -49,13 +49,13 @@ export declare class ShipperController {
     }>;
     updateLocation(id: string, updateLocationDto: UpdateLocationDto): Promise<{
         id: string;
+        status: import(".prisma/client").$Enums.ShipperStatus;
         createdAt: Date;
         updatedAt: Date;
-        rating: number | null;
         userId: string;
         active: boolean;
+        rating: number | null;
         currentLocation: import("@prisma/client/runtime/library").JsonValue | null;
-        status: import(".prisma/client").$Enums.ShipperStatus;
         totalDeliveries: number;
         totalRatings: number;
         deliveryRange: number;
@@ -65,6 +65,9 @@ export declare class ShipperController {
     findAll(logisticsPartnerId: string): Promise<({
         user: {
             id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
             name: string;
             email: string;
             password: string;
@@ -73,35 +76,32 @@ export declare class ShipperController {
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
             verificationToken: string | null;
-            isActive: boolean;
-            createdAt: Date;
-            updatedAt: Date;
         };
         assignedOrders: ({
             order: {
                 id: string;
+                status: import(".prisma/client").$Enums.OrderStatus;
+                paymentId: string | null;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                status: import(".prisma/client").$Enums.OrderStatus;
-                shippingFee: number;
-                paymentId: string | null;
                 subtotal: number;
+                shippingFee: number;
                 shopDiscount: number;
                 platformDiscount: number;
                 freeshipDiscount: number;
                 totalDiscount: number;
                 totalAmount: number;
+                userId: string;
             };
         } & {
             id: string;
+            status: import(".prisma/client").$Enums.LogisticsStatus;
             updatedAt: Date;
-            rating: number | null;
             sellerId: string | null;
             enterpriseId: string | null;
-            status: import(".prisma/client").$Enums.LogisticsStatus;
-            logisticsPartnerId: string;
             orderId: string;
+            rating: number | null;
+            logisticsPartnerId: string;
             shipperId: string | null;
             trackingCode: string;
             pickupAddress: string;
@@ -122,13 +122,13 @@ export declare class ShipperController {
         })[];
     } & {
         id: string;
+        status: import(".prisma/client").$Enums.ShipperStatus;
         createdAt: Date;
         updatedAt: Date;
-        rating: number | null;
         userId: string;
         active: boolean;
+        rating: number | null;
         currentLocation: import("@prisma/client/runtime/library").JsonValue | null;
-        status: import(".prisma/client").$Enums.ShipperStatus;
         totalDeliveries: number;
         totalRatings: number;
         deliveryRange: number;
@@ -138,6 +138,9 @@ export declare class ShipperController {
     findOne(id: string): Promise<{
         user: {
             id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            isActive: boolean;
             name: string;
             email: string;
             password: string;
@@ -146,35 +149,32 @@ export declare class ShipperController {
             role: import(".prisma/client").$Enums.Role;
             isVerified: boolean;
             verificationToken: string | null;
-            isActive: boolean;
-            createdAt: Date;
-            updatedAt: Date;
         };
         assignedOrders: ({
             order: {
                 id: string;
+                status: import(".prisma/client").$Enums.OrderStatus;
+                paymentId: string | null;
                 createdAt: Date;
                 updatedAt: Date;
-                userId: string;
-                status: import(".prisma/client").$Enums.OrderStatus;
-                shippingFee: number;
-                paymentId: string | null;
                 subtotal: number;
+                shippingFee: number;
                 shopDiscount: number;
                 platformDiscount: number;
                 freeshipDiscount: number;
                 totalDiscount: number;
                 totalAmount: number;
+                userId: string;
             };
         } & {
             id: string;
+            status: import(".prisma/client").$Enums.LogisticsStatus;
             updatedAt: Date;
-            rating: number | null;
             sellerId: string | null;
             enterpriseId: string | null;
-            status: import(".prisma/client").$Enums.LogisticsStatus;
-            logisticsPartnerId: string;
             orderId: string;
+            rating: number | null;
+            logisticsPartnerId: string;
             shipperId: string | null;
             trackingCode: string;
             pickupAddress: string;
@@ -195,13 +195,13 @@ export declare class ShipperController {
         })[];
     } & {
         id: string;
+        status: import(".prisma/client").$Enums.ShipperStatus;
         createdAt: Date;
         updatedAt: Date;
-        rating: number | null;
         userId: string;
         active: boolean;
+        rating: number | null;
         currentLocation: import("@prisma/client/runtime/library").JsonValue | null;
-        status: import(".prisma/client").$Enums.ShipperStatus;
         totalDeliveries: number;
         totalRatings: number;
         deliveryRange: number;
@@ -210,13 +210,13 @@ export declare class ShipperController {
     }>;
     assignOrder(id: string, orderId: string): Promise<{
         id: string;
+        status: import(".prisma/client").$Enums.LogisticsStatus;
         updatedAt: Date;
-        rating: number | null;
         sellerId: string | null;
         enterpriseId: string | null;
-        status: import(".prisma/client").$Enums.LogisticsStatus;
-        logisticsPartnerId: string;
         orderId: string;
+        rating: number | null;
+        logisticsPartnerId: string;
         shipperId: string | null;
         trackingCode: string;
         pickupAddress: string;
@@ -237,13 +237,13 @@ export declare class ShipperController {
     }>;
     completeDelivery(orderId: string): Promise<{
         id: string;
+        status: import(".prisma/client").$Enums.LogisticsStatus;
         updatedAt: Date;
-        rating: number | null;
         sellerId: string | null;
         enterpriseId: string | null;
-        status: import(".prisma/client").$Enums.LogisticsStatus;
-        logisticsPartnerId: string;
         orderId: string;
+        rating: number | null;
+        logisticsPartnerId: string;
         shipperId: string | null;
         trackingCode: string;
         pickupAddress: string;

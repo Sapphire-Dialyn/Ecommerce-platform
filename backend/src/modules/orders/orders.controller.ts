@@ -5,17 +5,20 @@ import {
   Body,
   Patch,
   Param,
+  Query, // 👈 Thêm Query để lấy ?status=...
   UseGuards,
   Request,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/orders.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../auth/decorators/public.decorator';
+import { OrderStatus } from '@prisma/client';
 
 @ApiTags('orders')
 @Controller('orders')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
@@ -26,20 +29,30 @@ export class OrdersController {
     return this.ordersService.create(req.user.id, dto);
   }
 
-  @ApiOperation({ summary: 'Get all orders (user or admin)' })
-  @ApiResponse({ status: 200, description: 'Return all orders.' })
-  @Public()
+  // ==================================================================
+  // 👇 QUAN TRỌNG: Route tĩnh 'my-orders' phải đặt TRƯỚC route động ':id'
+  // ==================================================================
+  @ApiOperation({ summary: 'Get current user orders' })
+  @ApiResponse({ status: 200, description: 'Return list of my orders.' })
+  @ApiQuery({ name: 'status', required: false, enum: OrderStatus })
+  @Get('my-orders')
+  findMyOrders(@Request() req, @Query('status') status?: OrderStatus) {
+    // Gọi hàm riêng cho my-orders để clear logic
+    return this.ordersService.findMyOrders(req.user.id, status);
+  }
+
+  @ApiOperation({ summary: 'Get all orders (Admin/Manager filter)' })
+  @ApiResponse({ status: 200, description: 'Return list of orders.' })
   @Get()
   findAll(@Request() req) {
-    return this.ordersService.findAll(req.user?.id, req.user?.role);
+    return this.ordersService.findAll(req.user.id, req.user.role);
   }
 
   @ApiOperation({ summary: 'Get order by ID' })
-  @ApiResponse({ status: 200, description: 'Return the order.' })
-  @Public()
+  @ApiResponse({ status: 200, description: 'Return order details.' })
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req) {
-    return this.ordersService.findOne(id, req.user?.id, req.user?.role);
+    return this.ordersService.findOne(id, req.user.id, req.user.role);
   }
 
   @ApiOperation({ summary: 'Update order status' })

@@ -1,71 +1,105 @@
 import { OrdersService } from './orders.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/orders.dto';
+import { OrderStatus } from '@prisma/client';
 export declare class OrdersController {
     private readonly ordersService;
     constructor(ordersService: OrdersService);
     create(req: any, dto: CreateOrderDto): Promise<{
+        payment: {
+            id: string;
+            status: import(".prisma/client").$Enums.PaymentStatus;
+            createdAt: Date;
+            orderId: string;
+            method: import(".prisma/client").$Enums.PaymentMethod;
+            transactionId: string | null;
+            amount: number;
+        };
         orderItems: {
             id: string;
             sellerId: string | null;
             enterpriseId: string | null;
+            quantity: number;
             price: number;
             productId: string;
-            quantity: number;
             variantId: string | null;
             orderId: string;
         }[];
-        appliedVouchers: {
-            id: string;
-            isActive: boolean;
-            description: string | null;
-            sellerId: string | null;
-            enterpriseId: string | null;
-            title: string;
-            code: string;
-            scope: import(".prisma/client").$Enums.VoucherScope;
-            discountType: import(".prisma/client").$Enums.DiscountType;
-            discountValue: number;
-            maxDiscountValue: number | null;
-            minOrderValue: number | null;
-            startDate: Date;
-            endDate: Date;
-            usageLimit: number | null;
-            usedCount: number;
-        }[];
     } & {
         id: string;
+        status: import(".prisma/client").$Enums.OrderStatus;
+        paymentId: string | null;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
-        status: import(".prisma/client").$Enums.OrderStatus;
-        shippingFee: number;
-        paymentId: string | null;
         subtotal: number;
+        shippingFee: number;
         shopDiscount: number;
         platformDiscount: number;
         freeshipDiscount: number;
         totalDiscount: number;
         totalAmount: number;
+        userId: string;
     }>;
-    findAll(req: any): Promise<({
-        orderItems: {
+    findMyOrders(req: any, status?: OrderStatus): Promise<({
+        payment: {
+            id: string;
+            status: import(".prisma/client").$Enums.PaymentStatus;
+            createdAt: Date;
+            orderId: string;
+            method: import(".prisma/client").$Enums.PaymentMethod;
+            transactionId: string | null;
+            amount: number;
+        };
+        orderItems: ({
+            product: {
+                id: string;
+                name: string;
+                images: string[];
+            };
+            variant: {
+                id: string;
+                color: string;
+                size: string;
+            };
+        } & {
             id: string;
             sellerId: string | null;
             enterpriseId: string | null;
+            quantity: number;
             price: number;
             productId: string;
-            quantity: number;
             variantId: string | null;
             orderId: string;
-        }[];
+        })[];
+    } & {
+        id: string;
+        status: import(".prisma/client").$Enums.OrderStatus;
+        paymentId: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        subtotal: number;
+        shippingFee: number;
+        shopDiscount: number;
+        platformDiscount: number;
+        freeshipDiscount: number;
+        totalDiscount: number;
+        totalAmount: number;
+        userId: string;
+    })[]>;
+    findAll(req: any): Promise<({
+        payment: {
+            id: string;
+            status: import(".prisma/client").$Enums.PaymentStatus;
+            createdAt: Date;
+            orderId: string;
+            method: import(".prisma/client").$Enums.PaymentMethod;
+            transactionId: string | null;
+            amount: number;
+        };
         appliedVouchers: {
             id: string;
-            isActive: boolean;
-            description: string | null;
-            sellerId: string | null;
-            enterpriseId: string | null;
-            title: string;
             code: string;
+            title: string;
+            description: string | null;
             scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
@@ -75,41 +109,79 @@ export declare class OrdersController {
             endDate: Date;
             usageLimit: number | null;
             usedCount: number;
+            isActive: boolean;
+            sellerId: string | null;
+            enterpriseId: string | null;
         }[];
+        orderItems: ({
+            product: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                description: string;
+                sellerId: string | null;
+                enterpriseId: string | null;
+                name: string;
+                specifications: import("@prisma/client/runtime/library").JsonValue | null;
+                categoryId: string;
+                images: string[];
+                active: boolean;
+            };
+            variant: {
+                id: string;
+                price: number;
+                productId: string;
+                color: string | null;
+                size: string | null;
+                stock: number;
+                sku: string | null;
+            };
+        } & {
+            id: string;
+            sellerId: string | null;
+            enterpriseId: string | null;
+            quantity: number;
+            price: number;
+            productId: string;
+            variantId: string | null;
+            orderId: string;
+        })[];
     } & {
         id: string;
+        status: import(".prisma/client").$Enums.OrderStatus;
+        paymentId: string | null;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
-        status: import(".prisma/client").$Enums.OrderStatus;
-        shippingFee: number;
-        paymentId: string | null;
         subtotal: number;
+        shippingFee: number;
         shopDiscount: number;
         platformDiscount: number;
         freeshipDiscount: number;
         totalDiscount: number;
         totalAmount: number;
+        userId: string;
     })[]>;
     findOne(id: string, req: any): Promise<{
-        orderItems: {
+        user: {
             id: string;
-            sellerId: string | null;
-            enterpriseId: string | null;
-            price: number;
-            productId: string;
-            quantity: number;
-            variantId: string | null;
+            name: string;
+            email: string;
+            phone: string;
+        };
+        payment: {
+            id: string;
+            status: import(".prisma/client").$Enums.PaymentStatus;
+            createdAt: Date;
             orderId: string;
-        }[];
+            method: import(".prisma/client").$Enums.PaymentMethod;
+            transactionId: string | null;
+            amount: number;
+        };
         appliedVouchers: {
             id: string;
-            isActive: boolean;
-            description: string | null;
-            sellerId: string | null;
-            enterpriseId: string | null;
-            title: string;
             code: string;
+            title: string;
+            description: string | null;
             scope: import(".prisma/client").$Enums.VoucherScope;
             discountType: import(".prisma/client").$Enums.DiscountType;
             discountValue: number;
@@ -119,35 +191,71 @@ export declare class OrdersController {
             endDate: Date;
             usageLimit: number | null;
             usedCount: number;
+            isActive: boolean;
+            sellerId: string | null;
+            enterpriseId: string | null;
         }[];
+        orderItems: ({
+            product: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                description: string;
+                sellerId: string | null;
+                enterpriseId: string | null;
+                name: string;
+                specifications: import("@prisma/client/runtime/library").JsonValue | null;
+                categoryId: string;
+                images: string[];
+                active: boolean;
+            };
+            variant: {
+                id: string;
+                price: number;
+                productId: string;
+                color: string | null;
+                size: string | null;
+                stock: number;
+                sku: string | null;
+            };
+        } & {
+            id: string;
+            sellerId: string | null;
+            enterpriseId: string | null;
+            quantity: number;
+            price: number;
+            productId: string;
+            variantId: string | null;
+            orderId: string;
+        })[];
     } & {
         id: string;
+        status: import(".prisma/client").$Enums.OrderStatus;
+        paymentId: string | null;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
-        status: import(".prisma/client").$Enums.OrderStatus;
-        shippingFee: number;
-        paymentId: string | null;
         subtotal: number;
+        shippingFee: number;
         shopDiscount: number;
         platformDiscount: number;
         freeshipDiscount: number;
         totalDiscount: number;
         totalAmount: number;
+        userId: string;
     }>;
     updateStatus(id: string, dto: UpdateOrderStatusDto, req: any): Promise<{
         id: string;
+        status: import(".prisma/client").$Enums.OrderStatus;
+        paymentId: string | null;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
-        status: import(".prisma/client").$Enums.OrderStatus;
-        shippingFee: number;
-        paymentId: string | null;
         subtotal: number;
+        shippingFee: number;
         shopDiscount: number;
         platformDiscount: number;
         freeshipDiscount: number;
         totalDiscount: number;
         totalAmount: number;
+        userId: string;
     }>;
 }

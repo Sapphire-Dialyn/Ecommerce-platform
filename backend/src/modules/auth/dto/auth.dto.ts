@@ -1,59 +1,78 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail, IsEnum, IsOptional, ValidateIf } from 'class-validator';
+// Chỉ giữ lại các validator đơn giản, bỏ IsEmail, IsStrongPassword, MinLength
+import { IsString, IsOptional, IsEnum, IsBoolean } from 'class-validator';
 import { Role } from '@prisma/client';
+import { Transform } from 'class-transformer'; // 👈 Cần import Transform
 
 export class RegisterDto {
   @ApiProperty()
-  @IsEmail()
+  @IsString() // 👈 Thay IsEmail bằng IsString để nhập "admin" cũng được
   email: string;
 
   @ApiProperty()
-  @IsString()
+  @IsString() // 👈 Bỏ MinLength(6) và IsStrongPassword để nhập "123" cũng được
   password: string;
 
   @ApiProperty()
   @IsString()
   name: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  phone?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  avatar?: string;
-
-  @ApiProperty({ enum: Role, required: false })
-  @IsOptional()
+  @ApiProperty({ enum: Role })
   @IsEnum(Role)
-  role?: Role;
+  role: Role;
 
+  // --- Dành cho Seller ---
   @ApiProperty({ required: false })
-  @ValidateIf(o => o.role === Role.SELLER)
+  @IsOptional()
   @IsString()
   storeName?: string;
 
+  // --- Dành cho Enterprise ---
   @ApiProperty({ required: false })
-  @ValidateIf(o => o.role === Role.ENTERPRISE)
+  @IsOptional()
   @IsString()
   companyName?: string;
 
   @ApiProperty({ required: false })
-  @ValidateIf(o => o.role === Role.ENTERPRISE)
+  @IsOptional()
   @IsString()
   taxCode?: string;
+
+  // 👇 QUAN TRỌNG: Xử lý boolean từ FormData
+  // FormData luôn gửi "true" (string), cần ép kiểu về boolean
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  verified?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  officialBrand?: boolean;
+  
+  // Các trường file không cần khai báo trong DTO này vì lấy qua @UploadedFiles()
 }
 
 export class LoginDto {
   @ApiProperty()
-  @IsEmail()
+  @IsString() // Nới lỏng login luôn
   email: string;
 
   @ApiProperty()
   @IsString()
   password: string;
+}
+
+export class ChangePasswordDto {
+  @ApiProperty()
+  @IsString()
+  oldPassword: string;
+
+  @ApiProperty()
+  @IsString()
+  newPassword: string;
 }
 
 export class VerifyEmailDto {
@@ -64,6 +83,6 @@ export class VerifyEmailDto {
 
 export class ResendVerificationDto {
   @ApiProperty()
-  @IsEmail()
+  @IsString()
   email: string;
 }

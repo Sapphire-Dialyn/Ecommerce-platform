@@ -14,60 +14,60 @@ export declare class SellersController {
     } & {
         id: string;
         userId: string;
-        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
+        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
     }>;
     findAll(): Promise<({
-        products: {
-            id: string;
-            name: string;
-            variants: {
-                stock: number;
-                price: number;
-            }[];
-        }[];
         user: {
             id: string;
             name: string;
             email: string;
         };
+        products: {
+            id: string;
+            name: string;
+            variants: {
+                price: number;
+                stock: number;
+            }[];
+        }[];
     } & {
         id: string;
         userId: string;
-        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
+        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
     })[]>;
     findOne(id: string): Promise<{
-        products: {
-            id: string;
-            name: string;
-            variants: {
-                stock: number;
-                price: number;
-            }[];
-        }[];
         user: {
             id: string;
             name: string;
             email: string;
         };
+        products: {
+            id: string;
+            name: string;
+            variants: {
+                price: number;
+                stock: number;
+            }[];
+        }[];
     } & {
         id: string;
         userId: string;
-        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
+        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
@@ -81,10 +81,10 @@ export declare class SellersController {
     } & {
         id: string;
         userId: string;
-        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
+        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;
@@ -98,10 +98,10 @@ export declare class SellersController {
     } & {
         id: string;
         userId: string;
-        storeName: string;
         verified: boolean;
         rating: number | null;
         logoUrl: string | null;
+        storeName: string;
         businessDocumentUrl: string | null;
         identityDocumentUrl: string | null;
         addressDocumentUrl: string | null;

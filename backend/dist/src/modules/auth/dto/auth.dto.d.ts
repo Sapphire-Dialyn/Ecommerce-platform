@@ -3,16 +3,20 @@ export declare class RegisterDto {
     email: string;
     password: string;
     name: string;
-    phone?: string;
-    avatar?: string;
-    role?: Role;
+    role: Role;
     storeName?: string;
     companyName?: string;
     taxCode?: string;
+    verified?: boolean;
+    officialBrand?: boolean;
 }
 export declare class LoginDto {
     email: string;
     password: string;
+}
+export declare class ChangePasswordDto {
+    oldPassword: string;
+    newPassword: string;
 }
 export declare class VerifyEmailDto {
     token: string;

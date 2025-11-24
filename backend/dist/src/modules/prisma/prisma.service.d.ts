@@ -11,13 +11,13 @@ export declare class PrismaService extends PrismaClient implements OnModuleInit,
         longitude: number;
     }, deliveryRange?: number): Promise<{
         id: string;
+        status: import(".prisma/client").$Enums.ShipperStatus;
         createdAt: Date;
         updatedAt: Date;
-        rating: number | null;
         userId: string;
         active: boolean;
+        rating: number | null;
         currentLocation: Prisma.JsonValue | null;
-        status: import(".prisma/client").$Enums.ShipperStatus;
         totalDeliveries: number;
         totalRatings: number;
         deliveryRange: number;
@@ -26,13 +26,13 @@ export declare class PrismaService extends PrismaClient implements OnModuleInit,
     }[]>;
     updateShipperStatus(shipperId: string, status: ShipperStatus): Promise<{
         id: string;
+        status: import(".prisma/client").$Enums.ShipperStatus;
         createdAt: Date;
         updatedAt: Date;
-        rating: number | null;
         userId: string;
         active: boolean;
+        rating: number | null;
         currentLocation: Prisma.JsonValue | null;
-        status: import(".prisma/client").$Enums.ShipperStatus;
         totalDeliveries: number;
         totalRatings: number;
         deliveryRange: number;
@@ -41,13 +41,13 @@ export declare class PrismaService extends PrismaClient implements OnModuleInit,
     }>;
     updateOrderStatus(orderId: string, status: LogisticsStatus, data?: Prisma.LogisticsOrderUpdateInput): Promise<{
         id: string;
+        status: import(".prisma/client").$Enums.LogisticsStatus;
         updatedAt: Date;
-        rating: number | null;
         sellerId: string | null;
         enterpriseId: string | null;
-        status: import(".prisma/client").$Enums.LogisticsStatus;
-        logisticsPartnerId: string;
         orderId: string;
+        rating: number | null;
+        logisticsPartnerId: string;
         shipperId: string | null;
         trackingCode: string;
         pickupAddress: string;
