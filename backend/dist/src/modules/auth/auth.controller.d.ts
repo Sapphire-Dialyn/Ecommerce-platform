@@ -41,10 +41,10 @@ export declare class AuthController {
         seller: {
             id: string;
             userId: string;
+            storeName: string;
             verified: boolean;
             rating: number | null;
             logoUrl: string | null;
-            storeName: string;
             businessDocumentUrl: string | null;
             identityDocumentUrl: string | null;
             addressDocumentUrl: string | null;
@@ -52,22 +52,22 @@ export declare class AuthController {
         enterprise: {
             id: string;
             userId: string;
-            companyName: string;
-            taxCode: string | null;
             verified: boolean;
-            officialBrand: boolean;
             rating: number | null;
             logoUrl: string | null;
+            companyName: string;
+            taxCode: string | null;
+            officialBrand: boolean;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
         };
         addresses: {
             id: string;
+            phone: string;
             createdAt: Date;
             updatedAt: Date;
             userId: string;
-            phone: string;
             label: string | null;
             fullName: string;
             province: string;
@@ -77,15 +77,15 @@ export declare class AuthController {
             isDefault: boolean;
         }[];
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        isActive: boolean;
-        name: string;
         email: string;
+        name: string;
         avatar: string | null;
         phone: string | null;
         role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
         verificationToken: string | null;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
 }

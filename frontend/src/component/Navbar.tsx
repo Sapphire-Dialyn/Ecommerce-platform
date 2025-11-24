@@ -1,8 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation'; // 👈 Thêm usePathname
 import { 
   ShoppingBag, Search, Menu, User, LogOut, 
   LayoutDashboard, Store, Building2, Truck, FileText 
@@ -12,24 +11,21 @@ import { logout, UserRole } from '@/store/slices/authSlice';
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname(); // 👈 Lấy path hiện tại
   const dispatch = useAppDispatch();
   
   // 1. LẤY DỮ LIỆU TỪ REDUX STORE
-  // Lấy user và trạng thái loading từ Auth Slice
   const { user, isLoading } = useAppSelector((state) => state.auth); 
-  
-  // Lấy giỏ hàng từ Cart Slice
   const cartItems = useAppSelector((state) => state.cart.items);
   const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   // 2. XỬ LÝ ĐĂNG XUẤT
   const handleLogout = () => {
-    dispatch(logout()); // Xóa Redux & LocalStorage
-    router.push('/login'); // Chuyển về trang đăng nhập
+    dispatch(logout()); 
+    router.push('/login'); 
   };
 
   // 3. LOGIC ĐIỀU HƯỚNG DỰA TRÊN ROLE
-  // Giúp đưa người dùng về đúng trang quản lý của họ
   const getDashboardLink = (role: UserRole) => {
     switch (role) {
         case 'ADMIN': return '/admin';
@@ -37,7 +33,7 @@ export default function Navbar() {
         case 'ENTERPRISE': return '/enterprise'; 
         case 'SHIPPER': return '/shipper'; 
         case 'LOGISTICS': return '/logistics';
-        default: return '/profile'; // CUSTOMER về trang cá nhân
+        default: return '/profile'; 
     }
   };
 
@@ -69,18 +65,34 @@ export default function Navbar() {
           </div>
         </Link>
 
-        {/* --- 2. DESKTOP MENU --- */}
+        {/* --- 2. DESKTOP MENU (ĐÃ UPDATE ACTIVE STATE) --- */}
         <div className="hidden lg:flex items-center gap-6 xl:gap-8">
-          {navLinks.map((link) => (
-            <Link 
-              key={link.path} 
-              href={link.path}
-              className="text-base font-bold text-gray-600 transition-all duration-300 hover:text-fuchsia-600 relative group/link"
-            >
-              {link.name}
-              <span className="absolute inset-x-0 bottom-0 h-0.5 bg-fuchsia-600 transform scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300"></span>
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            // Logic Active: 
+            // - Trang chủ ('/'): Phải khớp hoàn toàn
+            // - Trang con: Phải bắt đầu bằng path (VD: /shop/products/abc vẫn active Cửa hàng)
+            const isActive = link.path === '/' 
+                ? pathname === '/' 
+                : pathname.startsWith(link.path);
+
+            return (
+              <Link 
+                key={link.path} 
+                href={link.path}
+                className={`text-base font-bold transition-all duration-300 relative group/link
+                  ${isActive ? 'text-fuchsia-600' : 'text-gray-600 hover:text-fuchsia-600'}
+                `}
+              >
+                {link.name}
+                {/* Dòng kẻ dưới: Active thì hiện luôn (scale-100), không active thì hover mới hiện */}
+                <span 
+                    className={`absolute inset-x-0 bottom-0 h-0.5 bg-fuchsia-600 transform transition-transform duration-300 origin-left
+                    ${isActive ? 'scale-x-100' : 'scale-x-0 group-hover/link:scale-x-100'}
+                    `}
+                ></span>
+              </Link>
+            );
+          })}
         </div>
 
         {/* --- 3. RIGHT ACTIONS --- */}
@@ -94,12 +106,12 @@ export default function Navbar() {
           {/* --- KHU VỰC AUTHENTICATION --- */}
           <div className="hidden md:flex items-center gap-3">
             
-            {/* CASE A: ĐANG TẢI (F5 trang) -> Hiện khung xương */}
+            {/* CASE A: ĐANG TẢI */}
             {isLoading ? (
                <div className="w-32 h-10 bg-gray-100 rounded-full animate-pulse"></div>
             ) : user ? (
               
-              // CASE B: ĐÃ ĐĂNG NHẬP -> Hiện Avatar & Dropdown
+              // CASE B: ĐÃ ĐĂNG NHẬP
               <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
                 <div className="text-right hidden xl:block">
                    <p className="text-[10px] uppercase font-bold text-fuchsia-600 tracking-wider">{user.role}</p>
@@ -107,7 +119,7 @@ export default function Navbar() {
                 </div>
                 
                 <div className="relative group py-2">
-                    {/* Avatar Clickable */}
+                    {/* Avatar */}
                     <Link href={getDashboardLink(user.role)} className="cursor-pointer">
                         <img 
                             src={user.avatar || 'https://via.placeholder.com/40'} 
@@ -119,14 +131,12 @@ export default function Navbar() {
                     {/* Dropdown Menu */}
                     <div className="absolute right-0 top-full mt-0 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform translate-y-4 group-hover:translate-y-0 origin-top-right overflow-hidden z-50">
                         
-                        {/* Header Mobile (chỉ hiện khi menu xổ xuống) */}
                         <div className="px-4 py-3 border-b border-gray-50 xl:hidden">
                             <p className="text-xs font-bold text-fuchsia-600">{user.role}</p>
                             <p className="text-sm font-bold text-gray-900 truncate">{user.name}</p>
                         </div>
 
                         <div className="p-2 space-y-1">
-                            {/* Menu Quản Lý (Chỉ hiện cho Admin/Seller/Enterprise...) */}
                             {user.role !== 'CUSTOMER' && (
                                 <Link href={getDashboardLink(user.role)} className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-xl hover:bg-fuchsia-50 hover:text-fuchsia-600 transition">
                                     {user.role === 'ADMIN' && <LayoutDashboard size={18} />}
@@ -137,12 +147,10 @@ export default function Navbar() {
                                 </Link>
                             )}
 
-                            {/* Menu Chung */}
                             <Link href="/profile" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-xl hover:bg-fuchsia-50 hover:text-fuchsia-600 transition">
                                 <User size={18} /> Hồ sơ cá nhân
                             </Link>
                             
-                            {/* Menu Riêng cho Khách hàng */}
                             {user.role === 'CUSTOMER' && (
                                 <Link href="/profile/orders" className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 rounded-xl hover:bg-fuchsia-50 hover:text-fuchsia-600 transition">
                                     <FileText size={18} /> Đơn hàng của tôi
@@ -161,7 +169,7 @@ export default function Navbar() {
 
             ) : (
               
-              // CASE C: CHƯA ĐĂNG NHẬP -> Hiện nút Login/Register
+              // CASE C: CHƯA ĐĂNG NHẬP
               <div className="flex items-center gap-3">
                 <Link href="/login" className="px-5 py-3 text-sm font-bold text-gray-600 hover:text-fuchsia-700 hover:bg-fuchsia-50 rounded-full transition-all duration-300">
                   Đăng nhập
@@ -173,8 +181,13 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* --- 4. GIỎ HÀNG --- */}
-          <Link href="/cart" className="relative p-2 rounded-full hover:bg-fuchsia-50 text-gray-500 hover:text-fuchsia-600 transition group">
+          {/* --- 4. GIỎ HÀNG (Giữ nguyên active state cho cart) --- */}
+          <Link 
+            href="/cart" 
+            className={`relative p-2 rounded-full transition group
+              ${pathname === '/cart' ? 'text-fuchsia-600 bg-fuchsia-50' : 'text-gray-500 hover:bg-fuchsia-50 hover:text-fuchsia-600'}
+            `}
+          >
             <ShoppingBag size={24} />
             {totalItems > 0 && (
               <span className="absolute top-0 right-0 w-5 h-5 bg-fuchsia-600 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white shadow-sm group-hover:scale-110 transition">

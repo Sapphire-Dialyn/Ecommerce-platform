@@ -25,7 +25,7 @@ export const productService = {
     return res.data;
   },
 
-  // --- HELPER: Tạo FormData dùng chung cho Create/Update ---
+  // --- HELPER: Tạo FormData dùng chung ---
   _createFormData: (productData: any, file?: File | null) => {
     const formData = new FormData();
     
@@ -50,16 +50,44 @@ export const productService = {
     return formData;
   },
 
-  // 4. Tạo sản phẩm
+  // 4. Tạo sản phẩm (ĐÃ SỬA: Tự động thêm [Tên Shop])
   createProduct: async (productData: any, file?: File) => {
-    const formData = productService._createFormData(productData, file);
+    // 1. Lấy thông tin user hiện tại từ LocalStorage
+    const userStr = localStorage.getItem('currentUser');
+    let prefix = '';
+
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        
+        // 2. Kiểm tra Role để lấy tên Shop phù hợp
+        if (user.role === 'SELLER' && user.seller?.storeName) {
+          prefix = `[${user.seller.storeName}]`;
+        } else if (user.role === 'ENTERPRISE' && user.enterprise?.companyName) {
+          prefix = `[${user.enterprise.companyName}]`;
+        }
+      } catch (e) {
+        console.error("Lỗi parse user từ localStorage", e);
+      }
+    }
+
+    // 3. Gán tên mới: [Tên Shop] + Tên sản phẩm gốc
+    // Ví dụ: "[Bánh Vẽ Khổng Lồ] Kem Dưỡng..."
+    const finalName = prefix ? `${prefix} ${productData.name}` : productData.name;
+    
+    // Tạo object mới với tên đã sửa
+    const dataWithPrefix = { ...productData, name: finalName };
+
+    // 4. Gọi helper tạo form data
+    const formData = productService._createFormData(dataWithPrefix, file);
+    
     const res = await api.post('/products', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return res.data;
   },
 
-  // 5. Cập nhật sản phẩm (ĐÃ SỬA SIGNATURE ĐỂ ĐỒNG BỘ)
+  // 5. Cập nhật sản phẩm (Giữ nguyên, KHÔNG thêm prefix khi update để tránh bị trùng lặp)
   updateProduct: async (id: string, productData: any, file?: File | null) => {
     const formData = productService._createFormData(productData, file);
     const res = await api.patch(`/products/${id}`, formData, {

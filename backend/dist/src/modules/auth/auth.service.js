@@ -34,6 +34,11 @@ let AuthService = class AuthService {
         this.prisma = prisma;
     }
     async login(user) {
+        if (user.isActive === false) {
+            throw new common_1.ForbiddenException({
+                message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.',
+            });
+        }
         const payload = { username: user.email, sub: user.id, role: user.role };
         return {
             access_token: this.jwtService.sign(payload),
@@ -120,6 +125,8 @@ let AuthService = class AuthService {
         const user = await this.usersService.findOne(userId);
         if (!user)
             throw new common_1.UnauthorizedException();
+        if (user.isActive === false)
+            throw new common_1.ForbiddenException('User is banned');
         const payload = { username: user.email, sub: user.id, role: user.role };
         return {
             access_token: this.jwtService.sign(payload),

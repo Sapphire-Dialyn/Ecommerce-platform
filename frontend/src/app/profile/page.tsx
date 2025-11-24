@@ -3,11 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@/hook/useRedux';
 import { userService } from '@/services/user.service';
-import { loginSuccess } from '@/store/slices/authSlice'; // Để cập nhật lại Redux sau khi sửa
+import { loginSuccess } from '@/store/slices/authSlice'; 
 import { toast } from 'react-hot-toast';
 import { 
   User, Phone, Mail, Building2, Store, 
-  Camera, Loader2, Save, MapPin, ShieldCheck 
+  Camera, Loader2, Save, MapPin, ShieldCheck, Upload
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -15,7 +15,7 @@ export default function ProfilePage() {
   const { user } = useAppSelector((state) => state.auth);
 
   const [loading, setLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(true); // Mặc định cho phép sửa luôn cho tiện
+  // const [isEditing, setIsEditing] = useState(true); // Luôn active để sửa
 
   // State dữ liệu form
   const [formData, setFormData] = useState({
@@ -45,7 +45,6 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       if (!user) return;
       try {
-        // Gọi API lấy thông tin mới nhất (có thể user trong redux chưa đủ chi tiết seller/enterprise)
         const fullUserData = await userService.getMe(); 
         
         setFormData({
@@ -89,8 +88,6 @@ export default function ProfilePage() {
     try {
       const updatedUser = await userService.updateProfile(formData, avatarFile, logoFile);
       
-      // Cập nhật lại Redux store để Header/Navbar nhận diện thay đổi mới
-      // Lưu ý: Backend trả về cấu trúc { user: ... } hay trực tiếp user thì sửa lại cho khớp
       dispatch(loginSuccess({ 
           user: updatedUser, 
           token: localStorage.getItem('accessToken') || '' 
@@ -110,25 +107,29 @@ export default function ProfilePage() {
   const isSeller = user.role === 'SELLER';
   const isEnterprise = user.role === 'ENTERPRISE';
 
+  // Style chung
+  const labelClass = "block text-sm font-bold text-gray-900 uppercase tracking-wide mb-2";
+  const inputClass = "w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 text-gray-900 font-bold placeholder:text-gray-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-fuchsia-500 focus:border-transparent transition-all duration-200 shadow-sm disabled:bg-gray-100 disabled:text-gray-500";
+
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-serif font-bold text-gray-900">Hồ sơ cá nhân</h1>
-          <p className="text-gray-500">Quản lý thông tin tài khoản và bảo mật</p>
+        <div className="mb-10 text-center">
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-2">HỒ SƠ CÁ NHÂN</h1>
+          <p className="text-gray-500 font-medium">Quản lý thông tin tài khoản và bảo mật</p>
         </div>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* --- COL 1: AVATAR & BASIC INFO --- */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-8">
             
             {/* Avatar Card */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center text-center">
+            <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 flex flex-col items-center text-center">
               <div className="relative group cursor-pointer" onClick={() => avatarInputRef.current?.click()}>
-                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-fuchsia-100 shadow-inner">
+                <div className="w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-2xl ring-4 ring-fuchsia-50 transition-transform transform group-hover:scale-105">
                   <img 
                     src={avatarPreview || "https://via.placeholder.com/150"} 
                     alt="Avatar" 
@@ -136,8 +137,8 @@ export default function ProfilePage() {
                   />
                 </div>
                 {/* Overlay Camera Icon */}
-                <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="text-white" size={24} />
+                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                  <Camera className="text-white drop-shadow-md" size={32} />
                 </div>
                 <input 
                   type="file" 
@@ -148,23 +149,35 @@ export default function ProfilePage() {
                 />
               </div>
               
-              <h2 className="mt-4 text-xl font-bold text-gray-900">{formData.name || 'Người dùng'}</h2>
-              <p className="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full mt-2">
-                {user.role}
-              </p>
+              <h2 className="mt-6 text-2xl font-extrabold text-gray-900">{formData.name || 'Người dùng'}</h2>
+              
+              <div className="mt-3 inline-flex items-center px-4 py-1.5 rounded-full bg-fuchsia-100 text-fuchsia-700 border border-fuchsia-200">
+                <ShieldCheck size={16} className="mr-2" />
+                <span className="text-xs font-bold uppercase tracking-wider">{user.role}</span>
+              </div>
             </div>
 
             {/* Role Specific Logo (Seller/Enterprise) */}
             {(isSeller || isEnterprise) && (
-               <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col items-center text-center">
-                 <h3 className="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Logo Thương Hiệu</h3>
-                 <div className="relative group cursor-pointer w-full aspect-video rounded-xl overflow-hidden border-2 border-dashed border-gray-300 hover:border-fuchsia-400 transition bg-gray-50" onClick={() => logoInputRef.current?.click()}>
+               <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 flex flex-col items-center text-center">
+                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-4 border-b-2 border-fuchsia-500 pb-1 inline-block">
+                    Logo Thương Hiệu
+                 </h3>
+                 <div 
+                    className="relative group cursor-pointer w-full aspect-video rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 hover:border-fuchsia-500 hover:bg-fuchsia-50 transition-all duration-300" 
+                    onClick={() => logoInputRef.current?.click()}
+                 >
                     {logoPreview ? (
-                        <img src={logoPreview} className="w-full h-full object-contain" alt="Logo" />
+                        <>
+                            <img src={logoPreview} className="w-full h-full object-contain p-2" alt="Logo" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                <p className="text-white font-bold flex items-center gap-2"><Upload size={20}/> Đổi Logo</p>
+                            </div>
+                        </>
                     ) : (
-                        <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                            <Building2 size={32} />
-                            <span className="text-xs mt-2">Tải lên Logo</span>
+                        <div className="flex flex-col items-center justify-center h-full text-gray-400 group-hover:text-fuchsia-600 transition-colors">
+                            <Building2 size={40} className="mb-2" />
+                            <span className="text-sm font-bold uppercase">Tải lên Logo</span>
                         </div>
                     )}
                     <input 
@@ -182,55 +195,59 @@ export default function ProfilePage() {
 
           {/* --- COL 2: FORM DETAILS --- */}
           <div className="lg:col-span-2">
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Thông tin chi tiết</h3>
+            <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-xl border border-gray-100">
+              
+              <div className="flex flex-col sm:flex-row items-center justify-between mb-8 pb-6 border-b border-gray-100 gap-4">
+                <h3 className="text-2xl font-extrabold text-gray-900 uppercase tracking-tight flex items-center gap-2">
+                    <User className="text-fuchsia-600" size={28}/>
+                    Thông tin chi tiết
+                </h3>
                 {/* Nút Save */}
                 <button 
                   type="submit" 
                   disabled={loading}
-                  className="flex items-center gap-2 bg-fuchsia-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-fuchsia-700 transition shadow-lg shadow-fuchsia-200 disabled:opacity-70"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-fuchsia-600 text-white px-8 py-3 rounded-xl font-bold text-lg hover:bg-fuchsia-700 transition shadow-lg shadow-fuchsia-200 disabled:opacity-70 transform active:scale-95"
                 >
-                  {loading ? <Loader2 className="animate-spin" size={20} /> : <><Save size={20} /> Lưu thay đổi</>}
+                  {loading ? <Loader2 className="animate-spin" size={24} /> : <><Save size={20} /> LƯU THAY ĐỔI</>}
                 </button>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-8">
                 
                 {/* 1. THÔNG TIN TÀI KHOẢN (Read only Email) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+                        <label className={labelClass}>Họ và tên</label>
                         <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                             <input 
                                 type="text" 
-                                className="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-fuchsia-500 outline-none transition"
+                                className={inputClass}
                                 value={formData.name}
                                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                             />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email (Không thể đổi)</label>
+                        <label className={labelClass}>Email (Cố định)</label>
                         <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                             <input 
                                 type="email" 
                                 disabled
-                                className="w-full pl-10 pr-4 py-3 border rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed"
+                                className={`${inputClass} cursor-not-allowed opacity-80`}
                                 value={formData.email}
                             />
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                    <div className="md:col-span-2">
+                        <label className={labelClass}>Số điện thoại</label>
                         <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                             <input 
                                 type="text" 
-                                className="w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-fuchsia-500 outline-none transition"
-                                placeholder="Thêm số điện thoại"
+                                className={inputClass}
+                                placeholder="Cập nhật số điện thoại..."
                                 value={formData.phone}
                                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
                             />
@@ -238,55 +255,60 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
-                <hr className="border-gray-100" />
-
                 {/* 2. THÔNG TIN DOANH NGHIỆP / CỬA HÀNG (Conditional) */}
+                {(isSeller || isEnterprise) && <hr className="border-gray-100 my-4" />}
+
                 {isSeller && (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                        <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                            <Store className="text-fuchsia-600" size={20}/> Thông tin Cửa hàng
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                        <h4 className="font-extrabold text-xl text-gray-900 flex items-center gap-2">
+                            <Store className="text-fuchsia-600" size={24}/> THÔNG TIN CỬA HÀNG
                         </h4>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Tên cửa hàng</label>
-                            <input 
-                                type="text" 
-                                className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-fuchsia-500 outline-none"
-                                value={formData.storeName}
-                                onChange={(e) => setFormData({...formData, storeName: e.target.value})}
-                            />
+                            <label className={labelClass}>Tên cửa hàng</label>
+                            <div className="relative">
+                                <input 
+                                    type="text" 
+                                    className={`${inputClass} pl-4`} // Override padding left vì ko có icon
+                                    placeholder="Nhập tên cửa hàng..."
+                                    value={formData.storeName}
+                                    onChange={(e) => setFormData({...formData, storeName: e.target.value})}
+                                />
+                            </div>
                         </div>
                     </div>
                 )}
 
                 {isEnterprise && (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                        <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                            <Building2 className="text-fuchsia-600" size={20}/> Thông tin Doanh nghiệp
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+                        <h4 className="font-extrabold text-xl text-gray-900 flex items-center gap-2">
+                            <Building2 className="text-fuchsia-600" size={24}/> THÔNG TIN DOANH NGHIỆP
                         </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tên công ty</label>
+                                <label className={labelClass}>Tên công ty</label>
                                 <input 
                                     type="text" 
-                                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-fuchsia-500 outline-none"
+                                    className={`${inputClass} pl-4`}
+                                    placeholder="Công ty TNHH..."
                                     value={formData.companyName}
                                     onChange={(e) => setFormData({...formData, companyName: e.target.value})}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Mã số thuế</label>
+                                <label className={labelClass}>Mã số thuế</label>
                                 <input 
                                     type="text" 
-                                    className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-fuchsia-500 outline-none font-mono"
+                                    className={`${inputClass} pl-4 font-mono tracking-wider`}
+                                    placeholder="0123456789"
                                     value={formData.taxCode}
                                     onChange={(e) => setFormData({...formData, taxCode: e.target.value})}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái xác thực</label>
-                                <div className="w-full px-4 py-3 border rounded-xl bg-gray-50 text-gray-500 flex items-center gap-2">
-                                    <ShieldCheck size={18} className={user.enterprise?.verified ? 'text-green-500' : 'text-gray-400'} />
-                                    {user.enterprise?.verified ? 'Đã xác thực' : 'Đang chờ duyệt / Chưa xác thực'}
+                                <label className={labelClass}>Trạng thái xác thực</label>
+                                <div className={`w-full px-4 py-3 rounded-xl border flex items-center gap-3 font-bold ${user.enterprise?.verified ? 'bg-green-50 border-green-200 text-green-700' : 'bg-orange-50 border-orange-200 text-orange-700'}`}>
+                                    <ShieldCheck size={20} />
+                                    {user.enterprise?.verified ? 'ĐÃ XÁC THỰC' : 'ĐANG CHỜ DUYỆT'}
                                 </div>
                             </div>
                         </div>
