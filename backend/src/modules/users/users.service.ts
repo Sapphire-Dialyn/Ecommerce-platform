@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto, UpdateUserDto, AddAddressDto } from './dto/users.dto';
-import { UpdateUserProfileDto } from './dto/update-user.dto'; // Import DTO mới
+import { UpdateUserProfileDto } from './dto/update-user.dto'; 
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { v2 as cloudinary } from 'cloudinary';
@@ -16,7 +16,6 @@ export class UsersService {
     private prisma: PrismaService,
     private configService: ConfigService
   ) {
-    // Cấu hình Cloudinary
     const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
     const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY');
     const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
@@ -32,7 +31,6 @@ export class UsersService {
     });
   }
 
-  // Helper upload ảnh lên Cloudinary
   private async uploadToCloudinary(file: Express.Multer.File, folder: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
@@ -49,31 +47,28 @@ export class UsersService {
     });
   }
 
-  // --- GET PROFILE (Full Info cho trang Profile) ---
+  // --- GET PROFILE ---
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
         seller: true,
         enterprise: true,
-        addresses: true, // Có thể include thêm address nếu cần
+        addresses: true,
       },
     });
     if (!user) throw new NotFoundException('User not found');
-    
-    // Loại bỏ password trước khi trả về
     const { password, ...result } = user; 
     return result;
   }
 
-  // --- UPDATE PROFILE (Bao gồm upload ảnh & update Seller/Enterprise) ---
+  // --- UPDATE PROFILE ---
   async updateProfile(
     userId: string, 
-    role: string, // Role lấy từ token (req.user.role) - Role trong schema là enum nhưng ở đây nhận string cũng được
+    role: string, 
     dto: UpdateUserProfileDto, 
     files?: { avatar?: Express.Multer.File[], logo?: Express.Multer.File[] }
   ) {
-    // 1. Xử lý Upload ảnh
     let avatarUrl: string | undefined;
     let logoUrl: string | undefined;
 
@@ -84,8 +79,6 @@ export class UsersService {
       logoUrl = await this.uploadToCloudinary(files.logo[0], 'logos');
     }
 
-    // 2. Update User cơ bản (Name, Phone, Avatar)
-    // Tạo object data dynamic để chỉ update những trường có gửi lên
     const userDataToUpdate: any = {};
     if (dto.name) userDataToUpdate.name = dto.name;
     if (dto.phone) userDataToUpdate.phone = dto.phone;
@@ -97,7 +90,6 @@ export class UsersService {
       include: { seller: true, enterprise: true }
     });
 
-    // 3. Update thông tin riêng theo Role (Seller/Enterprise)
     if (role === Role.SELLER && updatedUser.seller) {
       const sellerDataToUpdate: any = {};
       if (dto.storeName) sellerDataToUpdate.storeName = dto.storeName;
@@ -123,30 +115,30 @@ export class UsersService {
       }
     }
 
-    // Trả về thông tin mới nhất sau khi update tất cả
     return this.getProfile(userId);
   }
 
-  // --- CÁC PHƯƠNG THỨC CŨ (Giữ nguyên logic nhưng clean code hơn) ---
+  // --- CÁC PHƯƠNG THỨC CŨ (ĐÃ SỬA findAll) ---
 
   async findAll() {
+    // 🔥 ĐÃ SỬA: Dùng 'include' để lấy FULL thông tin thay vì 'select' bị thiếu
+    // Điều này đảm bảo name, avatar, phone và các relation đều có mặt
     return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
+      include: {
+        seller: true,
+        enterprise: true,
+        logistics: true,
+        shipper: true,
         addresses: true,
-        // Có thể select thêm avatar, phone nếu muốn hiển thị ở list admin
       },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: { // Dùng include thay vì select để lấy hết trừ pass (xử lý sau) hoặc select cụ thể
+      include: { 
         seller: true,
         enterprise: true,
         addresses: true,
@@ -156,8 +148,6 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-
-    // Loại bỏ password
     const { password, ...result } = user;
     return result;
   }
@@ -175,13 +165,11 @@ export class UsersService {
         ...createUserDto,
         password: hashedPassword,
       },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-      },
+      // Có thể dùng include ở đây nếu muốn trả về full sau khi tạo
+      include: {
+        seller: true,
+        enterprise: true
+      }
     });
   }
 
@@ -194,18 +182,14 @@ export class UsersService {
     return this.prisma.user.update({
       where: { id },
       data,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-      },
+      include: { // Sửa thành include luôn cho đồng bộ
+        seller: true,
+        enterprise: true
+      }
     });
   }
 
   async addAddress(userId: string, addressDto: AddAddressDto) {
-    // Logic đặt default address
     const addressCount = await this.prisma.address.count({
       where: { userId },
     });
@@ -241,7 +225,6 @@ export class UsersService {
       where: { id: addressId },
     });
 
-    // Nếu xóa địa chỉ mặc định, chọn địa chỉ mới nhất làm mặc định
     if (address.isDefault) {
       const lastAddress = await this.prisma.address.findFirst({
         where: { userId },

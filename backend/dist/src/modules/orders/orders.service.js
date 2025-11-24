@@ -27,12 +27,10 @@ let OrdersService = class OrdersService {
                 where: { id: item.variantId },
                 include: { product: true },
             });
-            if (!variant) {
+            if (!variant)
                 throw new common_1.NotFoundException(`Product Variant ${item.variantId} not found`);
-            }
-            if (variant.stock < item.quantity) {
-                throw new common_1.BadRequestException(`Sản phẩm "${variant.product.name}" không đủ tồn kho (Còn: ${variant.stock})`);
-            }
+            if (variant.stock < item.quantity)
+                throw new common_1.BadRequestException(`Sản phẩm "${variant.product.name}" không đủ tồn kho`);
             const itemTotal = variant.price * item.quantity;
             subtotal += itemTotal;
             orderItemsData.push({
@@ -50,10 +48,9 @@ let OrdersService = class OrdersService {
             });
         }
         const voucherIdsToConnect = (voucherIds || []).map((id) => ({ id }));
-        const totalDiscount = 0;
-        const totalAmount = subtotal + shippingFee - totalDiscount;
+        const totalAmount = subtotal + shippingFee;
         try {
-            const result = await this.prisma.$transaction(async (tx) => {
+            return await this.prisma.$transaction(async (tx) => {
                 for (const item of variantIdsToUpdate) {
                     const currentVariant = await tx.productVariant.findUnique({ where: { id: item.id } });
                     if (!currentVariant || currentVariant.stock < item.quantity) {
@@ -64,23 +61,19 @@ let OrdersService = class OrdersService {
                         data: { stock: { decrement: item.quantity } }
                     });
                 }
-                const newOrder = await tx.order.create({
+                return await tx.order.create({
                     data: {
                         userId,
                         status: client_1.OrderStatus.PENDING,
                         subtotal,
                         shippingFee,
-                        totalDiscount,
+                        totalDiscount: 0,
                         totalAmount,
                         shopDiscount: 0,
                         platformDiscount: 0,
                         freeshipDiscount: 0,
-                        appliedVouchers: {
-                            connect: voucherIdsToConnect,
-                        },
-                        orderItems: {
-                            create: orderItemsData,
-                        },
+                        appliedVouchers: { connect: voucherIdsToConnect },
+                        orderItems: { create: orderItemsData },
                         payment: {
                             create: {
                                 method: paymentMethod,
@@ -89,40 +82,26 @@ let OrdersService = class OrdersService {
                             }
                         }
                     },
-                    include: {
-                        orderItems: true,
-                        payment: true,
-                    },
+                    include: { orderItems: true, payment: true },
                 });
-                return newOrder;
             });
-            return result;
         }
         catch (error) {
-            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
-            }
             throw error;
         }
     }
     async findMyOrders(userId, status) {
-        const whereCondition = {
-            userId: userId,
-        };
-        if (status && status !== 'ALL') {
+        const whereCondition = { userId };
+        if (status && status !== 'ALL')
             whereCondition.status = status;
-        }
         return this.prisma.order.findMany({
             where: whereCondition,
             orderBy: { createdAt: 'desc' },
             include: {
                 orderItems: {
                     include: {
-                        product: {
-                            select: { id: true, name: true, images: true }
-                        },
-                        variant: {
-                            select: { id: true, size: true, color: true }
-                        }
+                        product: { select: { id: true, name: true, images: true } },
+                        variant: { select: { id: true, size: true, color: true } }
                     }
                 },
                 payment: true,
@@ -137,11 +116,17 @@ let OrdersService = class OrdersService {
         return this.prisma.order.findMany({
             where: whereCondition,
             include: {
-                orderItems: {
-                    include: {
-                        product: true,
-                        variant: true
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        phone: true,
+                        avatar: true
                     }
+                },
+                orderItems: {
+                    include: { product: true, variant: true }
                 },
                 payment: true,
                 appliedVouchers: true,
@@ -153,12 +138,7 @@ let OrdersService = class OrdersService {
         const order = await this.prisma.order.findUnique({
             where: { id },
             include: {
-                orderItems: {
-                    include: {
-                        product: true,
-                        variant: true
-                    }
-                },
+                orderItems: { include: { product: true, variant: true } },
                 payment: true,
                 appliedVouchers: true,
                 user: { select: { id: true, name: true, email: true, phone: true } }
@@ -172,8 +152,6 @@ let OrdersService = class OrdersService {
         return order;
     }
     async updateStatus(id, dto, userId, role) {
-        if (role !== client_1.Role.SELLER && role !== client_1.Role.ENTERPRISE) {
-        }
         return this.prisma.order.update({
             where: { id },
             data: { status: dto.status },

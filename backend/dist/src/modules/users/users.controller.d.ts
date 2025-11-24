@@ -8,10 +8,10 @@ export declare class UsersController {
         seller: {
             id: string;
             userId: string;
+            storeName: string;
             verified: boolean;
             rating: number | null;
             logoUrl: string | null;
-            storeName: string;
             businessDocumentUrl: string | null;
             identityDocumentUrl: string | null;
             addressDocumentUrl: string | null;
@@ -19,22 +19,22 @@ export declare class UsersController {
         enterprise: {
             id: string;
             userId: string;
-            companyName: string;
-            taxCode: string | null;
             verified: boolean;
-            officialBrand: boolean;
             rating: number | null;
             logoUrl: string | null;
+            companyName: string;
+            taxCode: string | null;
+            officialBrand: boolean;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
         };
         addresses: {
             id: string;
+            phone: string;
             createdAt: Date;
             updatedAt: Date;
             userId: string;
-            phone: string;
             label: string | null;
             fullName: string;
             province: string;
@@ -44,16 +44,16 @@ export declare class UsersController {
             isDefault: boolean;
         }[];
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        isActive: boolean;
-        name: string;
         email: string;
+        name: string;
         avatar: string | null;
         phone: string | null;
         role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
         verificationToken: string | null;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     updateProfile(req: any, dto: UpdateUserProfileDto, files: {
         avatar?: Express.Multer.File[];
@@ -62,10 +62,10 @@ export declare class UsersController {
         seller: {
             id: string;
             userId: string;
+            storeName: string;
             verified: boolean;
             rating: number | null;
             logoUrl: string | null;
-            storeName: string;
             businessDocumentUrl: string | null;
             identityDocumentUrl: string | null;
             addressDocumentUrl: string | null;
@@ -73,22 +73,22 @@ export declare class UsersController {
         enterprise: {
             id: string;
             userId: string;
-            companyName: string;
-            taxCode: string | null;
             verified: boolean;
-            officialBrand: boolean;
             rating: number | null;
             logoUrl: string | null;
+            companyName: string;
+            taxCode: string | null;
+            officialBrand: boolean;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
         };
         addresses: {
             id: string;
+            phone: string;
             createdAt: Date;
             updatedAt: Date;
             userId: string;
-            phone: string;
             label: string | null;
             fullName: string;
             province: string;
@@ -98,29 +98,72 @@ export declare class UsersController {
             isDefault: boolean;
         }[];
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        isActive: boolean;
-        name: string;
         email: string;
+        name: string;
         avatar: string | null;
         phone: string | null;
         role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
         verificationToken: string | null;
-    }>;
-    findAll(req: any): Promise<{
-        id: string;
+        isActive: boolean;
         createdAt: Date;
-        name: string;
-        email: string;
-        role: import(".prisma/client").$Enums.Role;
-        addresses: {
+        updatedAt: Date;
+    }>;
+    findAll(req: any): Promise<({
+        seller: {
+            id: string;
+            userId: string;
+            storeName: string;
+            verified: boolean;
+            rating: number | null;
+            logoUrl: string | null;
+            businessDocumentUrl: string | null;
+            identityDocumentUrl: string | null;
+            addressDocumentUrl: string | null;
+        };
+        enterprise: {
+            id: string;
+            userId: string;
+            verified: boolean;
+            rating: number | null;
+            logoUrl: string | null;
+            companyName: string;
+            taxCode: string | null;
+            officialBrand: boolean;
+            businessLicenseUrl: string | null;
+            brandRegistrationUrl: string | null;
+            taxDocumentUrl: string | null;
+        };
+        logistics: {
+            id: string;
+            name: string;
+            userId: string;
+            verified: boolean;
+            rating: number | null;
+            apiEndpoint: string | null;
+            baseRate: number;
+        };
+        shipper: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
             userId: string;
+            rating: number | null;
+            logisticsPartnerId: string;
+            active: boolean;
+            currentLocation: import("@prisma/client/runtime/library").JsonValue | null;
+            status: import(".prisma/client").$Enums.ShipperStatus;
+            totalDeliveries: number;
+            totalRatings: number;
+            deliveryRange: number;
+            deliveryHistory: import("@prisma/client/runtime/library").JsonValue[];
+        };
+        addresses: {
+            id: string;
             phone: string;
+            createdAt: Date;
+            updatedAt: Date;
+            userId: string;
             label: string | null;
             fullName: string;
             province: string;
@@ -129,15 +172,28 @@ export declare class UsersController {
             street: string;
             isDefault: boolean;
         }[];
-    }[]>;
+    } & {
+        id: string;
+        email: string;
+        password: string;
+        name: string;
+        avatar: string | null;
+        phone: string | null;
+        role: import(".prisma/client").$Enums.Role;
+        isVerified: boolean;
+        verificationToken: string | null;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+    })[]>;
     findOne(id: string): Promise<{
         seller: {
             id: string;
             userId: string;
+            storeName: string;
             verified: boolean;
             rating: number | null;
             logoUrl: string | null;
-            storeName: string;
             businessDocumentUrl: string | null;
             identityDocumentUrl: string | null;
             addressDocumentUrl: string | null;
@@ -145,22 +201,22 @@ export declare class UsersController {
         enterprise: {
             id: string;
             userId: string;
-            companyName: string;
-            taxCode: string | null;
             verified: boolean;
-            officialBrand: boolean;
             rating: number | null;
             logoUrl: string | null;
+            companyName: string;
+            taxCode: string | null;
+            officialBrand: boolean;
             businessLicenseUrl: string | null;
             brandRegistrationUrl: string | null;
             taxDocumentUrl: string | null;
         };
         addresses: {
             id: string;
+            phone: string;
             createdAt: Date;
             updatedAt: Date;
             userId: string;
-            phone: string;
             label: string | null;
             fullName: string;
             province: string;
@@ -170,30 +226,62 @@ export declare class UsersController {
             isDefault: boolean;
         }[];
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        isActive: boolean;
-        name: string;
         email: string;
+        name: string;
         avatar: string | null;
         phone: string | null;
         role: import(".prisma/client").$Enums.Role;
         isVerified: boolean;
         verificationToken: string | null;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     update(id: string, updateUserDto: UpdateUserDto, req: any): Promise<{
+        seller: {
+            id: string;
+            userId: string;
+            storeName: string;
+            verified: boolean;
+            rating: number | null;
+            logoUrl: string | null;
+            businessDocumentUrl: string | null;
+            identityDocumentUrl: string | null;
+            addressDocumentUrl: string | null;
+        };
+        enterprise: {
+            id: string;
+            userId: string;
+            verified: boolean;
+            rating: number | null;
+            logoUrl: string | null;
+            companyName: string;
+            taxCode: string | null;
+            officialBrand: boolean;
+            businessLicenseUrl: string | null;
+            brandRegistrationUrl: string | null;
+            taxDocumentUrl: string | null;
+        };
+    } & {
         id: string;
-        createdAt: Date;
-        name: string;
         email: string;
+        password: string;
+        name: string;
+        avatar: string | null;
+        phone: string | null;
         role: import(".prisma/client").$Enums.Role;
+        isVerified: boolean;
+        verificationToken: string | null;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     addAddress(id: string, addressDto: AddAddressDto, req: any): Promise<{
         id: string;
+        phone: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;
-        phone: string;
         label: string | null;
         fullName: string;
         province: string;

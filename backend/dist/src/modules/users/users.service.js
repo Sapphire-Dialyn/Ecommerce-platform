@@ -126,14 +126,14 @@ let UsersService = UsersService_1 = class UsersService {
     }
     async findAll() {
         return this.prisma.user.findMany({
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-                createdAt: true,
+            include: {
+                seller: true,
+                enterprise: true,
+                logistics: true,
+                shipper: true,
                 addresses: true,
             },
+            orderBy: { createdAt: 'desc' },
         });
     }
     async findOne(id) {
@@ -160,13 +160,10 @@ let UsersService = UsersService_1 = class UsersService {
         const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
         return this.prisma.user.create({
             data: Object.assign(Object.assign({}, createUserDto), { password: hashedPassword }),
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-                createdAt: true,
-            },
+            include: {
+                seller: true,
+                enterprise: true
+            }
         });
     }
     async update(id, updateUserDto) {
@@ -177,13 +174,10 @@ let UsersService = UsersService_1 = class UsersService {
         return this.prisma.user.update({
             where: { id },
             data,
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                role: true,
-                createdAt: true,
-            },
+            include: {
+                seller: true,
+                enterprise: true
+            }
         });
     }
     async addAddress(userId, addressDto) {

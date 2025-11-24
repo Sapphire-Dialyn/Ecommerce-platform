@@ -26,6 +26,7 @@ export declare class OrdersService {
         }[];
     } & {
         id: string;
+        userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
         paymentId: string | null;
         createdAt: Date;
@@ -37,7 +38,6 @@ export declare class OrdersService {
         freeshipDiscount: number;
         totalDiscount: number;
         totalAmount: number;
-        userId: string;
     }>;
     findMyOrders(userId: string, status?: OrderStatus): Promise<({
         payment: {
@@ -51,8 +51,8 @@ export declare class OrdersService {
         };
         orderItems: ({
             product: {
-                id: string;
                 name: string;
+                id: string;
                 images: string[];
             };
             variant: {
@@ -72,6 +72,7 @@ export declare class OrdersService {
         })[];
     } & {
         id: string;
+        userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
         paymentId: string | null;
         createdAt: Date;
@@ -83,9 +84,15 @@ export declare class OrdersService {
         freeshipDiscount: number;
         totalDiscount: number;
         totalAmount: number;
-        userId: string;
     })[]>;
     findAll(userId: string, role: string): Promise<({
+        user: {
+            name: string;
+            id: string;
+            email: string;
+            avatar: string;
+            phone: string;
+        };
         payment: {
             id: string;
             status: import(".prisma/client").$Enums.PaymentStatus;
@@ -115,13 +122,13 @@ export declare class OrdersService {
         }[];
         orderItems: ({
             product: {
+                name: string;
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
                 description: string;
                 sellerId: string | null;
                 enterpriseId: string | null;
-                name: string;
                 specifications: Prisma.JsonValue | null;
                 categoryId: string;
                 images: string[];
@@ -148,6 +155,7 @@ export declare class OrdersService {
         })[];
     } & {
         id: string;
+        userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
         paymentId: string | null;
         createdAt: Date;
@@ -159,12 +167,11 @@ export declare class OrdersService {
         freeshipDiscount: number;
         totalDiscount: number;
         totalAmount: number;
-        userId: string;
     })[]>;
     findOne(id: string, userId: string, role: string): Promise<{
         user: {
-            id: string;
             name: string;
+            id: string;
             email: string;
             phone: string;
         };
@@ -197,13 +204,13 @@ export declare class OrdersService {
         }[];
         orderItems: ({
             product: {
+                name: string;
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
                 description: string;
                 sellerId: string | null;
                 enterpriseId: string | null;
-                name: string;
                 specifications: Prisma.JsonValue | null;
                 categoryId: string;
                 images: string[];
@@ -230,6 +237,7 @@ export declare class OrdersService {
         })[];
     } & {
         id: string;
+        userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
         paymentId: string | null;
         createdAt: Date;
@@ -241,10 +249,10 @@ export declare class OrdersService {
         freeshipDiscount: number;
         totalDiscount: number;
         totalAmount: number;
-        userId: string;
     }>;
     updateStatus(id: string, dto: UpdateOrderStatusDto, userId: string, role: string): Promise<{
         id: string;
+        userId: string;
         status: import(".prisma/client").$Enums.OrderStatus;
         paymentId: string | null;
         createdAt: Date;
@@ -256,6 +264,5 @@ export declare class OrdersService {
         freeshipDiscount: number;
         totalDiscount: number;
         totalAmount: number;
-        userId: string;
     }>;
 }
