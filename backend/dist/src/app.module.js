@@ -22,6 +22,7 @@ const analytics_module_1 = require("./modules/analytics/analytics.module");
 const admin_module_1 = require("./modules/admin/admin.module");
 const enterprise_module_1 = require("./modules/enterprise/enterprise.module");
 const cart_module_1 = require("./modules/cart/cart.module");
+const chat_module_1 = require("./modules/chat/chat.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -42,6 +43,7 @@ exports.AppModule = AppModule = __decorate([
             admin_module_1.AdminModule,
             enterprise_module_1.EnterpriseModule,
             cart_module_1.CartModule,
+            chat_module_1.ChatModule,
         ],
     })
 ], AppModule);

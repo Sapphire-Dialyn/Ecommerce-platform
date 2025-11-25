@@ -10,6 +10,7 @@ import {
 import { useAppSelector, useAppDispatch } from '@/hook/useRedux'; 
 import { logout, UserRole } from '@/store/slices/authSlice';
 import { productService } from '@/services/product.service'; // Import service để tìm kiếm
+import NavbarChatButton from '@/component/NavbarChatButton';
 
 export default function Navbar() {
   const router = useRouter();
@@ -117,6 +118,10 @@ export default function Navbar() {
             </span>
           </div>
         </Link>
+        <div className="flex items-center">
+  {/* ... các icon khác */}
+  <NavbarChatButton />
+</div>
 
         {/* --- 2. SEARCH BAR (HIỂN THỊ TRUNG TÂM) --- */}
         <div className="flex-1 max-w-xl mx-4 relative" ref={searchRef}>

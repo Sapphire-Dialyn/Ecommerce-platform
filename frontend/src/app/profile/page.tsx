@@ -1,29 +1,25 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link'; // Import Link để chuyển trang
+import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/hook/useRedux';
 import { userService } from '@/services/user.service';
+import { orderService } from '@/services/order.service';
 import { loginSuccess } from '@/store/slices/authSlice'; 
 import { toast } from 'react-hot-toast';
 import { 
   User, Phone, Mail, Building2, Store, 
   Camera, Loader2, Save, ShieldCheck, Upload,
-  Package, ChevronRight, Calendar, CreditCard, ShoppingBag
+  Package, ChevronRight, Calendar, ShoppingBag
 } from 'lucide-react';
-
-// Mock data cho đơn hàng (Bạn có thể thay thế bằng API call sau này)
-const MOCK_ORDERS = [
-  { id: 'ORD-7782-XM', date: '2023-11-20', total: 1250000, status: 'DELIVERED', items: 3 },
-  { id: 'ORD-9921-AB', date: '2023-11-22', total: 450000, status: 'SHIPPING', items: 1 },
-  { id: 'ORD-1102-CP', date: '2023-11-24', total: 2890000, status: 'PENDING', items: 5 },
-];
 
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
 
   const [loading, setLoading] = useState(false);
+  // State lưu danh sách đơn hàng thật từ API
+  const [orders, setOrders] = useState<any[]>([]);
 
   // State dữ liệu form
   const [formData, setFormData] = useState({
@@ -50,11 +46,16 @@ export default function ProfilePage() {
 
   // Load dữ liệu ban đầu
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileAndOrders = async () => {
       if (!user) return;
       try {
-        const fullUserData = await userService.getMe(); 
+        // Gọi song song 2 API: Profile và Orders
+        const [fullUserData, myOrders] = await Promise.all([
+            userService.getMe(),
+            orderService.getMyOrders('ALL') // Lấy tất cả đơn hàng
+        ]);
         
+        // Cập nhật Profile Form
         setFormData({
           name: fullUserData.name || '',
           email: fullUserData.email || '',
@@ -67,11 +68,15 @@ export default function ProfilePage() {
         setAvatarPreview(fullUserData.avatar);
         setLogoPreview(fullUserData.seller?.logoUrl || fullUserData.enterprise?.logoUrl);
 
+        // Cập nhật danh sách đơn hàng
+        setOrders(myOrders);
+
       } catch (error) {
-        console.error(error);
+        console.error("Lỗi tải dữ liệu:", error);
       }
     };
-    fetchProfile();
+
+    fetchProfileAndOrders();
   }, [user]);
 
   // Xử lý chọn ảnh
@@ -94,8 +99,10 @@ export default function ProfilePage() {
     e.preventDefault();
     setLoading(true);
     try {
+      // Gọi API cập nhật profile thật
       const updatedUser = await userService.updateProfile(formData, avatarFile, logoFile);
       
+      // Cập nhật lại Redux store
       dispatch(loginSuccess({ 
           user: updatedUser, 
           token: localStorage.getItem('accessToken') || '' 
@@ -110,19 +117,35 @@ export default function ProfilePage() {
     }
   };
 
-  // Helper function render trạng thái đơn hàng
+  // Helper render trạng thái đơn hàng
   const renderOrderStatus = (status: string) => {
     switch(status) {
+      case 'COMPLETED': 
       case 'DELIVERED':
         return <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">Hoàn thành</span>;
+      case 'PAID':
+        return <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">Đã thanh toán</span>;
       case 'SHIPPING':
         return <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">Đang giao</span>;
+      case 'PROCESSING':
+        return <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold">Đang xử lý</span>;
       case 'PENDING':
-        return <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">Chờ xử lý</span>;
+        return <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">Chờ thanh toán</span>;
+      case 'CANCELLED':
+        return <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold">Đã hủy</span>;
       default:
         return <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-bold">{status}</span>;
     }
   };
+
+  // Format ngày
+  const formatDate = (dateString: string) => {
+    try {
+        return new Date(dateString).toLocaleDateString('vi-VN');
+    } catch {
+        return dateString;
+    }
+  }
 
   if (!user) return null;
 
@@ -340,7 +363,7 @@ export default function ProfilePage() {
               </div>
             </form>
 
-            {/* --- SECTION: MY ORDERS (ĐƠN HÀNG CỦA TÔI) --- */}
+            {/* --- SECTION: MY ORDERS (ĐƠN HÀNG THẬT TỪ DB) --- */}
             <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-xl border border-gray-100 animate-in fade-in slide-in-from-bottom-8 duration-700">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-2xl font-extrabold text-gray-900 uppercase tracking-tight flex items-center gap-2">
@@ -353,8 +376,9 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-4">
-                    {MOCK_ORDERS.length > 0 ? (
-                        MOCK_ORDERS.map((order) => (
+                    {orders.length > 0 ? (
+                        // Render 3 đơn hàng mới nhất
+                        orders.slice(0, 3).map((order) => (
                             <Link 
                                 href={`/profile/orders/${order.id}`} 
                                 key={order.id}
@@ -368,13 +392,18 @@ export default function ProfilePage() {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="font-extrabold text-gray-900">{order.id}</span>
+                                                {/* Hiển thị ID cắt gọn để đẹp UI */}
+                                                <span className="font-extrabold text-gray-900" title={order.id}>
+                                                    #{order.id.slice(-6).toUpperCase()} 
+                                                </span>
                                                 {renderOrderStatus(order.status)}
                                             </div>
                                             <div className="flex items-center gap-3 text-sm text-gray-500 font-medium">
-                                                <span className="flex items-center gap-1"><Calendar size={14}/> {order.date}</span>
+                                                <span className="flex items-center gap-1">
+                                                    <Calendar size={14}/> {formatDate(order.createdAt)}
+                                                </span>
                                                 <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                                                <span>{order.items} sản phẩm</span>
+                                                <span>{order.orderItems?.length || 0} sản phẩm</span>
                                             </div>
                                         </div>
                                     </div>
@@ -384,7 +413,7 @@ export default function ProfilePage() {
                                         <div className="text-right">
                                             <p className="text-xs font-bold text-gray-400 uppercase mb-0.5">Tổng tiền</p>
                                             <p className="font-extrabold text-fuchsia-600 text-lg">
-                                                {order.total.toLocaleString('vi-VN')}đ
+                                                {(order.totalAmount || 0).toLocaleString('vi-VN')}đ
                                             </p>
                                         </div>
                                         <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-fuchsia-600 group-hover:text-white group-hover:border-transparent transition-all">
