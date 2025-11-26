@@ -9,9 +9,6 @@ export class ChatService {
 
   constructor(private prisma: PrismaService) {
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    
-    // 🟢 CẬP NHẬT: Dùng 'gemini-2.0-flash' (Theo danh sách bạn gửi)
-    // Nếu muốn đổi, bạn chỉ cần sửa chuỗi này thành 'gemini-1.5-flash' hoặc 'gemini-2.0-flash-lite'
     this.model = this.genAI.getGenerativeModel({ 
       model: "gemini-2.0-flash", 
     });
@@ -41,8 +38,7 @@ export class ChatService {
 
       return `- ${p.name} (Giá tham khảo: ${price.toLocaleString()}đ) - Tình trạng: ${totalStock > 0 ? 'Còn hàng' : 'Hết hàng'}`;
     }).join('\n');
-
-    // 2. SYSTEM PROMPT (Kịch bản tính cách)
+    // 2. TẠO SYSTEM PROMPT VỚI DỮ LIỆU SẢN PHẨM
     const systemPrompt = `
     [VAI TRÒ]
     Bạn là Cantarella Fisalia, chủ nhân gia tộc Fisalia và là người tư vấn tại cửa hàng Beauty & Skincare.
@@ -68,9 +64,6 @@ export class ChatService {
         role: msg.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: msg.content }],
       }));
-
-      // 🟢 KỸ THUẬT 'INJECTION': Nhúng System Prompt vào tin nhắn đầu tiên của User
-      // Cách này hoạt động trên mọi version Gemini và tránh lỗi "First role must be user"
       if (chatHistory.length > 0 && chatHistory[0].role === 'user') {
         chatHistory[0].parts[0].text = systemPrompt + "\n\n" + chatHistory[0].parts[0].text;
       } else {

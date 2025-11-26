@@ -194,3 +194,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+#dataset files
+dataset.jsonl
