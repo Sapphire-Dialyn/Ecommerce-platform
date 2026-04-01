@@ -1,13 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsString,
-  IsNumber,
-  IsOptional,
   IsArray,
   IsEnum,
-  ValidateNested,
-  Min,
   IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrderStatus, PaymentMethod } from '@prisma/client';
@@ -18,12 +18,10 @@ export class CreateOrderItemDto {
   @IsNotEmpty()
   productId: string;
 
-  // 👇👇👇 ĐÃ SỬA Ở ĐÂY 👇👇👇
-  @ApiPropertyOptional({ description: 'ID của ProductVariant (Có thể null)' })
-  @IsOptional() // Cho phép null hoặc undefined
+  @ApiPropertyOptional({ description: 'ProductVariant id if the cart item uses a variant' })
+  @IsOptional()
   @IsString()
-  variantId?: string; 
-  // 👆👆👆 ---------------------
+  variantId?: string;
 
   @ApiProperty()
   @IsNumber()
@@ -39,7 +37,7 @@ export class CreateOrderDto {
   items: CreateOrderItemDto[];
 
   @ApiPropertyOptional({
-    description: 'Mảng các ID voucher (Shop, Platform, Freeship)',
+    description: 'Ids of the applied vouchers',
     example: ['voucher-id-1'],
   })
   @IsArray()
@@ -47,15 +45,21 @@ export class CreateOrderDto {
   @IsOptional()
   voucherIds?: string[];
 
-  @ApiProperty({ description: 'Phí vận chuyển gốc' })
+  @ApiPropertyOptional({ description: 'Client-side preview shipping fee. Backend recalculates it.' })
+  @IsOptional()
   @IsNumber()
   @Min(0)
-  shippingFee: number;
+  shippingFee?: number;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Selected delivery address id' })
   @IsString()
   @IsNotEmpty()
   addressId: string;
+
+  @ApiProperty({ description: 'Selected logistics partner id' })
+  @IsString()
+  @IsNotEmpty()
+  logisticsPartnerId: string;
 
   @ApiProperty({ enum: PaymentMethod, example: PaymentMethod.COD })
   @IsEnum(PaymentMethod)

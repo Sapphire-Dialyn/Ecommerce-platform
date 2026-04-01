@@ -1,18 +1,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsString,
-  IsEmail,
-  IsOptional,
   IsBoolean,
-  IsNumber,
+  IsEmail,
   IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
   MinLength,
 } from 'class-validator';
-import { ShipperStatus } from '@prisma/client';
+import { LogisticsStatus, ShipperStatus } from '@prisma/client';
 
-/**
- * 🚀 DTO MỚI: Dùng để tạo User (role: SHIPPER) và Shipper cùng lúc
- */
 export class CreateShipperDto {
   @ApiProperty()
   @IsEmail()
@@ -32,41 +29,34 @@ export class CreateShipperDto {
   @IsString()
   phone?: string;
 
-  @ApiPropertyOptional({ description: 'URL ảnh avatar' })
+  @ApiPropertyOptional({ description: 'URL of the avatar image' })
   @IsOptional()
   @IsString()
   avatar?: string;
 
-  @ApiPropertyOptional({ description: 'Phạm vi giao hàng (km)', default: 5.0 })
+  @ApiPropertyOptional({ description: 'Delivery range in km', default: 5.0 })
   @IsOptional()
   @IsNumber()
   deliveryRange?: number;
 }
 
-/**
- * 🚀 DTO MỚI: Chỉ cập nhật các trường thuộc model Shipper
- * (Việc cập nhật name, phone, avatar... nên thuộc về UserService)
- */
 export class UpdateShipperDto {
-  @ApiPropertyOptional({ description: 'Kích hoạt shipper?' })
+  @ApiPropertyOptional({ description: 'Whether the shipper is active' })
   @IsOptional()
   @IsBoolean()
   active?: boolean;
 
-  @ApiPropertyOptional({ enum: ShipperStatus, description: 'Trạng thái shipper' })
+  @ApiPropertyOptional({ enum: ShipperStatus, description: 'Current shipper status' })
   @IsOptional()
   @IsEnum(ShipperStatus)
   status?: ShipperStatus;
 
-  @ApiPropertyOptional({ description: 'Phạm vi giao hàng (km)' })
+  @ApiPropertyOptional({ description: 'Delivery range in km' })
   @IsOptional()
   @IsNumber()
   deliveryRange?: number;
 }
 
-/**
- * DTO này vẫn chính xác
- */
 export class UpdateLocationDto {
   @ApiProperty()
   @IsNumber()
@@ -77,9 +67,6 @@ export class UpdateLocationDto {
   longitude: number;
 }
 
-/**
- * DTO này vẫn chính xác
- */
 export class AssignOrderDto {
   @ApiProperty()
   @IsString()
@@ -88,4 +75,12 @@ export class AssignOrderDto {
   @ApiProperty()
   @IsString()
   shipperId: string;
+}
+
+export class UpdateAssignedOrderStatusDto {
+  @ApiProperty({
+    enum: [LogisticsStatus.PICKED_UP, LogisticsStatus.IN_TRANSIT, LogisticsStatus.DELIVERED],
+  })
+  @IsEnum(LogisticsStatus)
+  status: LogisticsStatus;
 }

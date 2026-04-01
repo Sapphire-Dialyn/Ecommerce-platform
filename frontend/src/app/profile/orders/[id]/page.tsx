@@ -1,23 +1,80 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { orderService } from '@/services/order.service';
 import { paymentService } from '@/services/payment.service';
 import { toast } from 'react-hot-toast';
-import { 
-  ArrowLeft, MapPin, CreditCard, Package, 
-  Truck, CheckCircle, XCircle, Clock, Loader2, RefreshCcw
+import {
+  ArrowLeft,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  Loader2,
+  MapPin,
+  Package,
+  RefreshCcw,
+  Truck,
+  XCircle,
 } from 'lucide-react';
+import { Order } from '@/types/order';
+
+const renderStatusBadge = (status: string) => {
+  const styles: Record<
+    string,
+    { bg: string; text: string; icon: ReactNode; label: string }
+  > = {
+    PENDING: {
+      bg: 'bg-orange-100',
+      text: 'text-orange-700',
+      icon: <Clock size={16} />,
+      label: 'Cho xac nhan',
+    },
+    PROCESSING: {
+      bg: 'bg-sky-100',
+      text: 'text-sky-700',
+      icon: <Package size={16} />,
+      label: 'Dang xu ly',
+    },
+    SHIPPING: {
+      bg: 'bg-indigo-100',
+      text: 'text-indigo-700',
+      icon: <Truck size={16} />,
+      label: 'Dang giao hang',
+    },
+    DELIVERED: {
+      bg: 'bg-green-100',
+      text: 'text-green-700',
+      icon: <CheckCircle size={16} />,
+      label: 'Da giao',
+    },
+    CANCELLED: {
+      bg: 'bg-red-100',
+      text: 'text-red-700',
+      icon: <XCircle size={16} />,
+      label: 'Da huy',
+    },
+  };
+
+  const current = styles[status] || styles.PENDING;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${current.bg} ${current.text}`}
+    >
+      {current.icon}
+      {current.label}
+    </span>
+  );
+};
 
 export default function OrderDetailPage() {
   const params = useParams();
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPayLoading, setIsPayLoading] = useState(false);
 
-  // Hàm tải dữ liệu đơn hàng
   const fetchOrder = async () => {
     try {
       setLoading(true);
@@ -26,8 +83,8 @@ export default function OrderDetailPage() {
         setOrder(data);
       }
     } catch (error) {
-      console.error("Lỗi tải đơn hàng:", error);
-      toast.error("Không tìm thấy đơn hàng");
+      console.error('Order detail error:', error);
+      toast.error('Khong tim thay don hang');
     } finally {
       setLoading(false);
     }
@@ -37,168 +94,200 @@ export default function OrderDetailPage() {
     fetchOrder();
   }, [params?.id]);
 
-  // Xử lý nút "Thanh toán ngay"
   const handleRepay = async () => {
-    if (!order) return;
+    if (!order) {
+      return;
+    }
+
     setIsPayLoading(true);
     try {
       const res = await paymentService.createPayment(order.id, 'VNPAY');
       const paymentUrl = typeof res === 'string' ? res : res?.paymentUrl;
 
-      if (paymentUrl) {
-        window.location.href = paymentUrl;
-      } else {
-        toast.error("Không tạo được liên kết thanh toán. Vui lòng thử lại.");
+      if (!paymentUrl) {
+        toast.error('Khong tao duoc lien ket thanh toan');
+        return;
       }
+
+      window.location.href = paymentUrl;
     } catch (error) {
-      console.error("Lỗi thanh toán:", error);
-      toast.error("Lỗi kết nối tới cổng thanh toán.");
+      console.error('Repay error:', error);
+      toast.error('Khong ket noi duoc toi cong thanh toan');
     } finally {
       setIsPayLoading(false);
     }
   };
 
-  const renderStatusBadge = (status: string) => {
-    const styles: any = {
-      PENDING: { bg: 'bg-orange-100', text: 'text-orange-700', icon: <Clock size={16}/>, label: 'Chờ xác nhận' },
-      PROCESSING: { bg: 'bg-blue-100', text: 'text-blue-700', icon: <Package size={16}/>, label: 'Đang xử lý' },
-      SHIPPING: { bg: 'bg-indigo-100', text: 'text-indigo-700', icon: <Truck size={16}/>, label: 'Đang giao hàng' },
-      DELIVERED: { bg: 'bg-green-100', text: 'text-green-700', icon: <CheckCircle size={16}/>, label: 'Hoàn thành' },
-      COMPLETED: { bg: 'bg-green-100', text: 'text-green-700', icon: <CheckCircle size={16}/>, label: 'Hoàn thành' },
-      CANCELLED: { bg: 'bg-red-100', text: 'text-red-700', icon: <XCircle size={16}/>, label: 'Đã hủy' },
-    };
-    
-    // Nếu status lạ, fallback về mặc định
-    const s = styles[status] || styles.PENDING;
-    
+  if (loading) {
     return (
-      <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${s.bg} ${s.text}`}>
-        {s.icon} {s.label}
-      </span>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin text-emerald-700" size={40} />
+      </div>
     );
-  };
+  }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-fuchsia-600" size={40}/></div>;
-  if (!order) return <div className="min-h-screen flex items-center justify-center">Đơn hàng không tồn tại</div>;
+  if (!order) {
+    return <div className="min-h-screen flex items-center justify-center">Don hang khong ton tai</div>;
+  }
 
-  // ============================================================
-  // 🔥 FIX LOGIC CHECK TRẠNG THÁI THANH TOÁN
-  // ============================================================
-  
-  // Kiểm tra: Chấp nhận cả 'PAID' (chuẩn logic) và 'SUCCESS' (hiện tại trong DB)
   const paymentStatus = order.payment?.status;
-  const isPaid = paymentStatus === 'PAID' || paymentStatus === 'SUCCESS';
-
-  const isPending = order.status === 'PENDING';
-  const isNotCancelled = order.status !== 'CANCELLED';
-  const isVNPAY = order.payment?.method === 'VNPAY';
-  
-  // Chỉ hiện nút thanh toán lại nếu: Đơn chờ + Chưa hủy + VNPAY + CHƯA THANH TOÁN
-  const showRepayButton = isPending && isNotCancelled && isVNPAY && !isPaid;
+  const isPaid = paymentStatus === 'SUCCESS';
+  const showRepayButton =
+    order.status === 'PENDING' &&
+    order.payment?.method === 'VNPAY' &&
+    !isPaid;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-4xl mx-auto">
-        
-        {/* Header Navigation */}
+    <div className="min-h-screen bg-stone-50 py-10 px-4">
+      <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
-          <Link href="/profile/orders" className="p-2 bg-white rounded-full shadow-sm hover:bg-gray-100 transition">
-            <ArrowLeft size={20} className="text-gray-600"/>
+          <Link href="/profile/orders" className="p-2 bg-white rounded-full shadow-sm hover:bg-stone-100 transition">
+            <ArrowLeft size={20} className="text-stone-600" />
           </Link>
           <div>
-            <h1 className="text-2xl font-extrabold text-gray-900">Chi tiết đơn hàng</h1>
-            <p className="text-sm text-gray-500 font-mono">Mã đơn: {order.id}</p>
+            <h1 className="text-2xl font-extrabold text-stone-900">Chi tiet don hang</h1>
+            <p className="text-sm text-stone-500 font-mono">Ma don: {order.id}</p>
           </div>
           <div className="ml-auto flex items-center gap-3">
-            {/* Nút Refresh dữ liệu thủ công (đề phòng cache) */}
-            <button 
-                onClick={fetchOrder} 
-                className="p-2 text-gray-400 hover:text-fuchsia-600 transition" 
-                title="Cập nhật trạng thái mới nhất"
+            <button
+              onClick={fetchOrder}
+              className="p-2 text-stone-400 hover:text-emerald-700 transition"
+              title="Lam moi"
             >
-                <RefreshCcw size={18} />
+              <RefreshCcw size={18} />
             </button>
             {renderStatusBadge(order.status)}
           </div>
         </div>
 
-        {/* --- 1. THÔNG TIN GIAO HÀNG & THANH TOÁN --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          {/* Cột Trái: Địa chỉ */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <MapPin size={18} className="text-fuchsia-600"/> Địa chỉ nhận hàng
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200">
+            <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <MapPin size={18} className="text-emerald-700" />
+              Dia chi nhan hang
             </h3>
             <div className="space-y-1">
-              <p className="font-bold text-gray-900">{order.user?.name || "Khách hàng"}</p>
-              <p className="text-gray-500 text-sm">{order.user?.phone || "Chưa có số điện thoại"}</p>
-              <p className="text-gray-600 text-sm mt-2 leading-relaxed">
-                {order.address || "Giao tới địa chỉ mặc định của khách hàng"}
+              <p className="font-bold text-stone-900">
+                {order.recipientName || order.user?.name || 'Khach hang'}
+              </p>
+              <p className="text-stone-500 text-sm">
+                {order.recipientPhone || order.user?.phone || 'Chua co so dien thoai'}
+              </p>
+              <p className="text-stone-600 text-sm mt-2 leading-relaxed">
+                {order.deliveryAddress || 'Chua co dia chi giao hang'}
               </p>
             </div>
           </div>
 
-          {/* Cột Phải: Thanh toán */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200 flex flex-col justify-between">
             <div>
-              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <CreditCard size={18} className="text-fuchsia-600"/> Thanh toán
+              <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <CreditCard size={18} className="text-emerald-700" />
+                Thanh toan
               </h3>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-gray-500 text-sm">Phương thức</span>
-                <span className="font-bold text-gray-900">{order.payment?.method || "COD"}</span>
+                <span className="text-stone-500 text-sm">Phuong thuc</span>
+                <span className="font-bold text-stone-900">{order.payment?.method || 'COD'}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-500 text-sm">Trạng thái</span>
-                {/* 👇 Hiển thị đúng trạng thái dựa trên biến isPaid đã fix */}
+                <span className="text-stone-500 text-sm">Trang thai</span>
                 <span className={`font-bold text-sm ${isPaid ? 'text-green-600' : 'text-orange-600'}`}>
-                  {isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                  {isPaid ? 'Da thanh toan' : 'Chua thanh toan'}
                 </span>
               </div>
             </div>
 
-            {/* --- NÚT THANH TOÁN LẠI --- */}
             {showRepayButton && (
               <div className="mt-4">
-                  <button 
-                    onClick={handleRepay}
-                    disabled={isPayLoading}
-                    className="w-full py-3 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-xl font-bold shadow-lg shadow-fuchsia-200 transition flex items-center justify-center gap-2 disabled:opacity-70 transform active:scale-95"
-                  >
-                    {isPayLoading ? <Loader2 className="animate-spin" size={20}/> : <CreditCard size={20}/>}
-                    THANH TOÁN NGAY
-                  </button>
-                  <p className="text-xs text-center text-gray-400 mt-2 italic">
-                    * Nếu bạn vừa thanh toán, vui lòng bấm nút làm mới ↻ ở góc trên
-                  </p>
+                <button
+                  onClick={handleRepay}
+                  disabled={isPayLoading}
+                  className="w-full py-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-2xl font-bold shadow-lg shadow-emerald-200 transition flex items-center justify-center gap-2 disabled:opacity-70"
+                >
+                  {isPayLoading ? (
+                    <Loader2 className="animate-spin" size={20} />
+                  ) : (
+                    <CreditCard size={20} />
+                  )}
+                  Thanh toan ngay
+                </button>
               </div>
             )}
           </div>
         </div>
 
-        {/* --- 2. DANH SÁCH SẢN PHẨM --- */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-          <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-            <h3 className="font-bold text-gray-900">Sản phẩm đã đặt ({order.orderItems?.length || 0})</h3>
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200 mb-6">
+          <h3 className="text-sm font-bold text-stone-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <Truck size={18} className="text-emerald-700" />
+            Van chuyen
+          </h3>
+          <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div className="rounded-2xl bg-stone-50 p-4 border border-stone-200">
+              <div className="text-stone-500 mb-1">Don vi van chuyen</div>
+              <div className="font-bold text-stone-900">
+                {order.selectedLogisticsPartner?.name ||
+                  order.selectedLogisticsPartnerName ||
+                  'Chua chon'}
+              </div>
+            </div>
+            <div className="rounded-2xl bg-stone-50 p-4 border border-stone-200">
+              <div className="text-stone-500 mb-1">Tracking</div>
+              <div className="font-bold text-stone-900">
+                {order.logisticsOrder?.trackingCode || 'Chua tao van don'}
+              </div>
+            </div>
+            <div className="rounded-2xl bg-stone-50 p-4 border border-stone-200">
+              <div className="text-stone-500 mb-1">Trang thai giao van</div>
+              <div className="font-bold text-stone-900">
+                {order.logisticsOrder?.status || 'Chua tiep nhan'}
+              </div>
+            </div>
+            <div className="rounded-2xl bg-stone-50 p-4 border border-stone-200">
+              <div className="text-stone-500 mb-1">Shipper</div>
+              <div className="font-bold text-stone-900">
+                {order.logisticsOrder?.shipper?.user?.name || 'Chua phan cong'}
+              </div>
+            </div>
           </div>
-          <div className="divide-y divide-gray-100">
-            {order.orderItems?.map((item: any) => (
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-sm border border-stone-200 overflow-hidden mb-6">
+          <div className="p-6 border-b border-stone-100 bg-stone-50/80">
+            <h3 className="font-bold text-stone-900">
+              San pham da dat ({order.orderItems?.length || 0})
+            </h3>
+          </div>
+          <div className="divide-y divide-stone-100">
+            {order.orderItems?.map((item) => (
               <div key={item.id} className="p-6 flex items-start gap-4">
-                <div className="w-20 h-20 rounded-lg bg-gray-100 shrink-0 overflow-hidden border border-gray-200 relative">
-                   {item.product?.images?.[0] ? (
-                      <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
-                   ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400"><Package/></div>
-                   )}
+                <div className="w-20 h-20 rounded-2xl bg-stone-100 shrink-0 overflow-hidden border border-stone-200">
+                  {item.product?.images?.[0] ? (
+                    <img
+                      src={item.product.images[0]}
+                      alt={item.product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-stone-400">
+                      <Package />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-bold text-gray-900 text-base mb-1 line-clamp-2">{item.product?.name}</h4>
-                  <p className="text-sm text-gray-500 mb-2">
-                    Phân loại: {item.variant?.size || 'Tiêu chuẩn'} {item.variant?.color ? `- ${item.variant.color}` : ''}
+                  <h4 className="font-bold text-stone-900 text-base mb-1 line-clamp-2">
+                    {item.product?.name}
+                  </h4>
+                  <p className="text-sm text-stone-500 mb-2">
+                    Phan loai: {item.variant?.size || 'Tieu chuan'}
+                    {item.variant?.color ? ` - ${item.variant.color}` : ''}
                   </p>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium bg-gray-100 px-2 py-1 rounded text-gray-600">x{item.quantity}</span>
-                    <span className="font-bold text-gray-900">{(item.price * item.quantity).toLocaleString('vi-VN')}đ</span>
+                    <span className="text-sm font-medium bg-stone-100 px-2 py-1 rounded text-stone-600">
+                      x{item.quantity}
+                    </span>
+                    <span className="font-bold text-stone-900">
+                      {(item.price * item.quantity).toLocaleString('vi-VN')}đ
+                    </span>
                   </div>
                 </div>
               </div>
@@ -206,30 +295,30 @@ export default function OrderDetailPage() {
           </div>
         </div>
 
-        {/* --- 3. TỔNG KẾT TIỀN --- */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200">
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between text-gray-500">
-              <span>Tổng tiền hàng</span>
+            <div className="flex justify-between text-stone-500">
+              <span>Tong tien hang</span>
               <span>{order.subtotal?.toLocaleString('vi-VN')}đ</span>
             </div>
-            <div className="flex justify-between text-gray-500">
-              <span>Phí vận chuyển</span>
+            <div className="flex justify-between text-stone-500">
+              <span>Phi van chuyen</span>
               <span>{order.shippingFee?.toLocaleString('vi-VN')}đ</span>
             </div>
             {order.totalDiscount > 0 && (
-              <div className="flex justify-between text-gray-500">
-                <span>Giảm giá</span>
+              <div className="flex justify-between text-stone-500">
+                <span>Giam gia</span>
                 <span className="text-green-600">-{order.totalDiscount?.toLocaleString('vi-VN')}đ</span>
               </div>
             )}
-            <div className="border-t border-gray-100 pt-3 mt-3 flex justify-between items-center">
-              <span className="font-bold text-gray-900 text-lg">Thành tiền</span>
-              <span className="font-extrabold text-fuchsia-600 text-2xl">{order.totalAmount?.toLocaleString('vi-VN')}đ</span>
+            <div className="border-t border-stone-100 pt-3 mt-3 flex justify-between items-center">
+              <span className="font-bold text-stone-900 text-lg">Thanh tien</span>
+              <span className="font-extrabold text-emerald-700 text-2xl">
+                {order.totalAmount?.toLocaleString('vi-VN')}đ
+              </span>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

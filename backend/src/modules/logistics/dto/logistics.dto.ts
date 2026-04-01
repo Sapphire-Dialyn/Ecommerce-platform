@@ -1,5 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional, IsEnum, IsDate, IsBoolean } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsDate,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { LogisticsStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 
@@ -8,7 +15,7 @@ export class CreateLogisticsPartnerDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   apiEndpoint?: string;
@@ -19,22 +26,22 @@ export class CreateLogisticsPartnerDto {
 }
 
 export class UpdateLogisticsPartnerDto {
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   name?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   apiEndpoint?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
   baseRate?: number;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
   rating?: number;
@@ -49,23 +56,50 @@ export class CreateLogisticsOrderDto {
   @IsString()
   logisticsPartnerId: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  pickupAddress?: string;
+
+  @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Date)
   @IsDate()
   estimatedDelivery?: Date;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }
 
 export class UpdateLogisticsOrderDto {
-  @ApiProperty({ enum: LogisticsStatus })
+  @ApiPropertyOptional({ enum: LogisticsStatus })
+  @IsOptional()
   @IsEnum(LogisticsStatus)
-  status: LogisticsStatus;
+  status?: LogisticsStatus;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  pickupAddress?: string;
+
+  @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Date)
   @IsDate()
   estimatedDelivery?: Date;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
+export class AssignLogisticsOrderDto {
+  @ApiProperty()
+  @IsString()
+  shipperId: string;
 }
 
 export class CalculateShippingDto {
@@ -81,7 +115,7 @@ export class CalculateShippingDto {
   @IsNumber()
   weight: number;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
   express?: boolean;

@@ -115,7 +115,7 @@ model User {
   voucherClaims     VoucherDistribution[] // 👈 Voucher user đã "lưu"
   carts             Cart[] // 👈 Giỏ hàng cho user đăng nhập
 }
-
+  
 model Address {
   id        String   @id @default(cuid())
   userId    String
@@ -307,6 +307,12 @@ model Order {
   user             User         @relation(fields: [userId], references: [id])
   status           OrderStatus  @default(PENDING)
   paymentId        String?      @unique
+  addressId        String?
+  recipientName    String?
+  recipientPhone   String?
+  deliveryAddress  String?
+  selectedLogisticsPartnerId   String?
+  selectedLogisticsPartnerName String?
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
@@ -324,7 +330,7 @@ model Order {
 
   payment          Payment?
   orderItems       OrderItem[]
-  logisticsOrders  LogisticsOrder[]
+  logisticsOrder   LogisticsOrder?
 }
 
 model OrderItem {
@@ -395,12 +401,12 @@ model Shipper {
 
 model LogisticsOrder {
   id                 String           @id @default(cuid())
-  orderId            String
+  orderId            String           @unique
   logisticsPartnerId String
   shipperId          String?
   trackingCode       String
   status             LogisticsStatus  @default(CREATED)
-  pickupAddress      String // Địa chỉ lấy hàng
+  pickupAddress      String? // Địa chỉ lấy hàng
   deliveryAddress    String // Địa chỉ giao hàng
   pickupLocation     Json? // Tọa độ lấy hàng
   deliveryLocation   Json? // Tọa độ giao hàng

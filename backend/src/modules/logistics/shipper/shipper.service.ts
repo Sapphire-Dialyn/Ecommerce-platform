@@ -1,42 +1,33 @@
 import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
-  ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service'; // 👈 Sửa đường dẫn nếu cần
-import { Role, ShipperStatus, Prisma, LogisticsStatus } from '@prisma/client'; // 👈 Thêm Role
+import { PrismaService } from '../../prisma/prisma.service';
+import {
+  LogisticsStatus,
+  OrderStatus,
+  Prisma,
+  Role,
+  ShipperStatus,
+} from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import {
   CreateShipperDto,
-  UpdateShipperDto,
+  UpdateAssignedOrderStatusDto,
   UpdateLocationDto,
+  UpdateShipperDto,
 } from './shipper.dto';
-// import { calculateDistance, validateLocation } from '@common/utils'; // (Giữ lại nếu bạn có)
 
 @Injectable()
 export class ShipperService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * 🚀 LOGIC ĐÃ SỬA:
-   * Tạo một User (vai trò SHIPPER) và một Shipper (liên kết) cùng lúc.
-   */
-  async create(
-    logisticsPartnerId: string,
-    createShipperDto: CreateShipperDto,
-  ) {
-    // 1. Tách DTO: Lấy thông tin cho User và thông tin cho Shipper
-    const {
-      email,
-      password,
-      name,
-      phone,
-      avatar,
-      deliveryRange, //
-    } = createShipperDto;
+  async create(logisticsPartnerId: string, createShipperDto: CreateShipperDto) {
+    const { email, password, name, phone, avatar, deliveryRange } = createShipperDto;
 
-    // 2. Kiểm tra email trên model User, KHÔNG phải Shipper
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -47,40 +38,35 @@ export class ShipperService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 3. Dùng transaction để đảm bảo tạo User và Shipper cùng lúc
     return this.prisma.$transaction(async (tx) => {
-      // 3a. Tạo User
       const user = await tx.user.create({
         data: {
           email,
           password: hashedPassword,
           name,
           phone,
-          avatar, // (Nếu có)
-          role: Role.SHIPPER, // 👈 Gán vai trò
+          avatar,
+          role: Role.SHIPPER,
         },
       });
 
-      // 3b. Tạo Shipper và liên kết với User vừa tạo
       const shipper = await tx.shipper.create({
         data: {
-          userId: user.id, // 👈 Liên kết qua userId
+          userId: user.id,
           logisticsPartnerId,
           status: ShipperStatus.AVAILABLE,
           deliveryRange: deliveryRange || 5.0,
-          // ❌ Xóa: ...createShipperDto, password
+          deliveryHistory: [],
         },
       });
 
-      return { ...shipper, user }; // Trả về shipper và thông tin user
+      return { ...shipper, user };
     });
   }
 
   async update(id: string, updateShipperDto: UpdateShipperDto) {
-    // ❗️ Lưu ý: updateShipperDto chỉ nên chứa các trường
-    // của Shipper (status, deliveryRange, active),
-    // KHÔNG chứa (email, name...).
     await this.findOne(id);
+
     return this.prisma.shipper.update({
       where: { id },
       data: updateShipperDto,
@@ -89,6 +75,7 @@ export class ShipperService {
 
   async updateLocation(id: string, updateLocationDto: UpdateLocationDto) {
     await this.findOne(id);
+
     return this.prisma.shipper.update({
       where: { id },
       data: {
@@ -100,28 +87,15 @@ export class ShipperService {
   async findAll(logisticsPartnerId: string) {
     return this.prisma.shipper.findMany({
       where: { logisticsPartnerId },
-      include: {
-        user: true, // 👈 Nên include user để lấy tên, email...
-        assignedOrders: {
-          include: {
-            order: true,
-          },
-        },
-      },
+      include: this.getShipperInclude(),
+      orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
     });
   }
 
   async findOne(id: string) {
     const shipper = await this.prisma.shipper.findUnique({
       where: { id },
-      include: {
-        user: true, // 👈 Nên include user
-        assignedOrders: {
-          include: {
-            order: true,
-          },
-        },
-      },
+      include: this.getShipperInclude(),
     });
 
     if (!shipper) {
@@ -131,28 +105,44 @@ export class ShipperService {
     return shipper;
   }
 
-  /**
-   * 🚀 LOGIC ĐÃ SỬA:
-   * Tìm Shipper bằng email của User liên quan.
-   */
+  async findMe(userId: string) {
+    const shipper = await this.prisma.shipper.findFirst({
+      where: { userId },
+      include: this.getShipperInclude(),
+    });
+
+    if (!shipper) {
+      throw new NotFoundException('Shipper profile not found');
+    }
+
+    return shipper;
+  }
+
+  async findMyOrders(userId: string) {
+    const shipper = await this.findMe(userId);
+
+    return this.prisma.logisticsOrder.findMany({
+      where: { shipperId: shipper.id },
+      include: this.getAssignedOrderInclude(),
+      orderBy: [{ updatedAt: 'desc' }, { pickupTime: 'desc' }],
+    });
+  }
+
   async findByEmail(email: string) {
     return this.prisma.shipper.findFirst({
       where: {
         user: {
-          // 👈 Lọc lồng vào model User
-          email: email,
+          email,
         },
       },
-      include: {
-        user: true,
-      },
+      include: this.getShipperInclude(),
     });
   }
 
   async assignOrder(orderId: string, shipperId: string) {
     const [logisticsOrder, shipper] = await Promise.all([
       this.prisma.logisticsOrder.findUnique({ where: { id: orderId } }),
-      this.findOne(shipperId), // 👈 Hàm findOne đã lấy status
+      this.findOne(shipperId),
     ]);
 
     if (!logisticsOrder) {
@@ -163,13 +153,11 @@ export class ShipperService {
       throw new ConflictException('Shipper is not available');
     }
 
-    // Cập nhật trạng thái Shipper và Order
     const updatedOrder = await this.prisma.logisticsOrder.update({
       where: { id: orderId },
       data: {
         shipperId,
-        status: LogisticsStatus.PICKED_UP, // 👈 Dùng Enum
-        pickupTime: new Date(),
+        status: LogisticsStatus.ASSIGNED,
       },
     });
 
@@ -178,10 +166,90 @@ export class ShipperService {
       data: { status: ShipperStatus.BUSY },
     });
 
+    await this.prisma.order.update({
+      where: { id: logisticsOrder.orderId },
+      data: { status: OrderStatus.SHIPPING },
+    });
+
     return updatedOrder;
   }
 
-  async completeDelivery(orderId: string) {
+  async updateAssignedOrderStatus(
+    logisticsOrderId: string,
+    userId: string,
+    dto: UpdateAssignedOrderStatusDto,
+  ) {
+    const shipper = await this.findMe(userId);
+    const logisticsOrder = await this.prisma.logisticsOrder.findUnique({
+      where: { id: logisticsOrderId },
+      include: { order: true },
+    });
+
+    if (!logisticsOrder) {
+      throw new NotFoundException('Assigned logistics order not found');
+    }
+
+    if (logisticsOrder.shipperId !== shipper.id) {
+      throw new ForbiddenException('You can only update orders assigned to you');
+    }
+
+    if (
+      dto.status !== LogisticsStatus.PICKED_UP &&
+      dto.status !== LogisticsStatus.IN_TRANSIT &&
+      dto.status !== LogisticsStatus.DELIVERED
+    ) {
+      throw new BadRequestException('Invalid shipper status transition');
+    }
+
+    const updateData: Prisma.LogisticsOrderUpdateInput = {
+      status: dto.status,
+    };
+
+    if (dto.status === LogisticsStatus.PICKED_UP && !logisticsOrder.pickupTime) {
+      updateData.pickupTime = new Date();
+    }
+
+    if (dto.status === LogisticsStatus.DELIVERED) {
+      updateData.deliveredTime = new Date();
+    }
+
+    const [updatedOrder] = await this.prisma.$transaction([
+      this.prisma.logisticsOrder.update({
+        where: { id: logisticsOrderId },
+        data: updateData,
+      }),
+      this.prisma.order.update({
+        where: { id: logisticsOrder.orderId },
+        data: {
+          status:
+            dto.status === LogisticsStatus.DELIVERED
+              ? OrderStatus.DELIVERED
+              : OrderStatus.SHIPPING,
+        },
+      }),
+      ...(dto.status === LogisticsStatus.DELIVERED
+        ? [
+            this.prisma.shipper.update({
+              where: { id: shipper.id },
+              data: { status: ShipperStatus.AVAILABLE },
+            }),
+          ]
+        : []),
+    ]);
+
+    return this.prisma.logisticsOrder.findUnique({
+      where: { id: updatedOrder.id },
+      include: this.getAssignedOrderInclude(),
+    });
+  }
+
+  async completeDelivery(orderId: string, userId?: string) {
+    if (userId) {
+      return this.updateAssignedOrderStatus(orderId, userId, {
+        status: LogisticsStatus.DELIVERED,
+      });
+    }
+
     const order = await this.prisma.logisticsOrder.findUnique({
       where: { id: orderId },
     });
@@ -189,25 +257,68 @@ export class ShipperService {
     if (!order) {
       throw new NotFoundException(`Order with id ${orderId} not found`);
     }
+
     if (!order.shipperId) {
       throw new BadRequestException('Order has no shipper assigned');
     }
 
-    // Cập nhật trạng thái Order và Shipper
-    const updatedOrder = await this.prisma.logisticsOrder.update({
-      where: { id: orderId },
-      data: {
-        status: LogisticsStatus.DELIVERED, // 👈 Dùng Enum
-        deliveredTime: new Date(),
-      },
-    });
-
-    // Set shipper về AVAILABLE
-    await this.prisma.shipper.update({
-      where: { id: order.shipperId },
-      data: { status: ShipperStatus.AVAILABLE },
-    });
+    const [updatedOrder] = await this.prisma.$transaction([
+      this.prisma.logisticsOrder.update({
+        where: { id: orderId },
+        data: {
+          status: LogisticsStatus.DELIVERED,
+          deliveredTime: new Date(),
+        },
+      }),
+      this.prisma.shipper.update({
+        where: { id: order.shipperId },
+        data: { status: ShipperStatus.AVAILABLE },
+      }),
+      this.prisma.order.update({
+        where: { id: order.orderId },
+        data: { status: OrderStatus.DELIVERED },
+      }),
+    ]);
 
     return updatedOrder;
+  }
+
+  private getShipperInclude(): Prisma.ShipperInclude {
+    return {
+      user: true,
+      assignedOrders: {
+        include: this.getAssignedOrderInclude(),
+      },
+    };
+  }
+
+  private getAssignedOrderInclude(): Prisma.LogisticsOrderInclude {
+    return {
+      logisticsPartner: {
+        select: { id: true, name: true, baseRate: true, rating: true },
+      },
+      shipper: {
+        include: {
+          user: { select: { id: true, name: true, email: true, phone: true } },
+        },
+      },
+      order: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, phone: true },
+          },
+          orderItems: {
+            include: {
+              product: {
+                select: { id: true, name: true, images: true },
+              },
+              variant: {
+                select: { id: true, size: true, color: true },
+              },
+            },
+          },
+        },
+      },
+    };
   }
 }

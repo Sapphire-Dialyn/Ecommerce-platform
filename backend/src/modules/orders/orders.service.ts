@@ -1,252 +1,231 @@
 import {
-  Injectable,
-  NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/orders.dto';
-import { OrderStatus, PaymentStatus, Prisma, Role,PaymentMethod } from '@prisma/client';
-
+import {
+  LogisticsStatus,
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+  Prisma,
+  Role,
+} from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
-  // ==================================================================
-  // 1. CREATE ORDER (ĐÃ SỬA ĐỂ CHỐNG LỖI VARIANT NOT FOUND)
-  // ==================================================================
   async create(userId: string, dto: CreateOrderDto) {
-    const { items, voucherIds, shippingFee, paymentMethod, addressId } = dto;
+    const { items, voucherIds, paymentMethod, addressId, logisticsPartnerId } = dto;
+
+    const [address, logisticsPartner] = await Promise.all([
+      this.prisma.address.findFirst({
+        where: { id: addressId, userId },
+      }),
+      this.prisma.logisticsPartner.findFirst({
+        where: { id: logisticsPartnerId, verified: true },
+      }),
+    ]);
+
+    if (!address) {
+      throw new BadRequestException('Delivery address is invalid');
+    }
+
+    if (!logisticsPartner) {
+      throw new BadRequestException('Logistics partner is invalid or not verified');
+    }
 
     let subtotal = 0;
-    const orderItemsData: any[] = [];
+    const orderItemsData: Prisma.OrderItemCreateWithoutOrderInput[] = [];
     const variantIdsToUpdate: { id: string; quantity: number }[] = [];
 
-    // Duyệt qua từng sản phẩm trong giỏ
     for (const item of items) {
       let price = 0;
-      let realVariantId = null;
-      let sellerId = null;
-      let enterpriseId = null;
+      let realVariantId: string | null = null;
+      let sellerId: string | null = null;
+      let enterpriseId: string | null = null;
 
-      // Bước 1: Cố gắng tìm Variant nếu có ID gửi lên
       if (item.variantId) {
-        // Dùng try-catch hoặc findUnique bình thường để tránh crash nếu ID không đúng format
-        try {
-            const variant = await this.prisma.productVariant.findUnique({
-                where: { id: item.variantId },
-                include: { product: true }
-            });
-            
-            if (variant) {
-                price = variant.price;
-                realVariantId = variant.id;
-                sellerId = variant.product.sellerId;
-                enterpriseId = variant.product.enterpriseId;
+        const variant = await this.prisma.productVariant.findUnique({
+          where: { id: item.variantId },
+          include: { product: true },
+        });
 
-                // Check kho
-                if (variant.stock < item.quantity) {
-                    throw new BadRequestException(`Sản phẩm "${variant.product.name}" không đủ tồn kho`);
-                }
-                
-                // Thêm vào danh sách cần trừ kho
-                variantIdsToUpdate.push({ id: variant.id, quantity: item.quantity });
-            }
-        } catch (e) {
-            // Nếu lỗi (do ID sai format...) thì bỏ qua, xuống Bước 2
-            console.warn(`Invalid Variant ID: ${item.variantId}, falling back to Product...`);
+        if (variant) {
+          price = variant.price;
+          realVariantId = variant.id;
+          sellerId = variant.product.sellerId;
+          enterpriseId = variant.product.enterpriseId;
+
+          if (variant.stock < item.quantity) {
+            throw new BadRequestException(
+              `Product "${variant.product.name}" does not have enough stock`,
+            );
+          }
+
+          variantIdsToUpdate.push({ id: variant.id, quantity: item.quantity });
         }
       }
 
-      // Bước 2: Nếu không tìm thấy Variant (hoặc variantId là null/"200ml"), tìm Product gốc
       if (price === 0) {
-         const product = await this.prisma.product.findUnique({
-             where: { id: item.productId },
-             include: { variants: true } // Lấy variants để check giá
-         });
+        const product = await this.prisma.product.findUnique({
+          where: { id: item.productId },
+          include: { variants: true },
+        });
 
-         if (!product) {
-             throw new NotFoundException(`Product ${item.productId} not found`);
-         }
-         
-         sellerId = product.sellerId;
-         enterpriseId = product.enterpriseId;
+        if (!product) {
+          throw new NotFoundException(`Product ${item.productId} not found`);
+        }
 
-         // Lấy giá từ variant đầu tiên làm giá mặc định (Fallback)
-         if (product.variants && product.variants.length > 0) {
-             price = product.variants[0].price;
-         } else {
-             // Trường hợp hiếm: Sản phẩm không có biến thể nào
-             price = 0; 
-         }
+        sellerId = product.sellerId;
+        enterpriseId = product.enterpriseId;
+
+        if (product.variants?.length) {
+          const firstVariant = product.variants[0];
+          price = firstVariant.price;
+
+          if (firstVariant.stock < item.quantity) {
+            throw new BadRequestException(
+              `Product "${product.name}" does not have enough stock`,
+            );
+          }
+
+          variantIdsToUpdate.push({ id: firstVariant.id, quantity: item.quantity });
+          realVariantId = firstVariant.id;
+        }
       }
 
-      // Cộng dồn tổng tiền
       subtotal += price * item.quantity;
 
-      // Thêm vào dữ liệu tạo đơn
       orderItemsData.push({
-        productId: item.productId,
-        variantId: realVariantId, // ID chuẩn hoặc null
+        product: { connect: { id: item.productId } },
+        variant: realVariantId ? { connect: { id: realVariantId } } : undefined,
         quantity: item.quantity,
-        price: price,
-        sellerId: sellerId,
-        enterpriseId: enterpriseId,
+        price,
+        sellerId,
+        enterpriseId,
       });
     }
 
-    // Tính toán Voucher & Tổng tiền
+    const shippingFee = logisticsPartner.baseRate;
     const voucherIdsToConnect = (voucherIds || []).map((id) => ({ id }));
-    const totalAmount = subtotal + shippingFee; // (Tạm thời chưa trừ discount)
+    const totalAmount = subtotal + shippingFee;
+    const orderStatus =
+      paymentMethod === PaymentMethod.COD ? OrderStatus.PROCESSING : OrderStatus.PENDING;
 
-    // Thực hiện Transaction
-    try {
-      return await this.prisma.$transaction(async (tx) => {
-        
-        // 1. Trừ kho (chỉ những variant tìm thấy hợp lệ)
-        for (const v of variantIdsToUpdate) {
-            await tx.productVariant.update({
-                where: { id: v.id },
-                data: { stock: { decrement: v.quantity } }
-            });
-        }
-
-        // 2. Tạo Order
-        return await tx.order.create({
-          data: {
-            userId,
-            status: OrderStatus.PENDING,
-            subtotal,
-            shippingFee,
-            totalDiscount: 0,
-            totalAmount,
-            shopDiscount: 0,
-            platformDiscount: 0,
-            freeshipDiscount: 0,
-            
-            appliedVouchers: { connect: voucherIdsToConnect },
-            
-            orderItems: { create: orderItemsData },
-            
-            payment: {
-                create: {
-                    method: paymentMethod,
-                    amount: totalAmount,
-                    status: PaymentStatus.PENDING 
-                }
-            }
-          },
-          include: {
-            orderItems: true,
-            payment: true,
-          },
+    const order = await this.prisma.$transaction(async (tx) => {
+      for (const variantToUpdate of variantIdsToUpdate) {
+        await tx.productVariant.update({
+          where: { id: variantToUpdate.id },
+          data: { stock: { decrement: variantToUpdate.quantity } },
         });
+      }
+
+      const createdOrder = await tx.order.create({
+        data: {
+          userId,
+          status: orderStatus,
+          addressId: address.id,
+          recipientName: address.fullName,
+          recipientPhone: address.phone,
+          deliveryAddress: this.formatAddress(address),
+          selectedLogisticsPartnerId: logisticsPartner.id,
+          selectedLogisticsPartnerName: logisticsPartner.name,
+          subtotal,
+          shippingFee,
+          totalDiscount: 0,
+          totalAmount,
+          shopDiscount: 0,
+          platformDiscount: 0,
+          freeshipDiscount: 0,
+          appliedVouchers: { connect: voucherIdsToConnect },
+          orderItems: { create: orderItemsData },
+          payment: {
+            create: {
+              method: paymentMethod,
+              amount: totalAmount,
+              status:
+                paymentMethod === PaymentMethod.COD
+                  ? PaymentStatus.PENDING
+                  : PaymentStatus.PENDING,
+            },
+          },
+        },
+        include: { payment: true },
       });
-    } catch (error) {
-      throw error;
-    }
+
+      if (paymentMethod === PaymentMethod.COD) {
+        await this.createLogisticsOrderIfNeeded(tx, createdOrder.id);
+      }
+
+      return tx.order.findUnique({
+        where: { id: createdOrder.id },
+        include: this.getOrderInclude(),
+      });
+    });
+
+    return this.mapOrderResponse(order);
   }
 
-  // ==================================================================
-  // 2. FIND MY ORDERS (User)
-  // ==================================================================
   async findMyOrders(userId: string, status?: OrderStatus) {
     const whereCondition: Prisma.OrderWhereInput = { userId };
+
     if (status && status !== ('ALL' as any)) {
-        whereCondition.status = status;
+      whereCondition.status = status;
     }
 
-    return this.prisma.order.findMany({
-        where: whereCondition,
-        orderBy: { createdAt: 'desc' },
-        include: {
-            orderItems: {
-                include: {
-                    product: { select: { id: true, name: true, images: true } },
-                    variant: { select: { id: true, size: true, color: true } }
-                }
-            },
-            payment: true,
-        }
-    });
-  }
-
-  // ==================================================================
-  // 3. FIND ALL (Admin Dashboard)
-  // ==================================================================
-  async findAll(userId: string, role: string) {
-    const whereCondition: any = {};
-
-    // Nếu role là Customer thì chỉ xem của mình (Logic phụ trợ)
-    if (role === Role.CUSTOMER) {
-        whereCondition.userId = userId;
-    }
-    
-    return this.prisma.order.findMany({
+    const orders = await this.prisma.order.findMany({
       where: whereCondition,
-      include: {
-        // 🔥 Lấy thông tin User để hiển thị tên Khách hàng
-        user: {
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                phone: true,
-                avatar: true
-            }
-        },
-        orderItems: {
-            include: {
-                product: true, 
-                variant: true  
-            }
-        },
-        payment: true,
-        appliedVouchers: true,
-      },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      include: this.getOrderInclude(),
     });
+
+    return orders.map((order) => this.mapOrderResponse(order));
   }
 
-  // ==================================================================
-  // 4. FIND ONE
-  // ==================================================================
+  async findAll(userId: string, role: string) {
+    const whereCondition: Prisma.OrderWhereInput = {};
+
+    if (role === Role.CUSTOMER) {
+      whereCondition.userId = userId;
+    }
+
+    const orders = await this.prisma.order.findMany({
+      where: whereCondition,
+      include: this.getOrderInclude(true),
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return orders.map((order) => this.mapOrderResponse(order));
+  }
+
   async findOne(id: string, userId: string, role: string) {
     const order = await this.prisma.order.findUnique({
       where: { id },
-      include: {
-        orderItems: {
-            include: {
-                product: true,
-                variant: true
-            }
-        },
-        payment: true,
-        appliedVouchers: true,
-        user: { select: { id: true, name: true, email: true, phone: true } }
-      },
+      include: this.getOrderInclude(true),
     });
 
-    if (!order) throw new NotFoundException('Order not found');
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
 
     if (role !== Role.ADMIN && order.userId !== userId) {
       throw new ForbiddenException('You do not have permission to view this order');
     }
 
-    return order;
+    return this.mapOrderResponse(order);
   }
 
-  // ==================================================================
-  // 5. UPDATE STATUS
-  // ==================================================================
   async updateStatus(
     id: string,
     dto: UpdateOrderStatusDto,
-    userId: string,
-    role: string,
+    _userId: string,
+    _role: string,
   ) {
-    // Có thể thêm logic check quyền ở đây nếu cần
     return this.prisma.order.update({
       where: { id },
       data: { status: dto.status },
@@ -254,57 +233,190 @@ export class OrdersService {
   }
 
   async updatePaymentStatus(idOrRef: string, status: string, paymentMethod: string) {
-    console.log(`[UpdatePayment] Đang tìm đơn hàng với ID/Ref: ${idOrRef}`);
+    const normalizedStatus = (status || '').toUpperCase();
+    const isPaymentSuccessful = normalizedStatus === 'PAID' || normalizedStatus === 'SUCCESS';
 
-    // BƯỚC 1: Thử tìm trực tiếp theo Order ID
     let order = await this.prisma.order.findFirst({
       where: { id: idOrRef },
       include: { payment: true },
     });
 
-    // BƯỚC 2: Nếu không thấy, thử tìm xem đó có phải là Payment ID không?
-    // (Rất nhiều trường hợp nhầm lẫn lấy Payment ID làm mã giao dịch VNPay)
     if (!order) {
-      console.log(`[UpdatePayment] Không tìm thấy Order ID, đang thử tìm theo Payment ID...`);
       const payment = await this.prisma.payment.findFirst({
         where: { id: idOrRef },
-        include: { order: true } // Load ngược lại Order
+        include: { order: { include: { payment: true } } },
       });
 
-      if (payment && payment.order) {
-        console.log(`[UpdatePayment] -> Đã tìm thấy Order thông qua Payment ID: ${payment.order.id}`);
-        // Gán lại order tìm được và load kèm payment để xử lý ở dưới
-        order = await this.prisma.order.findUnique({
-           where: { id: payment.order.id },
-           include: { payment: true }
-        });
+      if (payment?.order) {
+        order = payment.order;
       }
     }
 
-    // Nếu vẫn không thấy thì chịu thua -> Báo lỗi
     if (!order) {
-      console.error(`[UpdatePayment] Thất bại! Không tồn tại Order hay Payment nào với ID: ${idOrRef}`);
-      throw new NotFoundException(`Không tìm thấy đơn hàng để cập nhật thanh toán (ID: ${idOrRef})`);
+      throw new NotFoundException(
+        `Unable to find order or payment with id ${idOrRef} to update payment status`,
+      );
     }
 
-    // BƯỚC 3: Cập nhật bảng Payment
-    if (order.payment) {
-      await this.prisma.payment.update({
-        where: { id: order.payment.id },
+    const updatedOrder = await this.prisma.$transaction(async (tx) => {
+      if (order?.payment) {
+        await tx.payment.update({
+          where: { id: order.payment.id },
+          data: {
+            status: isPaymentSuccessful ? PaymentStatus.SUCCESS : PaymentStatus.FAILED,
+            method: paymentMethod as PaymentMethod,
+          },
+        });
+      }
+
+      const nextOrder = await tx.order.update({
+        where: { id: order.id },
         data: {
-          status: PaymentStatus.SUCCESS,
-          method: paymentMethod as PaymentMethod, 
+          status: isPaymentSuccessful ? OrderStatus.PROCESSING : order.status,
         },
       });
+
+      if (isPaymentSuccessful) {
+        await this.createLogisticsOrderIfNeeded(tx, order.id);
+      }
+
+      return tx.order.findUnique({
+        where: { id: nextOrder.id },
+        include: this.getOrderInclude(true),
+      });
+    });
+
+    return this.mapOrderResponse(updatedOrder);
+  }
+
+  private getOrderInclude(includeUser = false): Prisma.OrderInclude {
+    return {
+      orderItems: {
+        include: {
+          product: includeUser
+            ? true
+            : { select: { id: true, name: true, images: true } },
+          variant: { select: { id: true, size: true, color: true } },
+        },
+      },
+      payment: true,
+      appliedVouchers: true,
+      user: includeUser
+        ? { select: { id: true, name: true, email: true, phone: true } }
+        : false,
+      logisticsOrder: {
+        include: {
+          logisticsPartner: {
+            select: { id: true, name: true, baseRate: true, rating: true },
+          },
+          shipper: {
+            include: {
+              user: { select: { id: true, name: true, phone: true, email: true } },
+            },
+          },
+        },
+      },
+    };
+  }
+
+  private async createLogisticsOrderIfNeeded(
+    tx: Prisma.TransactionClient,
+    orderId: string,
+  ) {
+    const existingLogisticsOrder = await tx.logisticsOrder.findUnique({
+      where: { orderId },
+    });
+
+    if (existingLogisticsOrder) {
+      return existingLogisticsOrder;
     }
 
-    // BƯỚC 4: Cập nhật trạng thái đơn hàng -> PROCESSING
-    return this.prisma.order.update({
-      where: { id: order.id }, // Dùng ID chuẩn của order vừa tìm được
-      data: {
-        status: OrderStatus.PROCESSING,
-      },
-      include: { payment: true },
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      include: { orderItems: true },
     });
+
+    if (!order) {
+      throw new NotFoundException('Order not found while creating logistics order');
+    }
+
+    if (!order.selectedLogisticsPartnerId || !order.deliveryAddress) {
+      throw new BadRequestException(
+        'Order is missing selected logistics partner or delivery address',
+      );
+    }
+
+    const merchantContext = this.resolveMerchantContext(order.orderItems);
+
+    try {
+      return await tx.logisticsOrder.create({
+        data: {
+          orderId: order.id,
+          logisticsPartnerId: order.selectedLogisticsPartnerId,
+          trackingCode: this.generateTrackingCode(),
+          status: LogisticsStatus.CREATED,
+          deliveryAddress: order.deliveryAddress,
+          pickupAddress: null,
+          notes: null,
+          sellerId: merchantContext.sellerId,
+          enterpriseId: merchantContext.enterpriseId,
+          proofOfDelivery: [],
+        },
+      });
+    } catch (error: any) {
+      if (error?.code === 'P2002') {
+        return tx.logisticsOrder.findUnique({
+          where: { orderId },
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  private resolveMerchantContext(orderItems: Array<{ sellerId?: string | null; enterpriseId?: string | null }>) {
+    const sellerIds = new Set(orderItems.map((item) => item.sellerId).filter(Boolean));
+    const enterpriseIds = new Set(
+      orderItems.map((item) => item.enterpriseId).filter(Boolean),
+    );
+
+    return {
+      sellerId: sellerIds.size === 1 ? Array.from(sellerIds)[0] : null,
+      enterpriseId: enterpriseIds.size === 1 ? Array.from(enterpriseIds)[0] : null,
+    };
+  }
+
+  private formatAddress(address: {
+    street: string;
+    ward: string;
+    district: string;
+    province: string;
+  }) {
+    return [address.street, address.ward, address.district, address.province]
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  private generateTrackingCode() {
+    const prefix = 'TRK';
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).slice(2, 5).toUpperCase();
+    return `${prefix}${timestamp}${random}`;
+  }
+
+  private mapOrderResponse<T extends Record<string, any> | null>(order: T) {
+    if (!order) {
+      return order;
+    }
+
+    return {
+      ...order,
+      selectedLogisticsPartner: order.selectedLogisticsPartnerId
+        ? {
+            id: order.selectedLogisticsPartnerId,
+            name: order.selectedLogisticsPartnerName,
+          }
+        : null,
+    };
   }
 }

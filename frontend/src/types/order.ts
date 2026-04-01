@@ -1,13 +1,20 @@
-export type OrderStatus = "PENDING" | "PROCESSING" | "SHIPPING" | "DELIVERED" | "CANCELLED";
-export type PaymentMethod = "VNPAY" | "PAYPAL" | "COD";
-export type PaymentStatus = "PENDING" | "SUCCESS" | "FAILED";
+import { LogisticsOrderRecord } from './logistics';
+
+export type OrderStatus =
+  | 'PENDING'
+  | 'PROCESSING'
+  | 'SHIPPING'
+  | 'DELIVERED'
+  | 'CANCELLED';
+export type PaymentMethod = 'VNPAY' | 'PAYPAL' | 'COD';
+export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
 
 export interface ProductVariant {
   id: string;
-  size?: string;
-  color?: string;
-  price: number;
-  stock: number;
+  size?: string | null;
+  color?: string | null;
+  price?: number;
+  stock?: number;
   sku?: string;
 }
 
@@ -25,7 +32,7 @@ export interface OrderItem {
   quantity: number;
   price: number;
   product: Product;
-  variant?: ProductVariant | null; 
+  variant?: ProductVariant | null;
 }
 
 export interface Payment {
@@ -42,22 +49,30 @@ export interface OrderUser {
   phone: string | null;
 }
 
+export interface SelectedLogisticsPartner {
+  id: string;
+  name: string;
+}
+
 export interface Order {
   id: string;
   userId: string;
   status: OrderStatus;
-  
-  // Tiền
   subtotal: number;
   shippingFee: number;
-  totalDiscount: number; // Tổng giảm giá
-  totalAmount: number;   // Tổng thanh toán
-
+  totalDiscount: number;
+  totalAmount: number;
+  addressId?: string | null;
+  recipientName?: string | null;
+  recipientPhone?: string | null;
+  deliveryAddress?: string | null;
+  selectedLogisticsPartnerId?: string | null;
+  selectedLogisticsPartnerName?: string | null;
+  selectedLogisticsPartner?: SelectedLogisticsPartner | null;
   createdAt: string;
   updatedAt: string;
-
-  // Quan hệ
   orderItems: OrderItem[];
   payment?: Payment | null;
-  user?: OrderUser; // Thông tin người mua
+  user?: OrderUser;
+  logisticsOrder?: LogisticsOrderRecord | null;
 }

@@ -1,39 +1,62 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
   Request,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { LogisticsService } from './logistics.service';
 import {
-  CreateLogisticsPartnerDto,
-  UpdateLogisticsPartnerDto,
-  CreateLogisticsOrderDto,
-  UpdateLogisticsOrderDto,
+  AssignLogisticsOrderDto,
   CalculateShippingDto,
+  CreateLogisticsOrderDto,
+  CreateLogisticsPartnerDto,
+  UpdateLogisticsOrderDto,
 } from './dto/logistics.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '@prisma/client';
+import { GetLogisticsPartnerId } from './decorators/get-logistics-partner-id.decorator';
 
 @ApiTags('logistics')
 @Controller('logistics')
+@ApiBearerAuth()
 export class LogisticsController {
   constructor(private readonly logisticsService: LogisticsService) {}
 
-  // Partner endpoints
-  @ApiOperation({ summary: 'Create a logistics partner profile' })
-  @ApiResponse({ status: 201, description: 'Partner profile has been created.' })
-  @Post('partners')
+  @Public()
+  @ApiOperation({ summary: 'Get verified logistics partners for checkout' })
+  @ApiResponse({ status: 200, description: 'Return logistics partners.' })
+  @Get('partners')
+  findAllPartners() {
+    return this.logisticsService.findAllPartners();
+  }
+
+  @Public()
+  @ApiOperation({ summary: 'Estimate shipping fee' })
+  @Post('calculate')
+  calculateShipping(@Body() calculateShippingDto: CalculateShippingDto) {
+    return this.logisticsService.calculateShipping(calculateShippingDto);
+  }
+
+  @ApiOperation({ summary: 'Create logistics partner profile' })
+  @Post('partners/profile')
   @Roles(Role.LOGISTICS)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   createPartner(
     @Request() req,
     @Body() createLogisticsPartnerDto: CreateLogisticsPartnerDto,
@@ -41,97 +64,71 @@ export class LogisticsController {
     return this.logisticsService.createPartner(req.user.id, createLogisticsPartnerDto);
   }
 
-  @ApiOperation({ summary: 'Get all logistics partners' })
-  @ApiResponse({ status: 200, description: 'Return all partners.' })
-  @Public()
-  @Get('partners')
-  @Roles(Role.ADMIN)
-  findAllPartners() {
-    return this.logisticsService.findAllPartners();
+  @ApiOperation({ summary: 'Get logistics orders for the current partner' })
+  @ApiQuery({ name: 'unassigned', required: false, type: Boolean })
+  @Get('orders/me')
+  @Roles(Role.LOGISTICS)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  findAllMyOrders(
+    @GetLogisticsPartnerId() partnerId: string,
+    @Query('unassigned') unassigned?: string,
+  ) {
+    return this.logisticsService.findAllOrders(partnerId, unassigned === 'true');
   }
 
-  @ApiOperation({ summary: 'Get logistics partner by ID' })
-  @ApiResponse({ status: 200, description: 'Return the partner.' })
-  @Public()
+  @ApiOperation({ summary: 'Get unassigned logistics orders for the current partner' })
+  @Get('orders/me/unassigned')
+  @Roles(Role.LOGISTICS)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  findUnassignedOrders(@GetLogisticsPartnerId() partnerId: string) {
+    return this.logisticsService.findUnassignedOrders(partnerId);
+  }
+
+  @ApiOperation({ summary: 'Update logistics order data or status' })
+  @Patch('orders/:id')
+  @Roles(Role.LOGISTICS)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  updateOrderStatus(
+    @Param('id') id: string,
+    @Body() updateLogisticsOrderDto: UpdateLogisticsOrderDto,
+    @GetLogisticsPartnerId() partnerId: string,
+  ) {
+    return this.logisticsService.updateOrderStatus(id, updateLogisticsOrderDto, partnerId);
+  }
+
+  @ApiOperation({ summary: 'Assign shipper to a logistics order owned by current partner' })
+  @Post('orders/:id/assign')
+  @Roles(Role.LOGISTICS)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  assignOrder(
+    @Param('id') id: string,
+    @Body() body: AssignLogisticsOrderDto,
+    @GetLogisticsPartnerId() partnerId: string,
+  ) {
+    return this.logisticsService.assignOrderToShipper(id, body, partnerId);
+  }
+
+  @ApiOperation({ summary: 'Get logistics partner details' })
   @Get('partners/:id')
+  @Roles(Role.ADMIN, Role.LOGISTICS)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   findOnePartner(@Param('id') id: string) {
     return this.logisticsService.findOnePartner(id);
   }
 
-  @ApiOperation({ summary: 'Update logistics partner profile' })
-  @ApiResponse({ status: 200, description: 'Partner profile has been updated.' })
-  @Patch('partners/:id')
-  @Roles(Role.LOGISTICS, Role.ADMIN)
-  updatePartner(
-    @Param('id') id: string,
-    @Body() updateLogisticsPartnerDto: UpdateLogisticsPartnerDto,
-    @Request() req,
-  ) {
-    // Only allow partners to update their own profile unless they're an admin
-    if (
-      req.user.role !== Role.ADMIN &&
-      this.logisticsService.findOnePartner(id)['userId'] !== req.user.id
-    ) {
-      throw new Error('Unauthorized');
-    }
-    return this.logisticsService.updatePartner(id, updateLogisticsPartnerDto);
-  }
-
-  @ApiOperation({ summary: 'Delete logistics partner profile' })
-  @ApiResponse({ status: 200, description: 'Partner profile has been deleted.' })
+  @ApiOperation({ summary: 'Delete logistics partner' })
   @Delete('partners/:id')
   @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   deletePartner(@Param('id') id: string) {
     return this.logisticsService.deletePartner(id);
   }
 
-  // Order endpoints
-  @ApiOperation({ summary: 'Create a logistics order' })
-  @ApiResponse({ status: 201, description: 'Logistics order has been created.' })
+  @ApiOperation({ summary: 'Create logistics order manually' })
   @Post('orders')
-  @Roles(Role.LOGISTICS, Role.ADMIN)
+  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   createOrder(@Body() createLogisticsOrderDto: CreateLogisticsOrderDto) {
     return this.logisticsService.createOrder(createLogisticsOrderDto);
-  }
-
-  @ApiOperation({ summary: 'Get all logistics orders' })
-  @ApiResponse({ status: 200, description: 'Return all logistics orders.' })
-  @Public()
-  @Get('orders')
-  @Roles(Role.LOGISTICS, Role.ADMIN)
-  findAllOrders(@Request() req) {
-    // If logistics partner, only show their orders
-    const partnerId =
-      req.user?.role === Role.LOGISTICS
-        ? this.logisticsService.findOnePartner(req.user?.id)['id']
-        : undefined;
-    return this.logisticsService.findAllOrders(partnerId);
-  }
-
-  @ApiOperation({ summary: 'Get logistics order by ID' })
-  @ApiResponse({ status: 200, description: 'Return the logistics order.' })
-  @Public()
-  @Get('orders/:id')
-  findOneOrder(@Param('id') id: string) {
-    return this.logisticsService.findOneOrder(id);
-  }
-
-  @ApiOperation({ summary: 'Update logistics order status' })
-  @ApiResponse({ status: 200, description: 'Order status has been updated.' })
-  @Patch('orders/:id')
-  @Roles(Role.LOGISTICS, Role.ADMIN)
-  updateOrderStatus(
-    @Param('id') id: string,
-    @Body() updateLogisticsOrderDto: UpdateLogisticsOrderDto,
-  ) {
-    return this.logisticsService.updateOrderStatus(id, updateLogisticsOrderDto);
-  }
-
-  // Shipping calculation endpoint
-  @ApiOperation({ summary: 'Calculate shipping cost' })
-  @ApiResponse({ status: 200, description: 'Return shipping cost calculation.' })
-  @Post('calculate')
-  calculateShipping(@Body() calculateShippingDto: CalculateShippingDto) {
-    return this.logisticsService.calculateShipping(calculateShippingDto);
   }
 }
