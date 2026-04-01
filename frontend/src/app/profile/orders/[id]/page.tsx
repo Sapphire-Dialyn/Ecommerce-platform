@@ -8,31 +8,32 @@ import { paymentService } from '@/services/payment.service';
 import { toast } from 'react-hot-toast';
 import { 
   ArrowLeft, MapPin, CreditCard, Package, 
-  Truck, CheckCircle, XCircle, Clock, Loader2 
+  Truck, CheckCircle, XCircle, Clock, Loader2, RefreshCcw
 } from 'lucide-react';
 
 export default function OrderDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isPayLoading, setIsPayLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        if (params?.id) {
-          // Gọi API lấy chi tiết đơn hàng thật từ Backend
-          const data = await orderService.getOrderById(params.id as string);
-          setOrder(data);
-        }
-      } catch (error) {
-        console.error("Lỗi tải đơn hàng:", error);
-        toast.error("Không tìm thấy đơn hàng");
-      } finally {
-        setLoading(false);
+  // Hàm tải dữ liệu đơn hàng
+  const fetchOrder = async () => {
+    try {
+      setLoading(true);
+      if (params?.id) {
+        const data = await orderService.getOrderById(params.id as string);
+        setOrder(data);
       }
-    };
+    } catch (error) {
+      console.error("Lỗi tải đơn hàng:", error);
+      toast.error("Không tìm thấy đơn hàng");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchOrder();
   }, [params?.id]);
 
@@ -41,15 +42,10 @@ export default function OrderDetailPage() {
     if (!order) return;
     setIsPayLoading(true);
     try {
-      // 🟢 SỬA LỖI TẠI ĐÂY: Truyền đúng 2 tham số (ID đơn hàng, Phương thức thanh toán)
-      // Thay vì truyền object { amount, orderId... } gây lỗi "Expected 2 arguments, but got 1"
       const res = await paymentService.createPayment(order.id, 'VNPAY');
-      
-      // Backend trả về có thể là string URL hoặc object { paymentUrl: '...' }
       const paymentUrl = typeof res === 'string' ? res : res?.paymentUrl;
 
       if (paymentUrl) {
-        // Chuyển hướng sang cổng thanh toán (VNPay)
         window.location.href = paymentUrl;
       } else {
         toast.error("Không tạo được liên kết thanh toán. Vui lòng thử lại.");
@@ -62,10 +58,9 @@ export default function OrderDetailPage() {
     }
   };
 
-  // Render Badge trạng thái đơn hàng (UI)
   const renderStatusBadge = (status: string) => {
     const styles: any = {
-      PENDING: { bg: 'bg-orange-100', text: 'text-orange-700', icon: <Clock size={16}/>, label: 'Chờ thanh toán' },
+      PENDING: { bg: 'bg-orange-100', text: 'text-orange-700', icon: <Clock size={16}/>, label: 'Chờ xác nhận' },
       PROCESSING: { bg: 'bg-blue-100', text: 'text-blue-700', icon: <Package size={16}/>, label: 'Đang xử lý' },
       SHIPPING: { bg: 'bg-indigo-100', text: 'text-indigo-700', icon: <Truck size={16}/>, label: 'Đang giao hàng' },
       DELIVERED: { bg: 'bg-green-100', text: 'text-green-700', icon: <CheckCircle size={16}/>, label: 'Hoàn thành' },
@@ -73,7 +68,8 @@ export default function OrderDetailPage() {
       CANCELLED: { bg: 'bg-red-100', text: 'text-red-700', icon: <XCircle size={16}/>, label: 'Đã hủy' },
     };
     
-    const s = styles[status] || { bg: 'bg-gray-100', text: 'text-gray-700', icon: <Package size={16}/>, label: status };
+    // Nếu status lạ, fallback về mặc định
+    const s = styles[status] || styles.PENDING;
     
     return (
       <span className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold ${s.bg} ${s.text}`}>
@@ -82,31 +78,23 @@ export default function OrderDetailPage() {
     );
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Loader2 className="animate-spin text-fuchsia-600" size={40}/>
-    </div>
-  );
-
-  if (!order) return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-      <p className="text-gray-500 font-medium">Đơn hàng không tồn tại hoặc đã bị xóa.</p>
-      <Link href="/profile/orders" className="text-fuchsia-600 hover:underline font-bold">
-        Quay lại danh sách
-      </Link>
-    </div>
-  );
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-fuchsia-600" size={40}/></div>;
+  if (!order) return <div className="min-h-screen flex items-center justify-center">Đơn hàng không tồn tại</div>;
 
   // ============================================================
-  // ĐIỀU KIỆN HIỂN THỊ NÚT THANH TOÁN LẠI
+  // 🔥 FIX LOGIC CHECK TRẠNG THÁI THANH TOÁN
   // ============================================================
-  const isOrderPending = order.status === 'PENDING';       // Đơn hàng đang chờ
-  const isNotCancelled = order.status !== 'CANCELLED';     // Chưa bị hủy
-  // Kiểm tra nếu là thanh toán online (VNPAY) và chưa thanh toán (PAID)
-  const isOnlinePayment = order.payment?.method === 'VNPAY'; 
-  const isPaymentUnpaid = order.payment?.status !== 'PAID';
   
-  const showRepayButton = isOrderPending && isNotCancelled && isOnlinePayment && isPaymentUnpaid;
+  // Kiểm tra: Chấp nhận cả 'PAID' (chuẩn logic) và 'SUCCESS' (hiện tại trong DB)
+  const paymentStatus = order.payment?.status;
+  const isPaid = paymentStatus === 'PAID' || paymentStatus === 'SUCCESS';
+
+  const isPending = order.status === 'PENDING';
+  const isNotCancelled = order.status !== 'CANCELLED';
+  const isVNPAY = order.payment?.method === 'VNPAY';
+  
+  // Chỉ hiện nút thanh toán lại nếu: Đơn chờ + Chưa hủy + VNPAY + CHƯA THANH TOÁN
+  const showRepayButton = isPending && isNotCancelled && isVNPAY && !isPaid;
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
@@ -121,7 +109,15 @@ export default function OrderDetailPage() {
             <h1 className="text-2xl font-extrabold text-gray-900">Chi tiết đơn hàng</h1>
             <p className="text-sm text-gray-500 font-mono">Mã đơn: {order.id}</p>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
+            {/* Nút Refresh dữ liệu thủ công (đề phòng cache) */}
+            <button 
+                onClick={fetchOrder} 
+                className="p-2 text-gray-400 hover:text-fuchsia-600 transition" 
+                title="Cập nhật trạng thái mới nhất"
+            >
+                <RefreshCcw size={18} />
+            </button>
             {renderStatusBadge(order.status)}
           </div>
         </div>
@@ -154,22 +150,28 @@ export default function OrderDetailPage() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500 text-sm">Trạng thái</span>
-                <span className={`font-bold text-sm ${order.payment?.status === 'PAID' ? 'text-green-600' : 'text-orange-600'}`}>
-                  {order.payment?.status === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                {/* 👇 Hiển thị đúng trạng thái dựa trên biến isPaid đã fix */}
+                <span className={`font-bold text-sm ${isPaid ? 'text-green-600' : 'text-orange-600'}`}>
+                  {isPaid ? 'Đã thanh toán' : 'Chưa thanh toán'}
                 </span>
               </div>
             </div>
 
             {/* --- NÚT THANH TOÁN LẠI --- */}
             {showRepayButton && (
-              <button 
-                onClick={handleRepay}
-                disabled={isPayLoading}
-                className="mt-4 w-full py-3 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-xl font-bold shadow-lg shadow-fuchsia-200 transition flex items-center justify-center gap-2 disabled:opacity-70 transform active:scale-95"
-              >
-                {isPayLoading ? <Loader2 className="animate-spin" size={20}/> : <CreditCard size={20}/>}
-                THANH TOÁN NGAY
-              </button>
+              <div className="mt-4">
+                  <button 
+                    onClick={handleRepay}
+                    disabled={isPayLoading}
+                    className="w-full py-3 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-xl font-bold shadow-lg shadow-fuchsia-200 transition flex items-center justify-center gap-2 disabled:opacity-70 transform active:scale-95"
+                  >
+                    {isPayLoading ? <Loader2 className="animate-spin" size={20}/> : <CreditCard size={20}/>}
+                    THANH TOÁN NGAY
+                  </button>
+                  <p className="text-xs text-center text-gray-400 mt-2 italic">
+                    * Nếu bạn vừa thanh toán, vui lòng bấm nút làm mới ↻ ở góc trên
+                  </p>
+              </div>
             )}
           </div>
         </div>
@@ -184,11 +186,7 @@ export default function OrderDetailPage() {
               <div key={item.id} className="p-6 flex items-start gap-4">
                 <div className="w-20 h-20 rounded-lg bg-gray-100 shrink-0 overflow-hidden border border-gray-200 relative">
                    {item.product?.images?.[0] ? (
-                      <img 
-                        src={item.product.images[0]} 
-                        alt={item.product.name} 
-                        className="w-full h-full object-cover" 
-                      />
+                      <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover" />
                    ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400"><Package/></div>
                    )}
@@ -200,9 +198,7 @@ export default function OrderDetailPage() {
                   </p>
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium bg-gray-100 px-2 py-1 rounded text-gray-600">x{item.quantity}</span>
-                    <span className="font-bold text-gray-900">
-                      {(item.price * item.quantity).toLocaleString('vi-VN')}đ
-                    </span>
+                    <span className="font-bold text-gray-900">{(item.price * item.quantity).toLocaleString('vi-VN')}đ</span>
                   </div>
                 </div>
               </div>
@@ -229,9 +225,7 @@ export default function OrderDetailPage() {
             )}
             <div className="border-t border-gray-100 pt-3 mt-3 flex justify-between items-center">
               <span className="font-bold text-gray-900 text-lg">Thành tiền</span>
-              <span className="font-extrabold text-fuchsia-600 text-2xl">
-                {order.totalAmount?.toLocaleString('vi-VN')}đ
-              </span>
+              <span className="font-extrabold text-fuchsia-600 text-2xl">{order.totalAmount?.toLocaleString('vi-VN')}đ</span>
             </div>
           </div>
         </div>

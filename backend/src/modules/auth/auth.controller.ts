@@ -8,23 +8,58 @@ import {
   HttpCode,
   HttpStatus,
   Get,
-  UseInterceptors, // 👈 Mới
-  UploadedFiles    // 👈 Mới
+  UseInterceptors,
+  UploadedFiles,
+  Res, // 👈 Thêm Res để xử lý Redirect
+  Req  // 👈 Thêm Req
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport'; // 👈 Thêm AuthGuard cho Google
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { LoginDto, RegisterDto, ChangePasswordDto } from './dto/auth.dto';
 import { Public } from './decorators/public.decorator';
-import { FileFieldsInterceptor } from '@nestjs/platform-express'; // 👈 Quan trọng
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  // --- ĐĂNG NHẬP ---
+  // ============================================================================
+  // 🔥 CHỨC NĂNG MỚI: GOOGLE OAUTH2 (CHỈ DÀNH CHO CUSTOMER)
+  // ============================================================================
+  
+  @Public()
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Bắt đầu đăng nhập bằng Google (Dành cho Khách hàng)' })
+  async googleAuth(@Req() req) {
+    // AuthGuard('google') sẽ tự động chuyển hướng sang Google
+  }
+
+  @Public()
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @ApiOperation({ summary: 'Xử lý kết quả trả về từ Google' })
+  async googleAuthRedirect(@Req() req, @Res() res) {
+    try {
+      // Gọi service để kiểm tra user/tạo mới role CUSTOMER
+      const loginData = await this.authService.validateGoogleUser(req.user);
+      
+      // Thành công: Redirect về trang xử lý thành công ở FE kèm token
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/login-success?token=${loginData.access_token}`
+      );
+    } catch (error) {
+      // Thất bại (Ví dụ: Admin/Staff cố tình login bằng Google): Redirect về trang login kèm lỗi
+      const errorMessage = encodeURIComponent(error.message || 'Đăng nhập Google thất bại');
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=${errorMessage}`);
+    }
+  }
+
+  // --- ĐĂNG NHẬP LOCAL ---
   @Public()
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({
@@ -39,29 +74,25 @@ export class AuthController {
     return this.authService.login(req.user);
   }
 
-  // --- ĐĂNG KÝ (Đã cập nhật để nhận File) ---
+  // --- ĐĂNG KÝ (Hỗ trợ File cho Seller/Enterprise) ---
   @Public()
   @ApiOperation({ summary: 'Register new user' })
   @ApiResponse({
     status: 201,
     description: 'User has been successfully created.',
   })
-  @ApiConsumes('multipart/form-data') // 👈 Khai báo Swagger nhận FormData
+  @ApiConsumes('multipart/form-data')
   @Post('register')
-  // 👇 Interceptor để hứng các file từ Frontend
   @UseInterceptors(FileFieldsInterceptor([
-    // Dành cho Enterprise
     { name: 'businessLicense', maxCount: 1 },
     { name: 'brandRegistration', maxCount: 1 },
     { name: 'taxDocument', maxCount: 1 },
-    // Dành cho Seller
     { name: 'businessDocument', maxCount: 1 },
     { name: 'identityDocument', maxCount: 1 },
     { name: 'addressDocument', maxCount: 1 },
   ]))
   async register(
     @Body() data: RegisterDto,
-    // 👇 Lấy object chứa các file upload
     @UploadedFiles() files: { 
       businessLicense?: Express.Multer.File[],
       brandRegistration?: Express.Multer.File[],
@@ -71,7 +102,6 @@ export class AuthController {
       addressDocument?: Express.Multer.File[],
     },
   ) {
-    // Truyền cả data và files xuống service
     return this.authService.register(data, files);
   }
 
@@ -138,7 +168,7 @@ export class AuthController {
   })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @Get('me') // 👈 Đã đổi thành GET cho đúng chuẩn REST
+  @Get('me')
   @HttpCode(HttpStatus.OK)
   async getCurrentUser(@Request() req) {
     return this.authService.validateJwt(req.user.id);

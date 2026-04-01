@@ -22,9 +22,13 @@ async function main() {
 
   // 2. TÌM HOẶC TẠO TÀI KHOẢN CỦA BẠN (customer1@shop.com)
   const myEmail = 'customer1@shop.com';
+  const myAvatar = `https://ui-avatars.com/api/?name=Khach+Hang+VIP&background=f0abfc&color=701a75&bold=true`;
+  
   const myUser = await prisma.user.upsert({
     where: { email: myEmail },
-    update: {},
+    update: {
+      avatar: myAvatar // 👈 Cập nhật avatar nếu user đã tồn tại
+    },
     create: {
       email: myEmail,
       password: passwordHash,
@@ -32,6 +36,7 @@ async function main() {
       role: Role.CUSTOMER,
       phone: '0911223344',
       isVerified: true,
+      avatar: myAvatar
     }
   });
   console.log(`👤 Đã xác định tài khoản chính: ${myUser.email}`);
@@ -41,16 +46,22 @@ async function main() {
   console.log('👥 Đang tạo 10 khách hàng ảo...');
   for (let i = 1; i <= 10; i++) {
     const email = `test_user_${i}@example.com`;
+    const name = `Khách Test ${i}`;
+    const testAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff`;
+
     const user = await prisma.user.upsert({
       where: { email },
-      update: {},
+      update: {
+        avatar: testAvatar // 👈 Đảm bảo cập nhật avatar cho các user cũ
+      },
       create: {
         email,
         password: passwordHash,
-        name: `Khách Test ${i}`,
+        name: name,
         role: Role.CUSTOMER,
         phone: `098877766${i}`,
         isVerified: true,
+        avatar: testAvatar
       }
     });
     fakeCustomers.push(user);
@@ -61,10 +72,7 @@ async function main() {
 
   const createOrderForUser = async (user: any, count: number) => {
     for (let i = 0; i < count; i++) {
-        // Random trạng thái
         const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-        
-        // Chọn 1-3 sản phẩm ngẫu nhiên
         const itemCount = Math.floor(Math.random() * 3) + 1;
         const orderItemsData = [];
         let subtotal = 0;
@@ -117,19 +125,17 @@ async function main() {
   };
 
   // 4. TẠO ĐƠN HÀNG
-  // -> Tạo 1-3 đơn cho tài khoản của bạn
-  const myOrderCount = Math.floor(Math.random() * 3) + 1; // Random 1 đến 3
+  const myOrderCount = Math.floor(Math.random() * 3) + 1; 
   console.log(`🎁 Đang tạo ${myOrderCount} đơn hàng cho ${myEmail}...`);
   await createOrderForUser(myUser, myOrderCount);
 
-  // -> Tạo 20 đơn cho khách ảo
   console.log('📦 Đang tạo 20 đơn hàng cho khách ảo...');
   for (let i = 0; i < 20; i++) {
       const randomCustomer = fakeCustomers[Math.floor(Math.random() * fakeCustomers.length)];
       await createOrderForUser(randomCustomer, 1);
   }
 
-  console.log('🎉 XONG! Dữ liệu đã sẵn sàng.');
+  console.log('🎉 XONG! Dữ liệu đã được làm mới với Avatar đầy đủ.');
 }
 
 main()

@@ -90,12 +90,12 @@ export default function HomePage() {
                 {/* THAY ĐỔI: Tăng chiều cao của div bao quanh ảnh */}
                 {/* Dùng h-[550px] hoặc h-[600px] tùy ý muốn */}
                 <div className="relative z-10 rounded-[3rem] overflow-hidden shadow-2xl border-[6px] border-white/60 group h-[550px] sm:h-[650px] md:h-[700px] lg:h-[650px]">
-                  <img 
-                    src="https://ayanaus.com/wp-content/uploads/2025/03/12312412312.png" 
-                    alt="Hero Product" 
-                    className="w-full h-full object-cover transform transition duration-1000 group-hover:scale-105"
-                  />
-                </div>
+      <img 
+        src="https://res.cloudinary.com/dvtklxato/image/upload/v1775021845/kxaioycdunxi94ydxfku.jpg" // 👈 Dán link mới của bạn vào đây
+        alt="Hero Product" 
+        className="w-full h-full object-cover transform transition duration-1000 group-hover:scale-105"
+      />
+    </div>
                 
                  {/* Floating Tag */}
                  {/* <div className="absolute bottom-10 -left-4 md:left-8 bg-white/90 backdrop-blur-md px-5 py-3 rounded-2xl shadow-xl border border-white hidden md:flex items-center gap-3 animate-bounce duration-3000">

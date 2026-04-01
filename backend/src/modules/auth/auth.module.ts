@@ -5,12 +5,13 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
+import { GoogleStrategy } from './strategies/google.strategy'; // 👈 1. Import GoogleStrategy
 import { UsersModule } from '../users/users.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { RolesGuard } from './guards/roles.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { EmailModule } from '@modules/email/email.module';
+import { EmailModule } from '../email/email.module'; // Sửa lại path nếu cần
 
 
 @Module({
@@ -18,7 +19,8 @@ import { EmailModule } from '@modules/email/email.module';
     UsersModule,
     PrismaModule,
     EmailModule,
-    PassportModule,
+    // 2. Cấu hình PassportModule để nhận diện các chiến lược xác thực
+    PassportModule.register({ defaultStrategy: 'jwt' }), 
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: process.env.JWT_SECRET,
@@ -33,8 +35,9 @@ import { EmailModule } from '@modules/email/email.module';
     AuthService,
     LocalStrategy,
     JwtStrategy,
+    GoogleStrategy, // 👈 3. Khai báo GoogleStrategy tại đây để NestJS khởi tạo
+    
     // Global guards tạm thời tắt để test API endpoints
-    // TODO: Bật lại sau khi hoàn thành testing
     // {
     //   provide: APP_GUARD,
     //   useClass: JwtAuthGuard,

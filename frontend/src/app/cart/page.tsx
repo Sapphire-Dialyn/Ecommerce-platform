@@ -11,13 +11,116 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-// Import Services (Đảm bảo bạn đã tạo 2 file này như hướng dẫn trước)
+// Import Services
 import { orderService } from '@/services/order.service';
 import { paymentService } from '@/services/payment.service';
 
+// ============================================================================
+// HÀM TIỆN ÍCH TẠO VÀ MỞ HÓA ĐƠN PDF
+// ============================================================================
+const generateInvoiceHTML = (orderId: string, cartItems: any[], totalAmount: number, shippingFee: number) => {
+  const today = new Date().toLocaleDateString('vi-VN');
+  
+  // Render danh sách sản phẩm thành các dòng HTML
+  const itemsHtml = cartItems.map((item, index) => `
+    <tr class="border-b border-gray-200">
+      <td class="py-3 text-sm">${index + 1}</td>
+      <td class="py-3 text-sm font-medium text-gray-900">${item.name} ${item.variant ? `<span class="text-xs text-gray-500">(${item.variant})</span>` : ''}</td>
+      <td class="py-3 text-sm text-center">${item.quantity}</td>
+      <td class="py-3 text-sm text-right">${item.price.toLocaleString('vi-VN')} đ</td>
+      <td class="py-3 text-sm text-right font-medium">${(item.price * item.quantity).toLocaleString('vi-VN')} đ</td>
+    </tr>
+  `).join('');
+
+  return `
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Hóa đơn #${orderId.slice(-8).toUpperCase()}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+          @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            @page { margin: 15mm; }
+          }
+        </style>
+    </head>
+    <body class="bg-gray-50 p-8 font-sans">
+        <div class="max-w-3xl mx-auto bg-white p-10 rounded-lg shadow-sm border border-gray-200">
+            <div class="flex justify-between items-start border-b border-gray-200 pb-8 mb-8">
+                <div>
+                    <h1 class="text-3xl font-serif font-bold text-fuchsia-700">beauty&skincare</h1>
+                    <p class="text-gray-500 mt-1 text-sm">Vẻ đẹp từ sự thuần khiết</p>
+                </div>
+                <div class="text-right">
+                    <h2 class="text-2xl font-bold text-gray-800">HÓA ĐƠN MUA HÀNG</h2>
+                    <p class="text-gray-500 mt-1">Mã đơn: <span class="font-bold text-gray-800">#${orderId.slice(-8).toUpperCase()}</span></p>
+                    <p class="text-gray-500">Ngày lập: ${today}</p>
+                </div>
+            </div>
+
+            <table class="w-full text-left mb-8">
+                <thead>
+                    <tr class="border-b-2 border-fuchsia-600 text-gray-800">
+                        <th class="py-3 text-sm font-bold w-12">STT</th>
+                        <th class="py-3 text-sm font-bold">Tên sản phẩm</th>
+                        <th class="py-3 text-sm font-bold text-center w-20">SL</th>
+                        <th class="py-3 text-sm font-bold text-right w-32">Đơn giá</th>
+                        <th class="py-3 text-sm font-bold text-right w-32">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+            </table>
+
+            <div class="flex justify-end">
+                <div class="w-72 space-y-3">
+                    <div class="flex justify-between text-gray-600">
+                        <span>Tạm tính:</span>
+                        <span>${(totalAmount - shippingFee).toLocaleString('vi-VN')} đ</span>
+                    </div>
+                    <div class="flex justify-between text-gray-600">
+                        <span>Phí vận chuyển:</span>
+                        <span>${shippingFee.toLocaleString('vi-VN')} đ</span>
+                    </div>
+                    <div class="flex justify-between text-xl font-bold text-gray-900 border-t border-gray-200 pt-3">
+                        <span>Tổng cộng:</span>
+                        <span class="text-fuchsia-600">${totalAmount.toLocaleString('vi-VN')} đ</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-16 text-center text-sm text-gray-500 italic">
+                Cảm ơn bạn đã mua sắm tại Beauty & Skincare!
+            </div>
+        </div>
+        <script>
+          window.onload = function() { window.print(); }
+        </script>
+    </body>
+    </html>
+  `;
+};
+
+const openInvoiceTab = (orderId: string, cartItems: any[], totalAmount: number, shippingFee: number) => {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    toast.error("Vui lòng cho phép mở Popup trên trình duyệt để in hóa đơn.");
+    return;
+  }
+  const htmlContent = generateInvoiceHTML(orderId, cartItems, totalAmount, shippingFee);
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+};
+// ============================================================================
+
+
 export default function CartPage() {
   const cartItems = useAppSelector((state) => state.cart.items);
-  const { user } = useAppSelector((state) => state.auth); // Lấy thông tin user để check login
+  const { user } = useAppSelector((state) => state.auth); 
   
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -26,7 +129,6 @@ export default function CartPage() {
 
   // --- TÍNH TOÁN TIỀN ---
   const subtotal = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  // Freeship nếu đơn hàng > 500k, ngược lại phí 30k
   const shipping = subtotal > 500000 ? 0 : 30000; 
   const total = subtotal + shipping;
 
@@ -46,22 +148,17 @@ export default function CartPage() {
     setIsProcessing(true);
 
     try {
-      // BƯỚC A: Chuẩn bị dữ liệu đơn hàng (ĐÃ SỬA LOGIC TÁCH ID)
+      // BƯỚC A: Chuẩn bị dữ liệu đơn hàng
       const orderData = {
         items: cartItems.map(item => {
-            // Logic tách ID: item.id đang có dạng "productId-variantId"
-            // Ví dụ: "cmial...99-cmial...eb"
-            
             let productId = item.id;
             let variantId = null;
 
-            // Kiểm tra nếu id chứa dấu gạch ngang (dấu hiệu của ID ghép)
             if (item.id.includes('-')) {
                 const parts = item.id.split('-');
-                // Prisma CUID không chứa dấu '-', nên nếu có '-' thì chắc chắn là do mình ghép
                 if (parts.length === 2) {
-                    productId = parts[0]; // Phần đầu là Product ID
-                    variantId = parts[1]; // Phần sau là Variant ID
+                    productId = parts[0]; 
+                    variantId = parts[1]; 
                 }
             }
 
@@ -87,9 +184,13 @@ export default function CartPage() {
       // BƯỚC C: Gọi API lấy link thanh toán VNPAY
       const paymentResponse = await paymentService.createPayment(newOrder.id, 'VNPAY');
       
-      // BƯỚC D: Chuyển hướng
+      // BƯỚC D: Xử lý hiển thị Hóa Đơn & Chuyển hướng
       if (paymentResponse.paymentUrl) {
+        // Mở tab in hóa đơn TRƯỚC khi chuyển hướng trang hiện tại
+        openInvoiceTab(newOrder.id, cartItems, total, shipping);
+
         dispatch(clearCart()); 
+        // Chuyển hướng sang VNPay
         window.location.href = paymentResponse.paymentUrl;
       } else {
         toast.error("Lỗi: Không nhận được liên kết thanh toán");
