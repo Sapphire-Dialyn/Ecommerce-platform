@@ -25,9 +25,9 @@ import {
 export class ShipperService {
   constructor(private prisma: PrismaService) {}
 
-  async create(logisticsPartnerId: string, createShipperDto: CreateShipperDto) {
+  async create(userId: string, createShipperDto: CreateShipperDto) {
     const { email, password, name, phone, avatar, deliveryRange } = createShipperDto;
-
+    const logisticsPartnerId = await this.getPartnerIdByUserId(userId);
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -84,11 +84,15 @@ export class ShipperService {
     });
   }
 
-  async findAll(logisticsPartnerId: string) {
+  async findAll(userId: string) {
+    const logisticsPartnerId = await this.getPartnerIdByUserId(userId); // 👈 Lấy ID ở đây
+    
     return this.prisma.shipper.findMany({
       where: { logisticsPartnerId },
-      include: this.getShipperInclude(),
-      orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+      include: {
+        user: true,
+        assignedOrders: { include: { order: true } },
+      },
     });
   }
 
@@ -320,5 +324,13 @@ export class ShipperService {
         },
       },
     };
+  }
+
+  private async getPartnerIdByUserId(userId: string) {
+    const partner = await this.prisma.logisticsPartner.findUnique({
+      where: { userId }
+    });
+    if (!partner) throw new ForbiddenException('Bạn không phải là đơn vị vận chuyển');
+    return partner.id;
   }
 }

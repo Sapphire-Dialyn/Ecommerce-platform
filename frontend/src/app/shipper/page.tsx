@@ -18,10 +18,10 @@ import {
 } from 'lucide-react';
 
 const statusLabel: Record<string, string> = {
-  ASSIGNED: 'Da duoc phan cong',
-  PICKED_UP: 'Da lay hang',
-  IN_TRANSIT: 'Dang giao hang',
-  DELIVERED: 'Da giao thanh cong',
+  ASSIGNED: 'Đã được phân công',
+  PICKED_UP: 'Đã lấy hàng',
+  IN_TRANSIT: 'Đang giao hàng',
+  DELIVERED: 'Đã giao thành công',
 };
 
 export default function ShipperDashboardPage() {
@@ -76,11 +76,11 @@ export default function ShipperDashboardPage() {
     setUpdatingOrderId(logisticsOrderId);
     try {
       await logisticsService.updateCurrentShipperOrderStatus(logisticsOrderId, status);
-      toast.success('Da cap nhat trang thai don hang');
+      toast.success('Đã cập nhật trạng thái đơn hàng');
       await loadDashboard(false);
     } catch (error) {
       console.error('Shipper status update error:', error);
-      toast.error('Khong the cap nhat trang thai don');
+      toast.error('Không thể cập nhật trạng thái đơn hàng');
     } finally {
       setUpdatingOrderId(null);
     }
@@ -95,7 +95,7 @@ export default function ShipperDashboardPage() {
             Dashboard shipper
           </h1>
           <p className="text-stone-500">
-            Trang nay chi danh cho tai khoan shipper.
+            Trang này chỉ danh cho tài khoản shipper.
           </p>
         </div>
       </div>
@@ -107,7 +107,7 @@ export default function ShipperDashboardPage() {
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="flex items-center gap-3 text-stone-600">
           <Loader2 className="animate-spin text-emerald-700" />
-          Dang tai dashboard shipper...
+          Đang tải dashboard shipper...
         </div>
       </div>
     );
@@ -120,7 +120,7 @@ export default function ShipperDashboardPage() {
           <div>
             <h1 className="text-3xl font-extrabold text-stone-900">Dashboard Shipper</h1>
             <p className="text-stone-500 mt-2">
-              Theo doi cac don duoc giao cho ban va cap nhat tien trinh giao hang.
+              Theo dõi các đơn được giao cho bạn và cập nhật tiến trình giao hàng.
             </p>
           </div>
           <button
@@ -128,7 +128,7 @@ export default function ShipperDashboardPage() {
             className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white border border-stone-200 text-stone-700 font-bold hover:border-emerald-300 hover:text-emerald-700 transition"
           >
             {refreshing ? <Loader2 className="animate-spin" size={18} /> : <RefreshCcw size={18} />}
-            Lam moi
+            Làm mới
           </button>
         </div>
 
@@ -139,17 +139,17 @@ export default function ShipperDashboardPage() {
               {shipper?.user?.name || user.name}
             </div>
             <div className="text-sm text-stone-500 mt-2">
-              {shipper?.user?.phone || shipper?.user?.email || 'Khong co thong tin'}
+              {shipper?.user?.phone || shipper?.user?.email || 'Không có thông tin'}
             </div>
           </div>
           <div className="bg-white rounded-3xl border border-stone-200 p-6">
-            <div className="text-sm text-stone-500">Trang thai hien tai</div>
+            <div className="text-sm text-stone-500">Trang thái hiện tại</div>
             <div className="text-3xl font-extrabold text-stone-900 mt-2">
               {shipper?.status || 'AVAILABLE'}
             </div>
           </div>
           <div className="bg-white rounded-3xl border border-stone-200 p-6">
-            <div className="text-sm text-stone-500">Don dang giao</div>
+            <div className="text-sm text-stone-500">Đơn đang giao</div>
             <div className="text-3xl font-extrabold text-stone-900 mt-2">
               {activeOrders.length}
             </div>
@@ -159,12 +159,12 @@ export default function ShipperDashboardPage() {
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <Package className="text-emerald-700" size={20} />
-            <h2 className="text-xl font-extrabold text-stone-900">Don dang xu ly</h2>
+            <h2 className="text-xl font-extrabold text-stone-900">Đơn đang xử lý</h2>
           </div>
 
           {activeOrders.length === 0 ? (
             <div className="bg-white rounded-3xl border border-stone-200 p-10 text-center text-stone-500">
-              Ban chua co don nao dang duoc giao.
+              Bạn chưa có đơn nào đang được giao.
             </div>
           ) : (
             <div className="space-y-4">
@@ -199,17 +199,17 @@ export default function ShipperDashboardPage() {
                               Nguoi nhan
                             </div>
                             <div className="font-bold text-stone-900">
-                              {order.order.recipientName || order.order.user?.name || 'Khach hang'}
+                              {order.order.recipientName || order.order.user?.name || 'Khách hàng'}
                             </div>
                             <div className="text-stone-500 mt-1 flex items-center gap-2">
                               <Phone size={14} />
-                              {order.order.recipientPhone || order.order.user?.phone || 'Chua co so dien thoai'}
+                              {order.order.recipientPhone || order.order.user?.phone || 'Chưa có số điện thoại'}
                             </div>
                           </div>
                           <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
                             <div className="flex items-center gap-2 text-stone-500 mb-2">
                               <MapPin size={16} />
-                              Dia chi giao hang
+                              Địa chỉ giao hàng
                             </div>
                             <div className="font-medium text-stone-900 leading-6">
                               {order.deliveryAddress}
@@ -223,13 +223,13 @@ export default function ShipperDashboardPage() {
                             Pickup address
                           </div>
                           <div className="font-medium text-stone-900">
-                            {order.pickupAddress || 'Chua co pickup address'}
+                            {order.pickupAddress || 'Chưa có pickup address'}
                           </div>
                         </div>
 
                         <div className="rounded-2xl border border-stone-200 p-4">
                           <div className="text-sm font-bold text-stone-900 mb-3">
-                            San pham ({order.order.orderItems.length})
+                            Sản phẩm ({order.order.orderItems.length})
                           </div>
                           <div className="space-y-3">
                             {order.order.orderItems.map((item) => (
@@ -260,20 +260,20 @@ export default function ShipperDashboardPage() {
 
                       <div className="xl:w-[0.9fr] space-y-4">
                         <div className="rounded-2xl border border-stone-200 p-5 bg-stone-50">
-                          <div className="text-sm text-stone-500 mb-2">Tien trinh giao hang</div>
+                          <div className="text-sm text-stone-500 mb-2">Tiến trình giao hàng</div>
                           <div className="space-y-2 text-sm text-stone-700">
                             <div className="flex items-center justify-between">
-                              <span>Da duoc phan cong</span>
+                              <span>Đã được phân công</span>
                               <CheckCircle2 className="text-emerald-700" size={16} />
                             </div>
                             <div className="flex items-center justify-between">
-                              <span>Da lay hang</span>
+                              <span>Đã lấy hàng</span>
                               <span className={order.status !== 'ASSIGNED' ? 'text-emerald-700' : 'text-stone-400'}>
-                                {order.status !== 'ASSIGNED' ? 'Xong' : 'Cho xu ly'}
+                                {order.status !== 'ASSIGNED' ? 'Xong' : 'Chờ xử lý'}
                               </span>
                             </div>
                             <div className="flex items-center justify-between">
-                              <span>Dang giao</span>
+                              <span>Đang giao</span>
                               <span
                                 className={
                                   order.status === 'IN_TRANSIT' || order.status === 'DELIVERED'
@@ -283,13 +283,13 @@ export default function ShipperDashboardPage() {
                               >
                                 {order.status === 'IN_TRANSIT' || order.status === 'DELIVERED'
                                   ? 'Xong'
-                                  : 'Cho xu ly'}
+                                  : 'Chờ xử lý'}
                               </span>
                             </div>
                             <div className="flex items-center justify-between">
-                              <span>Da giao</span>
+                              <span>Đã giao</span>
                               <span className={order.status === 'DELIVERED' ? 'text-emerald-700' : 'text-stone-400'}>
-                                {order.status === 'DELIVERED' ? 'Hoan tat' : 'Cho xu ly'}
+                                {order.status === 'DELIVERED' ? 'Hoàn tất' : 'Chờ xử lý'}
                               </span>
                             </div>
                           </div>
@@ -306,7 +306,7 @@ export default function ShipperDashboardPage() {
                             ) : (
                               <Package size={16} />
                             )}
-                            Xac nhan da lay hang
+                            Xác nhận đã lấy hàng
                           </button>
 
                           <button
@@ -319,7 +319,7 @@ export default function ShipperDashboardPage() {
                             ) : (
                               <Truck size={16} />
                             )}
-                            Bat dau giao hang
+                            Bắt đầu giao hàng
                           </button>
 
                           <button
@@ -332,7 +332,7 @@ export default function ShipperDashboardPage() {
                             ) : (
                               <CheckCircle2 size={16} />
                             )}
-                            Xac nhan giao thanh cong
+                            Xác nhận đã giao hàng
                           </button>
                         </div>
                       </div>
@@ -347,12 +347,12 @@ export default function ShipperDashboardPage() {
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="text-emerald-700" size={20} />
-            <h2 className="text-xl font-extrabold text-stone-900">Don da giao</h2>
+            <h2 className="text-xl font-extrabold text-stone-900">Đơn đã giao</h2>
           </div>
 
           {completedOrders.length === 0 ? (
             <div className="bg-white rounded-3xl border border-stone-200 p-10 text-center text-stone-500">
-              Chua co don nao da giao thanh cong.
+              Chưa có đơn nào đã giao thành công.
             </div>
           ) : (
             <div className="grid xl:grid-cols-2 gap-4">
@@ -374,7 +374,7 @@ export default function ShipperDashboardPage() {
                   </div>
                   <div className="text-sm text-stone-600">
                     <div className="font-semibold text-stone-900">
-                      {order.order.recipientName || order.order.user?.name || 'Khach hang'}
+                      {order.order.recipientName || order.order.user?.name || 'Khách hàng'}
                     </div>
                     <div>{order.deliveryAddress}</div>
                   </div>

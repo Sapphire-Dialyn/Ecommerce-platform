@@ -21,11 +21,10 @@ import {
   UpdateLocationDto,
   UpdateShipperDto,
 } from './shipper.dto';
-import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@modules/auth/guards/roles.guard';
-import { Roles } from '@modules/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../../auth/guards/roles.guard';
+import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '@prisma/client';
-import { GetLogisticsPartnerId } from '@modules/logistics/decorators/get-logistics-partner-id.decorator';
 
 @ApiTags('shipper')
 @Controller('logistics/shipper')
@@ -39,10 +38,11 @@ export class ShipperController {
   @Post()
   @Roles(Role.LOGISTICS)
   create(
-    @GetLogisticsPartnerId() logisticsPartnerId: string,
+    @Request() req, // 👈 SỬA Ở ĐÂY: Dùng @Request() thay vì Decorator tùy chỉnh
     @Body() createShipperDto: CreateShipperDto,
   ) {
-    return this.shipperService.create(logisticsPartnerId, createShipperDto);
+    // 👈 Truyền req.user.id xuống service
+    return this.shipperService.create(req.user.id, createShipperDto);
   }
 
   @ApiOperation({ summary: 'Get current shipper profile' })
@@ -84,8 +84,9 @@ export class ShipperController {
   @ApiResponse({ status: 200, description: 'Return all shippers.' })
   @Get()
   @Roles(Role.LOGISTICS)
-  findAll(@GetLogisticsPartnerId() logisticsPartnerId: string) {
-    return this.shipperService.findAll(logisticsPartnerId);
+  findAll(@Request() req) { // 👈 SỬA Ở ĐÂY: Dùng @Request() thay vì Decorator tùy chỉnh
+    // 👈 Truyền req.user.id xuống service
+    return this.shipperService.findAll(req.user.id);
   }
 
   @ApiOperation({ summary: 'Get shipper by ID' })

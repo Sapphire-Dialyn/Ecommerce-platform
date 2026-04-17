@@ -50,12 +50,11 @@ export class FileUploadService {
   async safeDeleteFile(publicId: string) {
     try {
       return await this.cloudinaryService.deleteFile(publicId);
-    } catch (error) {
-      // 404 là chấp nhận được (file không tồn tại)
-      if (error.http_code !== 404) {
-        this.handleUploadError(error);
-      }
-    }
+    } catch (error: any) {
+  if (error?.http_code !== 404) {
+    throw error;
+  }
+}
   }
 
   /**

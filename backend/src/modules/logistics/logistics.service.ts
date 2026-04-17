@@ -147,6 +147,16 @@ export class LogisticsService {
     return { message: 'Logistics partner deleted successfully' };
   }
 
+  async getPartnerByUserId(userId: string) {
+    const partner = await this.prisma.logisticsPartner.findUnique({
+      where: { userId },
+    });
+    if (!partner) {
+      throw new BadRequestException('Không tìm thấy hồ sơ đối tác vận chuyển của tài khoản này');
+    }
+    return partner;
+  }
+
   async createOrder(dto: CreateLogisticsOrderDto) {
     return this.prisma.$transaction(async (tx) => {
       const order = await tx.order.findUnique({

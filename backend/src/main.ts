@@ -13,7 +13,7 @@ app.enableCors({
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
-
+  
   // Global validation pipe
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
 

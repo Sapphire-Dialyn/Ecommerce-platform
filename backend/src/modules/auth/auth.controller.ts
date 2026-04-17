@@ -52,11 +52,11 @@ export class AuthController {
       return res.redirect(
         `${process.env.FRONTEND_URL}/login-success?token=${loginData.access_token}`
       );
-    } catch (error) {
-      // Thất bại (Ví dụ: Admin/Staff cố tình login bằng Google): Redirect về trang login kèm lỗi
-      const errorMessage = encodeURIComponent(error.message || 'Đăng nhập Google thất bại');
-      return res.redirect(`${process.env.FRONTEND_URL}/login?error=${errorMessage}`);
-    }
+    } catch (error: any) {
+  const errorMessage = encodeURIComponent(
+    error?.message || 'Đăng nhập Google thất bại'
+  );
+}
   }
 
   // --- ĐĂNG NHẬP LOCAL ---

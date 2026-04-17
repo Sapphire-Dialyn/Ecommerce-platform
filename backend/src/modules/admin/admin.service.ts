@@ -27,7 +27,9 @@ export class AdminService {
       orderBy: { createdAt: 'desc' }, // Sắp xếp mới nhất lên đầu
       include: {
         seller: true,     // Để lấy thông tin Store Name
-        enterprise: true, // Để lấy thông tin Company Name
+        enterprise: true,
+        logistics: true,  // 👈 BẮT BUỘC: Thêm dòng này
+        shipper: true,    // Thêm luôn shipper cho đầy đủ // Để lấy thông tin Company Name
         // Bỏ bớt mấy cái nặng như orders, addresses nếu chỉ để hiển thị danh sách
       },
     });

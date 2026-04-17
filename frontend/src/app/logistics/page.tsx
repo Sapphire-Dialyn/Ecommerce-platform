@@ -26,13 +26,13 @@ type DraftState = Record<
 >;
 
 const logisticsStatusLabel: Record<string, string> = {
-  CREATED: 'Moi tiep nhan',
-  ASSIGNED: 'Da phan cong',
-  PICKED_UP: 'Da lay hang',
-  IN_TRANSIT: 'Dang giao',
-  DELIVERED: 'Da giao',
-  RETURNED: 'Hoan tra',
-  CANCELLED: 'Da huy',
+  CREATED: 'Mới tiếp nhận',
+  ASSIGNED: 'Đã phân công',
+  PICKED_UP: 'Đã lấy hàng',
+  IN_TRANSIT: 'Đang giao',
+  DELIVERED: 'Đã giao',
+  RETURNED: 'Hoàn trả',
+  CANCELLED: 'Đã hủy',
 };
 
 export default function LogisticsDashboardPage() {
@@ -82,7 +82,7 @@ export default function LogisticsDashboardPage() {
       });
     } catch (error) {
       console.error('Logistics dashboard error:', error);
-      toast.error('Khong the tai dashboard logistics');
+      toast.error('Không thể tải dashboard logistics');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -117,11 +117,11 @@ export default function LogisticsDashboardPage() {
         pickupAddress: draft.pickupAddress,
         notes: draft.notes,
       });
-      toast.success('Da cap nhat thong tin van don');
+      toast.success('Đã cập nhật thông tin vận đơn thành công');
       await loadDashboard(false);
     } catch (error) {
       console.error('Save logistics order error:', error);
-      toast.error('Khong cap nhat duoc thong tin van don');
+      toast.error('Không thể cập nhật thông tin vận đơn');
     } finally {
       setSavingId(null);
     }
@@ -131,7 +131,7 @@ export default function LogisticsDashboardPage() {
     const draft = drafts[logisticsOrderId];
 
     if (!draft?.shipperId) {
-      toast.error('Vui long chon shipper');
+      toast.error('Vui lòng chọn shipper');
       return;
     }
 
@@ -142,11 +142,11 @@ export default function LogisticsDashboardPage() {
         notes: draft.notes,
       });
       await logisticsService.assignOrder(logisticsOrderId, draft.shipperId);
-      toast.success('Da phan cong shipper thanh cong');
+      toast.success('Đã phân công shipper thành công');
       await loadDashboard(false);
     } catch (error) {
       console.error('Assign logistics order error:', error);
-      toast.error('Khong the phan cong shipper');
+      toast.error('Không thể phân công shipper');
     } finally {
       setAssigningId(null);
     }
@@ -161,7 +161,7 @@ export default function LogisticsDashboardPage() {
             Dashboard logistics
           </h1>
           <p className="text-stone-500">
-            Trang nay chi danh cho tai khoan don vi van chuyen.
+            Trang này chỉ dành cho tài khoản đơn vị vận chuyển.
           </p>
         </div>
       </div>
@@ -173,7 +173,7 @@ export default function LogisticsDashboardPage() {
       <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="flex items-center gap-3 text-stone-600">
           <Loader2 className="animate-spin text-emerald-700" />
-          Dang tai dashboard logistics...
+          Đang tải dashboard logistics...
         </div>
       </div>
     );
@@ -188,7 +188,7 @@ export default function LogisticsDashboardPage() {
           <div>
             <h1 className="text-3xl font-extrabold text-stone-900">Dashboard Logistics</h1>
             <p className="text-stone-500 mt-2">
-              Theo doi don vua tiep nhan, cap nhat pickup address va phan cong shipper.
+              Theo dõi đơn vừa tiếp nhận, cập nhật pickup address và phân công shipper.
             </p>
           </div>
           <button
@@ -196,25 +196,25 @@ export default function LogisticsDashboardPage() {
             className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white border border-stone-200 text-stone-700 font-bold hover:border-emerald-300 hover:text-emerald-700 transition"
           >
             {refreshing ? <Loader2 className="animate-spin" size={18} /> : <RefreshCcw size={18} />}
-            Lam moi
+            Làm mới
           </button>
         </div>
 
         <div className="grid md:grid-cols-3 gap-4">
           <div className="bg-white rounded-3xl border border-stone-200 p-6">
-            <div className="text-sm text-stone-500">Don chua phan cong</div>
+            <div className="text-sm text-stone-500">Đơn chưa phân công</div>
             <div className="text-3xl font-extrabold text-stone-900 mt-2">
               {unassignedOrders.length}
             </div>
           </div>
           <div className="bg-white rounded-3xl border border-stone-200 p-6">
-            <div className="text-sm text-stone-500">Don dang xu ly</div>
+            <div className="text-sm text-stone-500">Đơn đang xử lý</div>
             <div className="text-3xl font-extrabold text-stone-900 mt-2">
               {allOrders.filter((order) => order.status !== 'DELIVERED').length}
             </div>
           </div>
           <div className="bg-white rounded-3xl border border-stone-200 p-6">
-            <div className="text-sm text-stone-500">Shipper san sang</div>
+            <div className="text-sm text-stone-500">Shipper sẵn sàng</div>
             <div className="text-3xl font-extrabold text-stone-900 mt-2">
               {availableShippers.length}
             </div>
@@ -224,12 +224,12 @@ export default function LogisticsDashboardPage() {
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <Package className="text-emerald-700" size={20} />
-            <h2 className="text-xl font-extrabold text-stone-900">Don moi can phan cong</h2>
+            <h2 className="text-xl font-extrabold text-stone-900">Đơn mới cần phân công</h2>
           </div>
 
           {unassignedOrders.length === 0 ? (
             <div className="bg-white rounded-3xl border border-stone-200 p-10 text-center text-stone-500">
-              Hien tai khong co don nao dang cho phan cong.
+              Hiện tại không có đơn nào đang chờ phân công.
             </div>
           ) : (
             <div className="space-y-4">
@@ -333,13 +333,13 @@ export default function LogisticsDashboardPage() {
                             }
                             rows={3}
                             className="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-900 outline-none focus:border-emerald-500"
-                            placeholder="Nhap dia chi lay hang cho don nay"
+                            placeholder="Nhập địa chỉ lấy hàng"
                           />
                         </div>
 
                         <div className="rounded-2xl border border-stone-200 p-4">
                           <label className="block text-sm font-bold text-stone-900 mb-2">
-                            Ghi chu dieu phoi
+                            Ghi chú điều phối
                           </label>
                           <textarea
                             value={draft.notes}
@@ -348,13 +348,13 @@ export default function LogisticsDashboardPage() {
                             }
                             rows={3}
                             className="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-900 outline-none focus:border-emerald-500"
-                            placeholder="Ghi chu noi bo cho shipper hoac kho"
+                            placeholder="Ghi chú nội bộ cho shipper hoặc kho"
                           />
                         </div>
 
                         <div className="rounded-2xl border border-stone-200 p-4">
                           <label className="block text-sm font-bold text-stone-900 mb-2">
-                            Chon shipper
+                            Chọn shipper
                           </label>
                           <select
                             value={draft.shipperId}
@@ -363,10 +363,10 @@ export default function LogisticsDashboardPage() {
                             }
                             className="w-full rounded-2xl border border-stone-300 px-4 py-3 text-sm text-stone-900 outline-none focus:border-emerald-500 bg-white"
                           >
-                            <option value="">Chon shipper san sang</option>
+                            <option value="">Chọn shipper sẵn sàng</option>
                             {availableShippers.map((shipper) => (
                               <option key={shipper.id} value={shipper.id}>
-                                {shipper.user.name} • {shipper.user.phone || 'Khong co so dien thoai'}
+                                {shipper.user.name} • {shipper.user.phone || 'Không có số điện thoại'}
                               </option>
                             ))}
                           </select>
@@ -383,7 +383,7 @@ export default function LogisticsDashboardPage() {
                             ) : (
                               <Save size={16} />
                             )}
-                            Luu thong tin
+                            Lưu thông tin
                           </button>
                           <button
                             onClick={() => handleAssign(logisticsOrder.id)}
@@ -395,7 +395,7 @@ export default function LogisticsDashboardPage() {
                             ) : (
                               <Truck size={16} />
                             )}
-                            Phan cong shipper
+                            Phân công shipper
                           </button>
                         </div>
                       </div>
@@ -410,12 +410,12 @@ export default function LogisticsDashboardPage() {
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <Truck className="text-emerald-700" size={20} />
-            <h2 className="text-xl font-extrabold text-stone-900">Don da co shipper</h2>
+            <h2 className="text-xl font-extrabold text-stone-900">Đơn đã có shipper</h2>
           </div>
 
           {activeOrders.length === 0 ? (
             <div className="bg-white rounded-3xl border border-stone-200 p-10 text-center text-stone-500">
-              Chua co don nao da duoc phan cong shipper.
+              Chưa có đơn nào đã được phân công shipper.
             </div>
           ) : (
             <div className="grid xl:grid-cols-2 gap-4">
@@ -438,20 +438,20 @@ export default function LogisticsDashboardPage() {
 
                   <div className="text-sm text-stone-600">
                     <div className="font-semibold text-stone-900">
-                      {logisticsOrder.shipper?.user?.name || 'Chua co shipper'}
+                      {logisticsOrder.shipper?.user?.name || 'Chưa có shipper'}
                     </div>
-                    <div>{logisticsOrder.shipper?.user?.phone || 'Khong co so dien thoai'}</div>
+                    <div>{logisticsOrder.shipper?.user?.phone || 'Không có số điện thoại'}</div>
                   </div>
 
                   <div className="rounded-2xl bg-stone-50 border border-stone-200 p-4 text-sm">
                     <div className="text-stone-500 mb-1">Pickup address</div>
                     <div className="font-medium text-stone-900">
-                      {logisticsOrder.pickupAddress || 'Chua cap nhat'}
+                      {logisticsOrder.pickupAddress || 'Chưa cập nhật'}
                     </div>
                   </div>
 
                   <div className="rounded-2xl bg-stone-50 border border-stone-200 p-4 text-sm">
-                    <div className="text-stone-500 mb-1">Dia chi giao hang</div>
+                    <div className="text-stone-500 mb-1">Địa chỉ giao hàng</div>
                     <div className="font-medium text-stone-900">{logisticsOrder.deliveryAddress}</div>
                   </div>
                 </div>
