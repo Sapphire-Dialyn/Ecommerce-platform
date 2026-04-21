@@ -1,21 +1,4 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3000';
-const api = axios.create({ baseURL: API_URL });
-
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
-    
-    // 👉 Đảm bảo token có thật, không phải chuỗi rác 'null' hay 'undefined'
-    if (token && token !== 'null' && token !== 'undefined') {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else {
-      console.warn("⚠️ Cảnh báo: Token không hợp lệ hoặc không tồn tại!");
-    }
-  }
-  return config;
-});
+import api from '@/ultis/api';
 
 export const userService = {
   getMe: async () => {

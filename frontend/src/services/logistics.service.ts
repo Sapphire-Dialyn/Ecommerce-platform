@@ -1,22 +1,9 @@
-import axios from 'axios';
+import api from '@/ultis/api';
 import {
   LogisticsOrderRecord,
   LogisticsPartnerOption,
   LogisticsShipper,
 } from '@/types/logistics';
-
-const API_URL = 'http://localhost:3000';
-const api = axios.create({ baseURL: API_URL });
-
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
-});
 
 export const logisticsService = {
   getPartners: async () => {

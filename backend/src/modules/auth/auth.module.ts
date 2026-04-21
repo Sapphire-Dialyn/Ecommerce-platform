@@ -25,7 +25,7 @@ import { EmailModule } from '../email/email.module'; // Sửa lại path nếu c
       useFactory: () => ({
         secret: process.env.JWT_SECRET,
         signOptions: { 
-          expiresIn: '24h',
+          expiresIn: '3d',
           algorithm: 'HS256',
         },
       }),

@@ -1,11 +1,5 @@
-import axios from 'axios';
+import api from '@/ultis/api';
 
-const axiosClient = axios.create({
-  baseURL: 'http://localhost:3000', 
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Có thể thêm interceptors để xử lý token ở đây sau này
-export default axiosClient;
+// Sử dụng instance api tập trung từ @/ultis/api
+// Đã có sẵn interceptors xử lý token và 401 error
+export default api;

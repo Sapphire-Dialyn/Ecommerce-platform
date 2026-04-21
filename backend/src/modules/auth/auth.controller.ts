@@ -3,20 +3,20 @@ import {
   Post, 
   Body, 
   UseGuards, 
-  Request, 
   Put,
   HttpCode,
   HttpStatus,
   Get,
   UseInterceptors,
   UploadedFiles,
-  Res, // 👈 Thêm Res để xử lý Redirect
-  Req  // 👈 Thêm Req
+  Res,
+  Req // 👈 Chỉ dùng @Req để tránh trùng tên với Request type của express
 } from '@nestjs/common';
+import { Request } from 'express'; // 👈 Import Type Request của Express
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { AuthGuard } from '@nestjs/passport'; // 👈 Thêm AuthGuard cho Google
+import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { LoginDto, RegisterDto, ChangePasswordDto } from './dto/auth.dto';
 import { Public } from './decorators/public.decorator';
@@ -28,14 +28,14 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   // ============================================================================
-  // 🔥 CHỨC NĂNG MỚI: GOOGLE OAUTH2 (CHỈ DÀNH CHO CUSTOMER)
+  // 🔥 CHỨC NĂNG GOOGLE OAUTH2 (CHỈ DÀNH CHO CUSTOMER)
   // ============================================================================
   
   @Public()
   @Get('google')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Bắt đầu đăng nhập bằng Google (Dành cho Khách hàng)' })
-  async googleAuth(@Req() req) {
+  async googleAuth(@Req() req: Request) {
     // AuthGuard('google') sẽ tự động chuyển hướng sang Google
   }
 
@@ -43,23 +43,30 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ summary: 'Xử lý kết quả trả về từ Google' })
-  async googleAuthRedirect(@Req() req, @Res() res) {
+  async googleAuthRedirect(@Req() req: any, @Res() res: any) {
     try {
-      // Gọi service để kiểm tra user/tạo mới role CUSTOMER
-      const loginData = await this.authService.validateGoogleUser(req.user);
+      // 1. Lấy IP gốc từ Request (y hệt login bằng email)
+      const clientIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Unknown IP') as string;
+
+      // 2. Gọi service để kiểm tra/tạo user và thực hiện Login (kèm IP)
+      const loginData = await this.authService.validateGoogleUser(req.user, clientIp);
       
-      // Thành công: Redirect về trang xử lý thành công ở FE kèm token
+      // 3. Redirect về Frontend kèm token thành công
       return res.redirect(
         `${process.env.FRONTEND_URL}/login-success?token=${loginData.access_token}`
       );
     } catch (error: any) {
-  const errorMessage = encodeURIComponent(
-    error?.message || 'Đăng nhập Google thất bại'
-  );
-}
+      // Nếu có lỗi (ví dụ: bị ban, sai role), đá về trang login kèm message lỗi
+      const errorMessage = encodeURIComponent(
+        error?.message || 'Đăng nhập Google thất bại'
+      );
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=${errorMessage}`);
+    }
   }
 
+  // ============================================================================
   // --- ĐĂNG NHẬP LOCAL ---
+  // ============================================================================
   @Public()
   @ApiOperation({ summary: 'User login' })
   @ApiResponse({
@@ -70,8 +77,13 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Request() req) {
-    return this.authService.login(req.user);
+  async login(@Req() req: Request) { 
+    // 👈 1. Lấy IP của người dùng (kể cả khi qua proxy)
+    const clientIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'Unknown IP') as string;
+    
+    // 👈 2. Truyền IP vào service.
+    // Lưu ý: req.user ở đây có được là nhờ LocalAuthGuard đã chạy thành công
+    return this.authService.login(req.user, clientIp); 
   }
 
   // --- ĐĂNG KÝ (Hỗ trợ File cho Seller/Enterprise) ---
@@ -139,7 +151,7 @@ export class AuthController {
   @ApiBearerAuth()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Request() req) {
+  async refresh(@Req() req: any) {
     return this.authService.refreshToken(req.user.id);
   }
 
@@ -152,7 +164,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @Put('change-password')
-  async changePassword(@Request() req, @Body() data: ChangePasswordDto) {
+  async changePassword(@Req() req: any, @Body() data: ChangePasswordDto) {
     return this.authService.changePassword(
       req.user.id,
       data.oldPassword,
@@ -170,7 +182,7 @@ export class AuthController {
   @ApiBearerAuth()
   @Get('me')
   @HttpCode(HttpStatus.OK)
-  async getCurrentUser(@Request() req) {
+  async getCurrentUser(@Req() req: any) {
     return this.authService.validateJwt(req.user.id);
   }
 }

@@ -1,17 +1,7 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3000'; // URL Backend của bạn
-const api = axios.create({ baseURL: API_URL });
-
-// Thêm interceptor nếu cần Token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+import api from '@/ultis/api';
 
 export const adminService = {
-  // --- USER MANAGEMENT ---
+  // --- USER MANAGEMENT ---  
   getAllUsers: async () => {
     const response = await api.get('/admin/users');
     return response.data;

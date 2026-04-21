@@ -7,8 +7,7 @@ import { useAppDispatch } from '@/hook/useRedux';
 import { loginSuccess } from '@/store/slices/authSlice'; 
 import { authService } from '@/services/auth.service'; 
 import { toast } from 'react-hot-toast';
-// Thêm icon Chrome cho nút Google
-import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, Sparkles, ShieldAlert } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, Sparkles, ShieldAlert, AlertOctagon } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,60 +18,117 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false); 
   const [formData, setFormData] = useState({ email: '', password: '' });
 
-  // ✅ 1. BẮT LỖI TỪ BACKEND REDIRECT (Ví dụ: Admin login nhầm cổng)
+  // State dành riêng cho thông báo bị kích xuất (Single Session)
+  const [isKicked, setIsKicked] = useState(false);
+  const [kickedMessage, setKickedMessage] = useState('');
+
+  // ✅ 1. BẮT LỖI TỪ BACKEND REDIRECT & INTERCEPTOR
   useEffect(() => {
     const error = searchParams.get('error');
+    const type = searchParams.get('type');
+
     if (error) {
-      toast.error(decodeURIComponent(error), {
-        duration: 5000,
-        icon: <ShieldAlert className="text-red-500" />,
-      });
-      // Xóa error trên URL để không hiện lại khi F5
-      router.replace('/login');
+      const decodedError = decodeURIComponent(error);
+
+      if (type === 'kicked') {
+        // Mở Popup màu đỏ
+        setIsKicked(true);
+        setKickedMessage(decodedError);
+      } else {
+        // Lỗi bình thường thì dùng Toast
+        toast.error(decodedError, {
+          duration: 5000,
+          icon: <ShieldAlert className="text-red-500" />,
+        });
+      }
+      
+      // 🔥 FIX: Xóa params trên URL bằng Web API thay vì dùng Next.js Router
+      // Điều này giúp xóa URL mà không làm mất trạng thái Popup của React
+      window.history.replaceState(null, '', '/login');
     }
-  }, [searchParams, router]);
+  }, [searchParams]);
 
   // ✅ 2. XỬ LÝ ĐĂNG NHẬP GOOGLE
   const handleGoogleLogin = () => {
-    // Chuyển hướng trực tiếp tới Backend NestJS
     window.location.href = 'http://localhost:3000/auth/google';
   };
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  e.preventDefault();
+  setIsLoading(true);
 
-    try {
-      const data = await authService.login(formData.email, formData.password);
+  try {
+    const data = await authService.login(formData.email, formData.password);
+    
+    const token = data.accessToken || data.access_token;
 
-      dispatch(loginSuccess({
-        user: data.user,
-        token: data.accessToken || data.access_token
-      }));
+    // ✅ 1. Lưu token TRƯỚC (quan trọng nhất)
+    localStorage.setItem('accessToken', token);
 
-      toast.success(`Chào mừng, ${data.user.name}!`);
+    // ✅ 2. Lưu vào Redux
+    dispatch(loginSuccess({
+      user: data.user,
+      token: token
+    }));
 
-      if (['ADMIN', 'SELLER', 'ENTERPRISE', 'SHIPPER'].includes(data.user.role)) {
-        router.push('/admin');
-      } else {
-        router.push('/');
-      }
+    toast.success(`Chào mừng, ${data.user.name}!`);
 
-    } catch (error: any) {
-      if (error.response?.status === 403) {
-        toast.error(error.response.data.message || 'Tài khoản của bạn đã bị ban.');
-      } else {
-        toast.error(error.response?.data?.message || 'Đăng nhập thất bại.');
-      }
-    } finally {
-      setIsLoading(false);
+    const role = data.user.role;
+
+    // ✅ 3. Delay nhẹ để đảm bảo interceptor nhận token
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // ✅ 4. Dùng replace (tránh history lỗi)
+    if (role === 'ADMIN') {
+      router.replace('/admin');
+    } else if (role === 'SHIPPER') {
+      router.replace('/shipper'); 
+    } else if (role === 'LOGISTICS') {
+      router.replace('/logistics'); 
+    } else if (['SELLER', 'ENTERPRISE'].includes(role)) {
+      router.replace('/seller'); 
+    } else {
+      router.replace('/'); 
     }
-  };
 
+    // ✅ 5. Force re-render toàn bộ app (fix luôn bug F5)
+    router.refresh();
+
+  } catch (error: any) {
+    if (error.response?.status === 403) {
+      toast.error(error.response.data.message || 'Tài khoản của bạn đã bị ban.');
+    } else {
+      toast.error(error.response?.data?.message || 'Đăng nhập thất bại.');
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-fuchsia-50">
       
+      {/* ========================================================= */}
+      {/* 🔥 POPUP CẢNH BÁO BẢO MẬT (Chỉ hiện khi bị kick) 🔥      */}
+      {/* ========================================================= */}
+      {isKicked && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-4xl shadow-2xl p-8 max-w-md w-full text-center border-2 border-red-100 animate-in fade-in zoom-in duration-300">
+            <div className="w-20 h-20 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+              <AlertOctagon size={40} strokeWidth={2} />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-3 tracking-tight">Cảnh báo bảo mật</h3>
+            <p className="text-gray-600 mb-8 font-medium leading-relaxed">{kickedMessage}</p>
+            <button
+              onClick={() => setIsKicked(false)}
+              className="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-200 active:scale-95 uppercase tracking-wider text-sm flex items-center justify-center gap-2"
+            >
+              Đã hiểu & Thoát ra <ArrowRight size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Decorative Background Blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
       <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
@@ -96,7 +152,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* ✅ 3. NÚT ĐĂNG NHẬP GOOGLE */}
+          {/* NÚT ĐĂNG NHẬP GOOGLE */}
           <div className="w-full sm:w-[90%] mx-auto mb-6">
             <button
               type="button"

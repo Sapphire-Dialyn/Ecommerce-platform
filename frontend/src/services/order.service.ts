@@ -1,16 +1,5 @@
-import axios from 'axios';
+import api from '@/ultis/api';
 import { Order, OrderStatus } from '@/types/order';
-
-const API_URL = 'http://localhost:3000';
-const api = axios.create({ baseURL: API_URL });
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 export const orderService = {
   getMyOrders: async (status?: OrderStatus | 'ALL') => {

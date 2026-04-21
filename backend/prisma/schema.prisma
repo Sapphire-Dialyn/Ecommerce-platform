@@ -114,6 +114,8 @@ model User {
   behaviors         UserBehavior[]
   voucherClaims     VoucherDistribution[] // 👈 Voucher user đã "lưu"
   carts             Cart[] // 👈 Giỏ hàng cho user đăng nhập
+  activeSessionId String?   // Lưu ID của phiên đăng nhập mới nhất
+  lastLoginIp     String?   // Lưu địa chỉ IP của lần đăng nhập mới nhất
 }
   
 model Address {

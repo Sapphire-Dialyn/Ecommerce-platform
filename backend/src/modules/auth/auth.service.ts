@@ -1,4 +1,4 @@
-  import { 
+import { 
   Injectable, 
   UnauthorizedException, 
   BadRequestException, 
@@ -11,6 +11,7 @@ import { RegisterDto, LoginDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service'; 
+import * as crypto from 'crypto'; // 👈 Import thư viện crypto để tạo UUID
 
 @Injectable()
 export class AuthService {
@@ -23,22 +24,27 @@ export class AuthService {
   // ============================================================================
   // 🔥 CHỨC NĂNG: ĐĂNG NHẬP GOOGLE (CHỈ DÀNH CHO CUSTOMER)
   // ============================================================================
-  async validateGoogleUser(googleUser: any) {
+  // Thêm tham số clientIp để ghi nhận IP nếu đăng nhập bằng Google
+  async validateGoogleUser(googleUser: any, clientIp: string) {
+    // Tìm user theo email từ Google trả về
     let user = await this.prisma.user.findUnique({
       where: { email: googleUser.email },
     });
 
     if (user) {
+      // Kiểm tra trạng thái tài khoản
       if (!user.isActive) {
         throw new ForbiddenException('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.');
       }
 
+      // Ràng buộc Role nếu cần (ví dụ Google chỉ dành cho Customer)
       if (user.role !== Role.CUSTOMER) {
         throw new ForbiddenException(
           `Tài khoản vai trò ${user.role} không được phép đăng nhập qua cổng Khách hàng.`
         );
       }
     } else {
+      // Nếu chưa có thì tạo user mới với role mặc định là CUSTOMER
       user = await this.prisma.user.create({
         data: {
           email: googleUser.email,
@@ -47,23 +53,46 @@ export class AuthService {
           role: Role.CUSTOMER,
           isActive: true,
           isVerified: true, 
-          password: null, 
+          password: null, // Tài khoản Google không có pass local
         },
       });
     }
 
-    return this.login(user);
+    // 🔥 GỌI HÀM LOGIN TỔNG: Tại đây sessionId mới sẽ được sinh ra và IP sẽ được lưu vào DB
+    return this.login(user, clientIp);
   }
 
+  // ============================================================================
   // --- ĐĂNG NHẬP LOCAL ---
-  async login(user: any) {
+  // ============================================================================
+  // 👈 THÊM THAM SỐ clientIp
+  async login(user: any, clientIp: string = 'Unknown IP') {
     if (user.isActive === false) {
       throw new ForbiddenException({
         message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.',
       });
     }
 
-    const payload = { username: user.email, sub: user.id, role: user.role };
+    // 1. TẠO SESSION ID MỚI CHO LẦN ĐĂNG NHẬP NÀY
+    const sessionId = crypto.randomUUID();
+
+    // 2. CẬP NHẬT DATABASE (Lưu Session ID mới nhất và IP truy cập)
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        activeSessionId: sessionId,
+        lastLoginIp: clientIp,
+      },
+    });
+
+    // 3. ĐƯA SESSION ID VÀO PAYLOAD CỦA TOKEN
+    const payload = { 
+      username: user.email, 
+      sub: user.id, 
+      role: user.role,
+      sessionId: sessionId // 👈 Rất quan trọng để check xem có bị đăng nhập đè không
+    };
+
     return {
       access_token: this.jwtService.sign(payload),
       user: {
@@ -78,7 +107,6 @@ export class AuthService {
 
   // --- XÁC THỰC USER ---
   async validateUser(email: string, pass: string): Promise<any> {
-    // Sử dụng prisma trực tiếp để đảm bảo lấy được trường password cho việc so sánh
     const user = await this.prisma.user.findUnique({ where: { email } });
     
     if (user && user.password && (await bcrypt.compare(pass, user.password))) {
@@ -174,7 +202,14 @@ export class AuthService {
     if (!user) throw new UnauthorizedException();
     if (user.isActive === false) throw new ForbiddenException('User is banned');
 
-    const payload = { username: user.email, sub: user.id, role: user.role };
+    // 👇 Giữ nguyên Session ID hiện tại khi làm mới token để không bị đăng xuất
+    const payload = { 
+      username: user.email, 
+      sub: user.id, 
+      role: user.role,
+      sessionId: user.activeSessionId 
+    };
+    
     return {
       access_token: this.jwtService.sign(payload),
     };
@@ -184,23 +219,19 @@ export class AuthService {
   // ✅ FIX: PROPERTY 'PASSWORD' DOES NOT EXIST
   // ============================================================================
   async changePassword(userId: string, oldPass: string, newPass: string) {
-    // Truy vấn trực tiếp từ Prisma để đảm bảo trường password tồn tại trong Type và Data
     const user = await this.prisma.user.findUnique({ 
       where: { id: userId } 
     });
 
     if (!user) throw new NotFoundException('User not found');
     
-    // Kiểm tra mật khẩu (Tài khoản Google có pass là null)
     if (!user.password) {
       throw new BadRequestException('Tài khoản mạng xã hội không thể đổi mật khẩu trực tiếp.');
     }
 
-    // So sánh mật khẩu cũ
     const isMatch = await bcrypt.compare(oldPass, user.password);
     if (!isMatch) throw new BadRequestException('Mật khẩu cũ không chính xác');
 
-    // Hash mật khẩu mới và cập nhật
     const hashedNewPass = await bcrypt.hash(newPass, 10);
     await this.prisma.user.update({
       where: { id: userId },

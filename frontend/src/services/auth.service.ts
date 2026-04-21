@@ -1,7 +1,4 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3000'; // Đổi lại nếu port backend khác
-const api = axios.create({ baseURL: API_URL });
+import api from '@/ultis/api';
 
 export const authService = {
   // Đăng nhập: Thêm type string cho email và password
@@ -29,7 +26,7 @@ export const authService = {
     const token = localStorage.getItem('accessToken');
     if (!token) return null;
     
-    const response = await api.get('/auth/profile', {
+    const response = await api.get('/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
