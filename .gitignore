@@ -85,3 +85,4 @@ ehthumbs.db
 # =========================
 dataset.jsonl
 frontend/public/intro-cantarella-full.mp4
+backend/checkmodel.ts

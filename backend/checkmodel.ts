@@ -1,4 +1,4 @@
-const API_KEY = "AIzaSyBWFGgSKQ4Z2zKLT4lJgQHKi1VBFo26_TY";
+const API_KEY = process.env.GEMINI_API_KEY;
 
 async function checkModels() {
   try {
