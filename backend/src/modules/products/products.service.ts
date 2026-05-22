@@ -17,7 +17,16 @@ export class ProductsService {
   // ... Category methods ...
   createCategory(dto: any) { return this.prisma.category.create({ data: dto }); }
   findAllCategories() { return this.prisma.category.findMany(); }
-  findOneCategory(id: string) { return this.prisma.category.findUnique({ where: { id } }); }
+  findOneCategory(id: string) { 
+    return this.prisma.category.findUnique({ where: { id } }); 
+  }
+  async validateCategoryExists(id: string) {
+    const category = await this.prisma.category.findUnique({ where: { id } });
+    if (!category) {
+      throw new NotFoundException(`Category with ID "${id}" not found`);
+    }
+    return category;
+  }
   updateCategory(id: string, dto: any) { return this.prisma.category.update({ where: { id }, data: dto }); }
   deleteCategory(id: string) { return this.prisma.category.delete({ where: { id } }); }
 
@@ -105,6 +114,17 @@ export class ProductsService {
   ) {
     const skipNumber = Number(skip) || 0;
     const takeNumber = Number(take) || 100;
+    
+    // Validate that category exists if categoryId is provided
+    if (categoryId) {
+      const categoryExists = await this.prisma.category.findUnique({
+        where: { id: categoryId }
+      });
+      if (!categoryExists) {
+        throw new NotFoundException(`Category with ID "${categoryId}" not found`);
+      }
+    }
+    
     const products = await this.prisma.product.findMany({
       skip: skipNumber,
       take: takeNumber,

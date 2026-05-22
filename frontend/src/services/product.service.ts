@@ -6,8 +6,18 @@ export const productService = {
     return res.data;
   },
 
-  getAllProducts: async () => {
-    const res = await api.get('/products');
+  getCategoryById: async (categoryId: string) => {
+    const res = await api.get(`/products/categories/${categoryId}`);
+    return res.data;
+  },
+
+  getAllProducts: async (filters?: { categoryId?: string | null; enterpriseId?: string | null }) => {
+    const res = await api.get('/products', {
+      params: {
+        categoryId: filters?.categoryId || undefined,
+        enterpriseId: filters?.enterpriseId || undefined,
+      },
+    });
     return res.data;
   },
 

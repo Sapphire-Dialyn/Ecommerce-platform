@@ -9,6 +9,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 export default function ProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // State cho tiêu đề động
   const [pageTitle, setPageTitle] = useState("DANH SÁCH SẢN PHẨM");
@@ -25,14 +26,16 @@ export default function ProductsPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        let data = [];
+        setError(null);
+        
+        // GỌI ĐÚNG 1 HÀM DUY NHẤT: Trả việc lọc dữ liệu cho Backend
+        const data = await productService.getAllProducts({
+          categoryId: categoryId || undefined,
+          enterpriseId: enterpriseId || undefined
+        });
 
-        // TRƯỜNG HỢP 1: Lọc theo Thương hiệu (Enterprise)
+        // Xử lý giao diện (Tiêu đề động)
         if (enterpriseId) {
-          // Gọi API riêng cho Enterprise mà bạn vừa thêm vào service
-          data = await productService.getProductsByEnterprise(enterpriseId);
-          
-          // Cập nhật tiêu đề trang theo tên hãng
           if (data.length > 0 && data[0].enterprise) {
             setSubTitle("Gian hàng chính hãng");
             setPageTitle(data[0].enterprise.companyName.toUpperCase());
@@ -41,11 +44,7 @@ export default function ProductsPage() {
              setPageTitle("SẢN PHẨM CHÍNH HÃNG");
           }
         } 
-        // TRƯỜNG HỢP 2: Lọc theo Danh mục (Category)
         else if (categoryId) {
-          const allProducts = await productService.getAllProducts();
-          data = allProducts.filter((p: any) => p.categoryId === categoryId);
-          
           if (data.length > 0 && data[0].category) {
             setSubTitle("Danh mục");
             setPageTitle(data[0].category.name.toUpperCase());
@@ -54,17 +53,22 @@ export default function ProductsPage() {
             setPageTitle("SẢN PHẨM");
           }
         } 
-        // TRƯỜNG HỢP 3: Xem tất cả
         else {
-          data = await productService.getAllProducts();
           setSubTitle("DANH SÁCH");
           setPageTitle("SẢN PHẨM");
         }
 
         setProducts(data);
         setCurrentPage(1);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Lỗi:', error);
+        if (error?.response?.status === 404) {
+          setError(`Danh mục không tồn tại hoặc đã bị xóa (ID: ${categoryId})`);
+          setPageTitle("DANH MỤC KHÔNG TỒN TẠI");
+        } else {
+          setError('Có lỗi xảy ra khi tải sản phẩm');
+        }
+        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -144,6 +148,49 @@ export default function ProductsPage() {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-fuchsia-600"></div>
       </div>
     );
+
+  // Show error message if category doesn't exist
+  if (error) {
+    return (
+      <div className="container mx-auto p-8 min-h-screen pt-1">
+        <div className="py-2 flex flex-col items-center justify-center mb-2">
+          <div className="relative text-center">
+            <div className="absolute -top-2 -right-6 text-pink-400 text-2xl animate-pulse">
+              ✦
+            </div>
+            <h1 className="font-serif font-extrabold text-center tracking-tighter">
+              <span className="block text-sm text-gray-500 font-sans mb-1 tracking-widest uppercase font-bold leading-2">
+                Lỗi
+              </span>
+              <span className="block text-2xl md:text-3xl text-transparent bg-clip-text bg-linear-to-r from-fuchsia-600 via-pink-500 to-purple-600 drop-shadow-sm leading-normal py-2">
+                {pageTitle}
+              </span>
+            </h1>
+          </div>
+        </div>
+        
+        <div className="text-center py-20 bg-red-50 rounded-2xl border border-red-200">
+          <div className="text-6xl mb-4">⚠️</div>
+          <p className="text-xl text-red-700 mb-2 font-bold">{error}</p>
+          <p className="text-gray-600 mb-8">Danh mục bạn tìm kiếm có thể đã bị xóa hoặc không tồn tại.</p>
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Link
+              href="/shop/products"
+              className="px-6 py-3 bg-fuchsia-600 text-white rounded-lg hover:bg-fuchsia-700 font-bold transition"
+            >
+              Xem tất cả sản phẩm
+            </Link>
+            <Link
+              href="/"
+              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-bold transition"
+            >
+              Quay về trang chủ
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-8 min-h-screen pt-1"> {/* Thêm pt-32 để tránh Header che */}
