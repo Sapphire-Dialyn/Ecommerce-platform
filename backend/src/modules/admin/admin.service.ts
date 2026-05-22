@@ -168,6 +168,13 @@ export class AdminService {
       data: { verified },
     });
 
+    await this.prisma.user.update({
+      where: { id: seller.userId },
+      data: verified
+        ? { isVerified: true, isActive: true }
+        : { isVerified: false },
+    });
+
     if (verified) {
       // 🔥 Bọc try-catch ở đây để dù mail lỗi thì Admin vẫn thấy thông báo duyệt thành công
       try {
@@ -193,10 +200,18 @@ export class AdminService {
       include: {
         user: {
           select: {
+            id: true,
             email: true,
           },
         },
       },
+    });
+
+    await this.prisma.user.update({
+      where: { id: enterprise.user.id },
+      data: verified
+        ? { isVerified: true, isActive: true }
+        : { isVerified: false },
     });
 
     if (verified) {

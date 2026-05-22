@@ -63,6 +63,11 @@ export default function ProfilePage() {
             userService.getMe(),
             orderService.getMyOrders('ALL')
         ]);
+
+        dispatch(loginSuccess({ 
+          user: fullUserData, 
+          token: localStorage.getItem('accessToken') || '' 
+        }));
         
         setFormData({
           name: fullUserData.name || '',
@@ -90,7 +95,7 @@ export default function ProfilePage() {
     };
 
     fetchProfileAndOrders();
-  }, [user]);
+  }, [dispatch, user?.id]);
 
   // Xử lý chọn ảnh
   const handleFileChange = (e: any, type: 'avatar' | 'logo') => {
