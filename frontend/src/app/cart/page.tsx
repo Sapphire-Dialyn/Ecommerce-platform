@@ -422,9 +422,15 @@ export default function CartPage() {
                     Dang tai dia chi...
                   </div>
                 ) : addresses.length === 0 ? (
-                  <div className="rounded-2xl bg-amber-50 text-amber-800 p-4 text-sm">
-                    Ban chua co dia chi nao. Hay them dia chi trong tai khoan truoc khi thanh
-                    toan.
+                  // 🔥 ĐÃ CẬP NHẬT: Thêm nút nhảy sang trang Profile
+                  <div className="rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 p-5 flex flex-col gap-3">
+                    <p className="text-sm font-medium">Bạn chưa có địa chỉ giao hàng. Hãy thêm địa chỉ để tiếp tục thanh toán.</p>
+                    <Link 
+                      href="/profile" 
+                      className="inline-block w-max px-4 py-2 bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold rounded-lg transition-colors shadow-sm"
+                    >
+                      + Thêm địa chỉ ngay
+                    </Link>
                   </div>
                 ) : (
                   <div className="space-y-3">

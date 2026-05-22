@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/hook/useRedux';
 import { userService } from '@/services/user.service';
 import { orderService } from '@/services/order.service';
@@ -10,33 +11,42 @@ import { toast } from 'react-hot-toast';
 import { 
   User, Phone, Mail, Building2, Store, 
   Camera, Loader2, Save, ShieldCheck, Upload,
-  Package, ChevronRight, Calendar, ShoppingBag
+  Package, ChevronRight, Calendar, ShoppingBag, MapPin, Tag
 } from 'lucide-react';
 
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
+  const router = useRouter();
 
   const [loading, setLoading] = useState(false);
-  // State lưu danh sách đơn hàng thật từ API
   const [orders, setOrders] = useState<any[]>([]);
 
-  // State dữ liệu form
+  // State dữ liệu form tài khoản
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    // Seller
     storeName: '',
-    // Enterprise
     companyName: '',
     taxCode: '',
+  });
+
+  // State dữ liệu form địa chỉ (Khớp 100% Prisma Model)
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [addressData, setAddressData] = useState({
+    fullName: '',
+    phone: '',
+    province: '',
+    district: '',
+    ward: '',
+    street: '',
+    label: '', // Thêm trường Label để người dùng tự gõ (VD: Nhà riêng, Cơ quan)
   });
 
   // State ảnh
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
@@ -49,13 +59,11 @@ export default function ProfilePage() {
     const fetchProfileAndOrders = async () => {
       if (!user) return;
       try {
-        // Gọi song song 2 API: Profile và Orders
         const [fullUserData, myOrders] = await Promise.all([
             userService.getMe(),
-            orderService.getMyOrders('ALL') // Lấy tất cả đơn hàng
+            orderService.getMyOrders('ALL')
         ]);
         
-        // Cập nhật Profile Form
         setFormData({
           name: fullUserData.name || '',
           email: fullUserData.email || '',
@@ -65,10 +73,15 @@ export default function ProfilePage() {
           taxCode: fullUserData.enterprise?.taxCode || '',
         });
 
+        // Điền trước Tên và SĐT cho form Địa chỉ
+        setAddressData(prev => ({
+          ...prev,
+          fullName: fullUserData.name || '',
+          phone: fullUserData.phone || '',
+        }));
+
         setAvatarPreview(fullUserData.avatar);
         setLogoPreview(fullUserData.seller?.logoUrl || fullUserData.enterprise?.logoUrl);
-
-        // Cập nhật danh sách đơn hàng
         setOrders(myOrders);
 
       } catch (error) {
@@ -94,15 +107,13 @@ export default function ProfilePage() {
     }
   };
 
-  // Submit cập nhật
+  // Submit cập nhật tài khoản
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Gọi API cập nhật profile thật
       const updatedUser = await userService.updateProfile(formData, avatarFile, logoFile);
       
-      // Cập nhật lại Redux store
       dispatch(loginSuccess({ 
           user: updatedUser, 
           token: localStorage.getItem('accessToken') || '' 
@@ -114,6 +125,30 @@ export default function ProfilePage() {
       toast.error("Lỗi cập nhật hồ sơ.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Submit cập nhật địa chỉ
+  const handleAddressSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddressLoading(true);
+    try {
+      await userService.addAddress({
+        ...addressData,
+        isDefault: true, // Mặc định là địa chỉ chính
+      });
+      toast.success('Thêm địa chỉ thành công!');
+      
+      // Xóa form sau khi lưu
+      setAddressData({ ...addressData, street: '', ward: '', district: '', province: '', label: '' });
+      
+      // Chuyển hướng về giỏ hàng
+      router.push('/cart'); 
+    } catch (error) {
+      console.error(error);
+      toast.error('Có lỗi xảy ra khi lưu địa chỉ');
+    } finally {
+      setAddressLoading(false);
     }
   };
 
@@ -155,6 +190,7 @@ export default function ProfilePage() {
   // Style chung
   const labelClass = "block text-sm font-bold text-gray-900 uppercase tracking-wide mb-2";
   const inputClass = "w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 text-gray-900 font-bold placeholder:text-gray-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-fuchsia-500 focus:border-transparent transition-all duration-200 shadow-sm disabled:bg-gray-100 disabled:text-gray-500";
+  const simpleInputClass = "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-fuchsia-500 focus:border-transparent transition text-gray-900 placeholder:text-gray-400 font-medium";
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
@@ -241,7 +277,7 @@ export default function ProfilePage() {
           {/* --- COL 2: FORM DETAILS & ORDERS --- */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* SECTION: FORM INFO */}
+            {/* SECTION: FORM PROFILE INFO */}
             <form onSubmit={handleSubmit} className="bg-white p-8 sm:p-10 rounded-3xl shadow-xl border border-gray-100">
               
               <div className="flex flex-col sm:flex-row items-center justify-between mb-8 pb-6 border-b border-gray-100 gap-4">
@@ -249,7 +285,6 @@ export default function ProfilePage() {
                     <User className="text-fuchsia-600" size={28}/>
                     Thông tin chi tiết
                 </h3>
-                {/* Nút Save */}
                 <button 
                   type="submit" 
                   disabled={loading}
@@ -260,7 +295,6 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-8">
-                {/* 1. THÔNG TIN TÀI KHOẢN */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                         <label className={labelClass}>Họ và tên</label>
@@ -301,7 +335,6 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
-                {/* 2. THÔNG TIN DOANH NGHIỆP / CỬA HÀNG */}
                 {(isSeller || isEnterprise) && <hr className="border-gray-100 my-4" />}
 
                 {isSeller && (
@@ -363,7 +396,111 @@ export default function ProfilePage() {
               </div>
             </form>
 
-            {/* --- SECTION: MY ORDERS (ĐƠN HÀNG THẬT TỪ DB) --- */}
+            {/* --- SECTION: ADD NEW ADDRESS (KHỚP VỚI PRISMA MODEL) --- */}
+            <form onSubmit={handleAddressSubmit} className="bg-white p-8 sm:p-10 rounded-3xl shadow-xl border border-gray-100">
+              <div className="flex flex-col sm:flex-row items-center justify-between mb-8 pb-6 border-b border-gray-100 gap-4">
+                <h3 className="text-2xl font-extrabold text-gray-900 uppercase tracking-tight flex items-center gap-2">
+                    <MapPin className="text-fuchsia-600" size={28}/>
+                    Thêm địa chỉ giao hàng
+                </h3>
+                <button 
+                  type="submit" 
+                  disabled={addressLoading}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-emerald-700 transition shadow-lg shadow-emerald-200 disabled:opacity-70 transform active:scale-95"
+                >
+                  {addressLoading ? <Loader2 className="animate-spin" size={20} /> : <><Save size={18} /> LƯU VÀ THANH TOÁN</>}
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Họ và tên người nhận</label>
+                    <input 
+                      required
+                      className={simpleInputClass}
+                      value={addressData.fullName}
+                      onChange={(e) => setAddressData({...addressData, fullName: e.target.value})}
+                      placeholder="VD: Nguyễn Văn A"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Số điện thoại liên hệ</label>
+                    <input 
+                      required
+                      type="tel"
+                      className={simpleInputClass}
+                      value={addressData.phone}
+                      onChange={(e) => setAddressData({...addressData, phone: e.target.value})}
+                      placeholder="VD: 0987654321"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Tỉnh / Thành phố</label>
+                    <input 
+                      required
+                      className={simpleInputClass}
+                      value={addressData.province}
+                      onChange={(e) => setAddressData({...addressData, province: e.target.value})}
+                      placeholder="TP.HCM"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Quận / Huyện</label>
+                    <input 
+                      required
+                      className={simpleInputClass}
+                      value={addressData.district}
+                      onChange={(e) => setAddressData({...addressData, district: e.target.value})}
+                      placeholder="Quận 1"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Phường / Xã</label>
+                    <input 
+                      required
+                      className={simpleInputClass}
+                      value={addressData.ward}
+                      onChange={(e) => setAddressData({...addressData, ward: e.target.value})}
+                      placeholder="Phường Bến Nghé"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="md:col-span-1">
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Địa chỉ cụ thể (Số nhà, Đường)</label>
+                    <input 
+                      required
+                      className={simpleInputClass}
+                      value={addressData.street}
+                      onChange={(e) => setAddressData({...addressData, street: e.target.value})}
+                      placeholder="VD: 123 Lê Lợi"
+                    />
+                  </div>
+                  
+                  {/* TRƯỜNG LABEL MỚI THÊM ĐỂ KHỚP VỚI PRISMA MODEL */}
+                  <div className="md:col-span-1">
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Tên gợi nhớ (Không bắt buộc)</label>
+                    <div className="relative">
+                      <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <input 
+                        className={`${simpleInputClass} pl-11`}
+                        value={addressData.label}
+                        onChange={(e) => setAddressData({...addressData, label: e.target.value})}
+                        placeholder="VD: Nhà riêng, Công ty..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </form>
+
+            {/* --- SECTION: MY ORDERS --- */}
             <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-xl border border-gray-100 animate-in fade-in slide-in-from-bottom-8 duration-700">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-2xl font-extrabold text-gray-900 uppercase tracking-tight flex items-center gap-2">
@@ -377,7 +514,6 @@ export default function ProfilePage() {
 
                 <div className="space-y-4">
                     {orders.length > 0 ? (
-                        // Render 3 đơn hàng mới nhất
                         orders.slice(0, 3).map((order) => (
                             <Link 
                                 href={`/profile/orders/${order.id}`} 
@@ -392,7 +528,6 @@ export default function ProfilePage() {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
-                                                {/* Hiển thị ID cắt gọn để đẹp UI */}
                                                 <span className="font-extrabold text-gray-900" title={order.id}>
                                                     #{order.id.slice(-6).toUpperCase()} 
                                                 </span>

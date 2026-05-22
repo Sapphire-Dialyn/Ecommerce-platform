@@ -23,9 +23,23 @@ export const userService = {
       formData.append('logo', logoFile); 
     }
 
-    // Vẫn giữ nguyên, không tự set Content-Type
     const res = await api.patch('/users/profile', formData);
     
     return res.data;
   },
+
+  // THÊM MỚI: Gọi API thêm địa chỉ
+  addAddress: async (addressData: {
+    fullName: string;
+    phone: string;
+    street: string;
+    ward: string;
+    district: string;
+    province: string;
+    isDefault?: boolean;
+    label?: string;
+  }) => {
+    const res = await api.post('/users/profile/addresses', addressData);
+    return res.data;
+  }
 };

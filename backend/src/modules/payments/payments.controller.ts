@@ -39,14 +39,6 @@ export class PaymentsController {
     return this.paymentsService.findAll();
   }
 
-  @ApiOperation({ summary: 'Get payment by ID' })
-  @ApiResponse({ status: 200, description: 'Return the payment.' })
-  @Public()
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.paymentsService.findOne(id);
-  }
-
   @ApiOperation({ summary: 'Get payment by order ID' })
   @ApiResponse({ status: 200, description: 'Return the payment for the order.' })
   @Public()
@@ -71,5 +63,13 @@ export class PaymentsController {
   @Get('paypal-callback')
   handlePayPalCallback(@Query() params: PayPalCallbackDto) {
     return this.paymentsService.handlePayPalCallback(params);
+  }
+
+  @ApiOperation({ summary: 'Get payment by ID' })
+  @ApiResponse({ status: 200, description: 'Return the payment.' })
+  @Public()
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.paymentsService.findOne(id);
   }
 }

@@ -11,15 +11,16 @@ import {
   UseInterceptors,
   UploadedFiles,
   NotFoundException,
+  ForbiddenException, // 🟢 THÊM MỚI: Dùng để báo lỗi 403 chuẩn thay vì lỗi 500 hệ thống
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto, AddAddressDto } from './dto/users.dto';
-import { UpdateUserProfileDto } from './dto/update-user.dto'; // Import DTO mới
+import { UpdateUserProfileDto } from './dto/update-user.dto'; 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Public } from '../auth/decorators/public.decorator';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiConsumes } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { FileFieldsInterceptor } from '@nestjs/platform-express'; // Import Interceptor
+import { FileFieldsInterceptor } from '@nestjs/platform-express'; 
 
 @ApiTags('users')
 @Controller('users')
@@ -31,10 +32,9 @@ export class UsersController {
   // ==================================================================
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @Get('me') // Endpoint này xử lý GET /users/me
+  @Get('me') 
   @ApiOperation({ summary: 'Get current user profile with detailed info' })
   async getMe(@Request() req) {
-    // Gọi service lấy full info (bao gồm seller/enterprise)
     return this.usersService.getProfile(req.user.id);
   }
 
@@ -43,12 +43,12 @@ export class UsersController {
   // ==================================================================
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @Patch('profile') // Endpoint này xử lý PATCH /users/profile
+  @Patch('profile') 
   @ApiOperation({ summary: 'Update user profile and upload avatar/logo' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileFieldsInterceptor([
     { name: 'avatar', maxCount: 1 },
-    { name: 'logo', maxCount: 1 }, // Logo cho Seller/Enterprise
+    { name: 'logo', maxCount: 1 }, 
   ]))
   async updateProfile(
     @Request() req,
@@ -62,7 +62,21 @@ export class UsersController {
   }
 
   // ==================================================================
-  // ADMIN & ADDRESS ENDPOINTS (Các hàm cũ giữ nguyên logic)
+  // 🟢 3. ADD MY ADDRESS (Dành cho chính user đăng nhập tự thêm địa chỉ)
+  // Vị trí đặt cực kỳ quan trọng: Phải nằm TRÊN các hàm có cấu trúc chứa ":id"
+  // ==================================================================
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Post('profile/addresses')
+  @ApiOperation({ summary: 'Add a new address for current user' })
+  @ApiResponse({ status: 201, description: 'Address has been added successfully.' })
+  async addMyAddress(@Request() req, @Body() addressDto: AddAddressDto) {
+    // Lấy thẳng id an toàn từ JWT Token đã được xác thực, không phụ thuộc URL tham số
+    return this.usersService.addAddress(req.user.id, addressDto);
+  }
+
+  // ==================================================================
+  // ADMIN & GENERAL MANAGEMENT ENDPOINTS
   // ==================================================================
 
   @ApiOperation({ summary: 'Get all users (Admin only)' })
@@ -71,9 +85,8 @@ export class UsersController {
   @ApiBearerAuth()
   @Get()
   async findAll(@Request() req) {
-    // Thêm check role Admin nếu cần chặt chẽ hơn
     if (req.user.role !== Role.ADMIN) {
-        // Tùy chỉnh logic nếu muốn
+      throw new ForbiddenException('Bạn không có quyền truy cập danh sách này');
     }
     return this.usersService.findAll();
   }
@@ -99,14 +112,13 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @Request() req,
   ) {
-    // Only allow users to update their own profile unless they're an admin
     if (req.user.role !== Role.ADMIN && req.user.id !== id) {
-      throw new Error('Unauthorized');
+      throw new ForbiddenException('Bạn không được phép chỉnh sửa hồ sơ người khác');
     }
     return this.usersService.update(id, updateUserDto);
   }
 
-  @ApiOperation({ summary: 'Add a new address' })
+  @ApiOperation({ summary: 'Add a new address by User ID (Admin or Target Owner)' })
   @ApiResponse({ status: 201, description: 'Address has been added.' })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -117,7 +129,7 @@ export class UsersController {
     @Request() req,
   ) {
     if (req.user.role !== Role.ADMIN && req.user.id !== id) {
-      throw new Error('Unauthorized');
+      throw new ForbiddenException('Bạn không có quyền thêm địa chỉ cho tài khoản này');
     }
     return this.usersService.addAddress(id, addressDto);
   }
@@ -133,7 +145,7 @@ export class UsersController {
     @Request() req,
   ) {
     if (req.user.role !== Role.ADMIN && req.user.id !== id) {
-      throw new Error('Unauthorized');
+      throw new ForbiddenException('Bạn không có quyền xóa địa chỉ của tài khoản này');
     }
     return this.usersService.deleteAddress(id, addressId);
   }

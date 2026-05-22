@@ -1,29 +1,25 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreatePaymentDto, UpdatePaymentDto } from './dto/payments.dto'; // Bỏ import VNPayCallbackDto ở đây cho gọn
+import { CreatePaymentDto, UpdatePaymentDto } from './dto/payments.dto';
 import { PaymentMethod, PaymentStatus, OrderStatus } from '@prisma/client';
 import * as crypto from 'crypto';
-import * as qs from 'qs';
 import { format } from 'date-fns';
 
 @Injectable()
 export class PaymentsService {
   constructor(private prisma: PrismaService) {}
 
-  private sortObject(obj: any) {
-    const sorted = {};
-    const str = [];
-    let key;
-    for (key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        str.push(encodeURIComponent(key));
-      }
-    }
-    str.sort();
-    for (key = 0; key < str.length; key++) {
-      sorted[str[key]] = encodeURIComponent(obj[str[key]]).replace(/%20/g, '+');
-    }
-    return sorted;
+  // Hàm sắp xếp cực chuẩn của VNPAY
+  private buildVNPayQuery(params: Record<string, unknown>) {
+    return Object.keys(params)
+      .filter((key) => params[key] !== undefined && params[key] !== null && params[key] !== '')
+      .sort()
+      .map((key) => {
+        const encodedKey = encodeURIComponent(key);
+        const encodedValue = encodeURIComponent(String(params[key])).replace(/%20/g, '+');
+        return `${encodedKey}=${encodedValue}`;
+      })
+      .join('&');
   }
 
   async create(dto: CreatePaymentDto, ipAddr: string = '127.0.0.1') {
@@ -72,18 +68,27 @@ export class PaymentsService {
   }
 
   private async createVNPayPayment(payment: any, order: any, ipAddr: string) {
-    const tmnCode = process.env.VNPAY_TMN_CODE;
-    const secretKey = process.env.VNPAY_HASH_SECRET;
-    const vnpUrl = process.env.VNPAY_URL;
-    const returnUrl = `${process.env.FRONTEND_URL}/payment/vnpay-return`;
+    // Tự động tương thích cả 2 cách đặt tên biến VNP_ hoặc VNPAY_
+    const tmnCode = (process.env.VNP_TMN_CODE || process.env.VNPAY_TMN_CODE)?.trim();
+    const secretKey = (process.env.VNP_HASH_SECRET || process.env.VNPAY_HASH_SECRET)?.trim();
+    const vnpUrl = (process.env.VNP_URL || process.env.VNPAY_URL)?.trim();
+    const returnUrl = process.env.FRONTEND_URL 
+        ? `${process.env.FRONTEND_URL}/payment/vnpay-return` 
+        : 'http://localhost:3001/payment/vnpay-return';
+
+    if (!tmnCode || !secretKey || !vnpUrl) {
+        throw new BadRequestException('Lỗi hệ thống: Thiếu cấu hình VNPAY trong file .env');
+    }
 
     const date = new Date();
     const createDate = format(date, 'yyyyMMddHHmmss');
     const txnRef = payment.id; 
     const amount = Math.round(order.totalAmount * 100);
 
-    // 👇 SỬA: Khai báo kiểu 'any' để tránh lỗi Type '{}' missing properties...
-    let vnp_Params: any = {}; 
+    // Chặn lỗi IPv6 khiến VNPAY từ chối
+    const cleanIpAddr = (ipAddr === '::1' || !ipAddr) ? '127.0.0.1' : ipAddr;
+
+    const vnp_Params: Record<string, string | number> = {}; 
     
     vnp_Params['vnp_Version'] = '2.1.0';
     vnp_Params['vnp_Command'] = 'pay';
@@ -91,23 +96,23 @@ export class PaymentsService {
     vnp_Params['vnp_Locale'] = 'vn';
     vnp_Params['vnp_CurrCode'] = 'VND';
     vnp_Params['vnp_TxnRef'] = txnRef;
-    vnp_Params['vnp_OrderInfo'] = `Thanh toan don hang #${order.id.slice(-8)}`;
+    // Bỏ dấu # để tránh lỗi encode của URL
+    vnp_Params['vnp_OrderInfo'] = `Thanh_toan_don_hang_${order.id.slice(-8)}`;
     vnp_Params['vnp_OrderType'] = 'other';
     vnp_Params['vnp_Amount'] = amount;
     vnp_Params['vnp_ReturnUrl'] = returnUrl;
-    vnp_Params['vnp_IpAddr'] = ipAddr || '127.0.0.1';
+    vnp_Params['vnp_IpAddr'] = cleanIpAddr;
     vnp_Params['vnp_CreateDate'] = createDate;
 
-    vnp_Params = this.sortObject(vnp_Params);
+    // Sắp xếp object
+    const signData = this.buildVNPayQuery(vnp_Params);
 
-    const signData = qs.stringify(vnp_Params, { encode: false });
+    // DÙNG NỐI CHUỖI THỦ CÔNG THAY VÌ qs.stringify (Chống đạn 100%)
     const hmac = crypto.createHmac('sha512', secretKey);
     const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
     
-    vnp_Params['vnp_SecureHash'] = signed;
-
     let paymentUrl = vnpUrl;
-    paymentUrl += '?' + qs.stringify(vnp_Params, { encode: false });
+    paymentUrl += '?' + signData + `&vnp_SecureHash=${signed}`;
 
     return {
       ...payment,
@@ -115,40 +120,39 @@ export class PaymentsService {
     };
   }
 
-  // 👇 SỬA: Dùng 'any' cho params đầu vào để xử lý linh hoạt
   async handleVNPayCallback(params: any) {
-    console.log("🔹 VNPAY Callback Params:", params); // LOG 1: Xem params nhận được
+    console.log("🔹 VNPAY Callback Params:", params);
 
     let vnp_Params = { ...params };
     const secureHash = vnp_Params['vnp_SecureHash'];
 
-    // Xóa tham số hash để tính toán lại
     delete vnp_Params['vnp_SecureHash'];
     delete vnp_Params['vnp_SecureHashType'];
 
-    // Sắp xếp lại
-    vnp_Params = this.sortObject(vnp_Params);
-
-    const secretKey = process.env.VNPAY_HASH_SECRET;
+    const secretKey = (process.env.VNP_HASH_SECRET || process.env.VNPAY_HASH_SECRET)?.trim();
+    if (!secretKey) {
+      throw new BadRequestException('Missing VNPAY hash secret');
+    }
     
-    // Log Secret Key (ẩn bớt ký tự để check xem có load đc env không)
-    console.log("🔹 Hash Secret:", secretKey ? `${secretKey.substring(0, 5)}...` : "UNDEFINED"); 
-
-    const signData = qs.stringify(vnp_Params, { encode: false });
+    // Nối chuỗi thủ công để so sánh chữ ký
+    console.log("--- DEBUG START ---");
+    console.log("vnp_Params đã sắp xếp:", JSON.stringify(vnp_Params));
+    const signData = this.buildVNPayQuery(vnp_Params);
+    console.log("Chuỗi SignData để băm:", signData); 
+    console.log("--- DEBUG END ---");
+    
     const hmac = crypto.createHmac('sha512', secretKey);
     const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
     console.log("🔹 My Signed Hash:", signed);
     console.log("🔹 VNPAY Hash:   ", secureHash);
 
-    // Kiểm tra chữ ký
-    if (secureHash === signed) {
+    if (String(secureHash).toLowerCase() === signed.toLowerCase()) {
       const paymentId = vnp_Params['vnp_TxnRef'];
       const rspCode = vnp_Params['vnp_ResponseCode']; 
 
       console.log(`✅ Chữ ký hợp lệ. PaymentID: ${paymentId}, Code: ${rspCode}`);
 
-      // Tìm Payment
       const payment = await this.prisma.payment.findUnique({
         where: { id: paymentId },
       });
@@ -161,7 +165,6 @@ export class PaymentsService {
       if (rspCode === '00') {
         console.log("🚀 Đang cập nhật trạng thái SUCCESS...");
         
-        // SUCCESS
         await this.prisma.$transaction([
             this.prisma.payment.update({
                 where: { id: paymentId },
@@ -172,7 +175,7 @@ export class PaymentsService {
             }),
             this.prisma.order.update({
                 where: { id: payment.orderId },
-                data: { status: OrderStatus.PROCESSING } // Cập nhật Order sang Processing
+                data: { status: OrderStatus.PROCESSING } 
             })
         ]);
         
@@ -194,16 +197,13 @@ export class PaymentsService {
     }
   }
 
-  // MOCK METHODS
   private async createPayPalPayment(payment: any, order: any) { return { ...payment, paymentUrl: '' }; }
   private async createCODPayment(payment: any, order: any) { return payment; }
   async handlePayPalCallback(params: any) { return {}; }
 
-  // CRUD
   async findAll() { return this.prisma.payment.findMany({ include: { order: true } }); }
   async findOne(id: string) { return this.prisma.payment.findUnique({ where: { id }, include: { order: true } }); }
   async findByOrder(orderId: string) { return this.prisma.payment.findUnique({ where: { orderId }, include: { order: true } }); }
-  
   async updatePayment(id: string, dto: UpdatePaymentDto) {
       return this.prisma.payment.update({ where: { id }, data: { status: dto.status }});
   }
