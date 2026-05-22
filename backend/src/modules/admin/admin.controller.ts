@@ -24,14 +24,28 @@ import { Public } from '../auth/decorators/public.decorator';
 import { Role } from '@prisma/client';
 
 @ApiTags('admin')
+@ApiBearerAuth() // Khai báo cho Swagger biết API này cần token
+@UseGuards(JwtAuthGuard, RolesGuard) // BẢO MẬT: Bắt buộc đăng nhập & kiểm tra quyền
+@Roles(Role.ADMIN) // BẢO MẬT: Bắt buộc phải là ADMIN mới được vào toàn bộ route này
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  // User Management
+  // ====================================================================
+  // PHÊ DUYỆT ĐĂNG KÝ (TÍNH NĂNG MỚI)
+  // ====================================================================
+  @ApiOperation({ summary: 'Phê duyệt tài khoản Seller/Enterprise và gửi Email' })
+  @ApiResponse({ status: 200, description: 'Tài khoản đã được duyệt và email đã được gửi.' })
+  @Patch('users/:id/approve')
+  approveUserRegistration(@Param('id') id: string) {
+    return this.adminService.approveUserRegistration(id);
+  }
+
+  // ====================================================================
+  // USER MANAGEMENT
+  // ====================================================================
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, description: 'Return all users.' })
-  @Public()
   @Get('users')
   getAllUsers() {
     return this.adminService.getAllUsers();
@@ -39,7 +53,6 @@ export class AdminController {
 
   @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({ status: 200, description: 'Return the user.' })
-  @Public()
   @Get('users/:id')
   getUserById(@Param('id') id: string) {
     return this.adminService.getUserById(id);
@@ -72,10 +85,11 @@ export class AdminController {
     return this.adminService.updateUserStatus(id, active);
   }
 
-  // Seller Management
+  // ====================================================================
+  // SELLER MANAGEMENT
+  // ====================================================================
   @ApiOperation({ summary: 'Get all sellers' })
   @ApiResponse({ status: 200, description: 'Return all sellers.' })
-  @Public()
   @Get('sellers')
   getAllSellers() {
     return this.adminService.getAllSellers();
@@ -88,10 +102,11 @@ export class AdminController {
     return this.adminService.verifySeller(id, verified);
   }
 
-  // Product Management
+  // ====================================================================
+  // PRODUCT MANAGEMENT
+  // ====================================================================
   @ApiOperation({ summary: 'Get all products' })
   @ApiResponse({ status: 200, description: 'Return all products.' })
-  @Public()
   @Get('products')
   getAllProducts() {
     return this.adminService.getAllProducts();
@@ -104,7 +119,9 @@ export class AdminController {
     return this.adminService.updateProductStatus(id, active);
   }
 
-  // Order Management
+  // ====================================================================
+  // ORDER MANAGEMENT
+  // ====================================================================
   @ApiOperation({ summary: 'Get all orders' })
   @ApiResponse({ status: 200, description: 'Return all orders.' })
   @Get('orders')
@@ -112,7 +129,9 @@ export class AdminController {
     return this.adminService.getAllOrders();
   }
 
-  // Voucher Management
+  // ====================================================================
+  // VOUCHER MANAGEMENT
+  // ====================================================================
   @ApiOperation({ summary: 'Create voucher' })
   @ApiResponse({ status: 201, description: 'Voucher has been created.' })
   @Post('vouchers')
@@ -137,7 +156,9 @@ export class AdminController {
     return this.adminService.getAllVouchers();
   }
 
-  // Flash Sale Management
+  // ====================================================================
+  // FLASH SALE MANAGEMENT
+  // ====================================================================
   @ApiOperation({ summary: 'Create flash sale' })
   @ApiResponse({ status: 201, description: 'Flash sale has been created.' })
   @Post('flash-sales')
@@ -152,7 +173,9 @@ export class AdminController {
     return this.adminService.getAllFlashSales();
   }
 
-  // Campaign Management
+  // ====================================================================
+  // CAMPAIGN MANAGEMENT
+  // ====================================================================
   @ApiOperation({ summary: 'Create campaign' })
   @ApiResponse({ status: 201, description: 'Campaign has been created.' })
   @Post('campaigns')
@@ -167,7 +190,9 @@ export class AdminController {
     return this.adminService.getAllCampaigns();
   }
 
-  // System Statistics
+  // ====================================================================
+  // SYSTEM & UTILS
+  // ====================================================================
   @ApiOperation({ summary: 'Get system statistics' })
   @ApiResponse({ status: 200, description: 'Return system statistics.' })
   @Get('statistics')
@@ -175,9 +200,10 @@ export class AdminController {
     return this.adminService.getSystemStats(systemStatsDto);
   }
 
-  // Initialize Admin Accounts
+  // RIÊNG API NÀY NÊN ĐỂ PUBLIC (hoặc khóa lại sau khi đã tạo xong Admin đầu tiên)
   @ApiOperation({ summary: 'Create initial admin accounts' })
   @ApiResponse({ status: 201, description: 'Admin accounts created.' })
+  @Public() // Cho phép gọi 1 lần để khởi tạo hệ thống
   @Post('initialize')
   createInitialAdmins() {
     return this.adminService.createInitialAdmins();

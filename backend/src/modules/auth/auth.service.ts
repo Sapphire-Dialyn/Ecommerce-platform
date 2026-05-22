@@ -124,6 +124,8 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
+    // Khách hàng -> true (hoạt động ngay). Seller/Enterprise -> false (chờ duyệt)
+    const isAutoActive = dto.role === Role.CUSTOMER;
 
     const result = await this.prisma.$transaction(async (prisma) => {
         const newUser = await prisma.user.create({
@@ -132,7 +134,7 @@ export class AuthService {
                 password: hashedPassword,
                 name: dto.name,
                 role: dto.role, 
-                isActive: true,
+                isActive: isAutoActive,
                 isVerified: false, 
             }
         });
@@ -172,7 +174,9 @@ export class AuthService {
     });
 
     return {
-        message: 'User registered successfully',
+        message: isAutoActive 
+          ? 'Đăng ký thành công!' 
+          : 'Đăng ký thành công! Vui lòng chờ Admin phê duyệt tài khoản.',
         userId: result.id,
         role: result.role
     };

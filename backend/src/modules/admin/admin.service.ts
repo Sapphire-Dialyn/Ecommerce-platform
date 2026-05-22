@@ -18,8 +18,70 @@ export class AdminService {
     private emailService: EmailService,
   ) {}
 
+  // ====================================================================
+  // PHÊ DUYỆT ĐĂNG KÝ (Tính năng mới)
+  // ====================================================================
+  async approveUserRegistration(userId: string) {
+    // 1. Tìm user
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng này');
+    }
+
+    if (user.isActive) {
+      throw new BadRequestException('Tài khoản này đã được kích hoạt từ trước');
+    }
+
+    // 2. Mở khóa tài khoản (Active & Verified)
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        isActive: true,
+        isVerified: true,
+      },
+    });
+
+    // 3. Tự động đánh dấu Verified cho hồ sơ Seller/Enterprise tương ứng
+    if (updatedUser.role === Role.SELLER) {
+      await this.prisma.seller.updateMany({
+        where: { userId: updatedUser.id },
+        data: { verified: true },
+      });
+    } else if (updatedUser.role === Role.ENTERPRISE) {
+      await this.prisma.enterprise.updateMany({
+        where: { userId: updatedUser.id },
+        data: { verified: true },
+      });
+    }
+
+    // 4. Gửi Email thông báo (Sử dụng hàm có sẵn của bạn)
+    try {
+      await this.emailService.sendRoleApprovalEmail(
+        updatedUser.email, 
+        updatedUser.role
+      );
+    } catch (error) {
+      console.error('Lỗi khi gửi email duyệt tài khoản:', error);
+      // Không ném lỗi ra để tránh việc user đã được duyệt nhưng API lại báo lỗi 500 do kẹt mail
+    }
+
+    return {
+      message: 'Đã phê duyệt tài khoản thành công và gửi thông báo qua email.',
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        role: updatedUser.role,
+      }
+    };
+  }
+
+  // ====================================================================
   // User Management
- async getAllUsers(role?: Role) {
+  // ====================================================================
+  async getAllUsers(role?: Role) {
     const whereClause = role ? { role: role } : {};
 
     return this.prisma.user.findMany({
@@ -28,9 +90,8 @@ export class AdminService {
       include: {
         seller: true,     // Để lấy thông tin Store Name
         enterprise: true,
-        logistics: true,  // 👈 BẮT BUỘC: Thêm dòng này
-        shipper: true,    // Thêm luôn shipper cho đầy đủ // Để lấy thông tin Company Name
-        // Bỏ bớt mấy cái nặng như orders, addresses nếu chỉ để hiển thị danh sách
+        logistics: true,  
+        shipper: true,    // Thêm luôn shipper cho đầy đủ
       },
     });
   }
@@ -73,7 +134,9 @@ export class AdminService {
     });
   }
 
+  // ====================================================================
   // Seller Management
+  // ====================================================================
   async getAllSellers() {
     return this.prisma.seller.findMany({
       include: {
@@ -106,13 +169,23 @@ export class AdminService {
     });
 
     if (verified) {
-      await this.emailService.sendRoleApprovalEmail(seller.user.email, 'SELLER');
+      // 🔥 Bọc try-catch ở đây để dù mail lỗi thì Admin vẫn thấy thông báo duyệt thành công
+      try {
+        await this.emailService.sendRoleApprovalEmail(seller.user.email, 'SELLER');
+      } catch (error) {
+        console.error(
+          'Lỗi khi gửi email duyệt Seller:',
+          error instanceof Error ? error.message : error,
+        );
+      }
     }
 
     return { message: 'Seller verification status updated' };
   }
 
+  // ====================================================================
   // Enterprise Management
+  // ====================================================================
   async verifyEnterprise(id: string, verified: boolean) {
     const enterprise = await this.prisma.enterprise.update({
       where: { id },
@@ -127,7 +200,15 @@ export class AdminService {
     });
 
     if (verified) {
-      await this.emailService.sendRoleApprovalEmail(enterprise.user.email, 'ENTERPRISE');
+      // 🔥 Bọc try-catch ở đây để dù mail lỗi thì Admin vẫn thấy thông báo duyệt thành công
+      try {
+        await this.emailService.sendRoleApprovalEmail(enterprise.user.email, 'ENTERPRISE');
+      } catch (error) {
+        console.error(
+          'Lỗi khi gửi email duyệt Enterprise:',
+          error instanceof Error ? error.message : error,
+        );
+      }
     }
 
     return { message: 'Enterprise verification status updated' };
@@ -140,15 +221,16 @@ export class AdminService {
     });
   }
 
+  // ====================================================================
   // Product Management
- async getAllProducts() {
-    // Cần giới hạn số lượng hoặc phân trang
+  // ====================================================================
+  async getAllProducts() {
     return this.prisma.product.findMany({
       take: 50, // Giới hạn 50 sản phẩm mới nhất để demo
       orderBy: { createdAt: 'desc' },
       include: {
         category: true,
-        variants: { select: { price: true, stock: true } } // Chỉ lấy giá và kho để hiển thị
+        variants: { select: { price: true, stock: true } } 
       },
     });
   }
@@ -160,7 +242,9 @@ export class AdminService {
     });
   }
 
+  // ====================================================================
   // Order Management
+  // ====================================================================
   async getAllOrders() {
     return this.prisma.order.findMany({
       take: 50,
@@ -172,7 +256,9 @@ export class AdminService {
     });
   }
 
+  // ====================================================================
   // Voucher Management
+  // ====================================================================
   async createVoucher(dto: CreateVoucherDto) {
     return this.prisma.voucher.create({
       data: {
@@ -214,7 +300,9 @@ export class AdminService {
     });
   }
 
+  // ====================================================================
   // Flash Sale Management
+  // ====================================================================
   async createFlashSale(dto: CreateFlashSaleDto) {
     return this.prisma.$transaction(async (tx) => {
       const flashSale = await tx.promotion.create({
@@ -259,7 +347,9 @@ export class AdminService {
     });
   }
 
+  // ====================================================================
   // Campaign Management
+  // ====================================================================
   async createCampaign(dto: CreateCampaignDto) {
     return this.prisma.$transaction(async (tx) => {
       const campaign = await tx.promotion.create({
@@ -304,7 +394,9 @@ export class AdminService {
     });
   }
 
+  // ====================================================================
   // System Statistics
+  // ====================================================================
   async getSystemStats(dto: SystemStatsDto) {
     const startDate = new Date(dto.startDate);
     const endDate = new Date(dto.endDate);
@@ -318,100 +410,38 @@ export class AdminService {
       topSellingProducts,
       topSellers,
     ] = await Promise.all([
-      // Total users
       this.prisma.user.count({
-        where: {
-          createdAt: {
-            gte: startDate,
-            lte: endDate,
-          },
-        },
+        where: { createdAt: { gte: startDate, lte: endDate } },
       }),
-
-      // Total sellers
       this.prisma.seller.count({
-        where: {
-          user: {
-            createdAt: {
-              gte: startDate,
-              lte: endDate,
-            },
-          },
-        },
+        where: { user: { createdAt: { gte: startDate, lte: endDate } } },
       }),
-
-      // Total orders
       this.prisma.order.count({
-        where: {
-          createdAt: {
-            gte: startDate,
-            lte: endDate,
-          },
-        },
+        where: { createdAt: { gte: startDate, lte: endDate } },
       }),
-
-      // Total revenue
       this.prisma.order.aggregate({
         where: {
-          createdAt: {
-            gte: startDate,
-            lte: endDate,
-          },
-          status: {
-            in: ['DELIVERED', 'SHIPPING'],
-          },
+          createdAt: { gte: startDate, lte: endDate },
+          status: { in: ['DELIVERED', 'SHIPPING'] },
         },
-        _sum: {
-          totalAmount: true,
-        },
+        _sum: { totalAmount: true },
       }),
-
-      // Total products
       this.prisma.product.count({
-        where: {
-          createdAt: {
-            gte: startDate,
-            lte: endDate,
-          },
-        },
+        where: { createdAt: { gte: startDate, lte: endDate } },
       }),
-
-      // Top selling products
       this.prisma.orderItem.groupBy({
         by: ['productId'],
-        where: {
-          order: {
-            createdAt: {
-              gte: startDate,
-              lte: endDate,
-            },
-          },
-        },
-        _sum: {
-          quantity: true,
-        },
-        orderBy: {
-          _sum: {
-            quantity: 'desc',
-          },
-        },
+        where: { order: { createdAt: { gte: startDate, lte: endDate } } },
+        _sum: { quantity: true },
+        orderBy: { _sum: { quantity: 'desc' } },
         take: 10,
       }),
-
-      // Top sellers
       this.prisma.seller.findMany({
         where: {
           products: {
             some: {
               orderItems: {
-                some: {
-                  order: {
-                    createdAt: {
-                      gte: startDate,
-                      lte: endDate,
-                    },
-                  },
-                },
+                some: { order: { createdAt: { gte: startDate, lte: endDate } } },
               },
             },
           },
@@ -420,33 +450,18 @@ export class AdminService {
           products: {
             include: {
               orderItems: {
-                where: {
-                  order: {
-                    createdAt: {
-                      gte: startDate,
-                      lte: endDate,
-                    },
-                  },
-                },
+                where: { order: { createdAt: { gte: startDate, lte: endDate } } },
               },
             },
           },
-          user: {
-            select: {
-              name: true,
-              email: true,
-            },
-          },
+          user: { select: { name: true, email: true } },
         },
         take: 10,
       }),
     ]);
 
     return {
-      period: {
-        startDate,
-        endDate,
-      },
+      period: { startDate, endDate },
       metrics: {
         totalUsers,
         totalSellers,
@@ -468,35 +483,21 @@ export class AdminService {
               (sum, item) => sum + item.quantity * item.price,
               0,
             ),
-          0, 
+          0,
         ),
       })),
     };
   }
 
+  // ====================================================================
   // Create initial admin accounts
+  // ====================================================================
   async createInitialAdmins() {
     const adminAccounts = [
-      {
-        email: 'admin1@example.com',
-        password: 'Admin@123',
-        name: 'Admin One',
-      },
-      {
-        email: 'admin2@example.com',
-        password: 'Admin@123',
-        name: 'Admin Two',
-      },
-      {
-        email: 'admin3@example.com',
-        password: 'Admin@123',
-        name: 'Admin Three',
-      },
-      {
-        email: 'admin4@example.com',
-        password: 'Admin@123',
-        name: 'Admin Four',
-      },
+      { email: 'admin1@example.com', password: 'Admin@123', name: 'Admin One' },
+      { email: 'admin2@example.com', password: 'Admin@123', name: 'Admin Two' },
+      { email: 'admin3@example.com', password: 'Admin@123', name: 'Admin Three' },
+      { email: 'admin4@example.com', password: 'Admin@123', name: 'Admin Four' },
     ];
 
     for (const admin of adminAccounts) {
